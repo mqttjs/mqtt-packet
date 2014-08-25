@@ -1,0 +1,28 @@
+{
+  "name": "mqtt-packet",
+  "version": "0.0.0",
+  "description": "Parsing MQTT packets like a breeze",
+  "main": "index.js",
+  "scripts": {
+    "test": "tape test.js | faucet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mcollina/mqtt-packet.git"
+  },
+  "keywords": [
+    "MQTT",
+    "packet",
+    "parsing"
+  ],
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mcollina/mqtt-packet/issues"
+  },
+  "homepage": "https://github.com/mcollina/mqtt-packet",
+  "devDependencies": {
+    "faucet": "0.0.1",
+    "tape": "^2.14.0"
+  }
+}
