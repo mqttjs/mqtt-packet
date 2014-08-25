@@ -24,5 +24,9 @@
   "devDependencies": {
     "faucet": "0.0.1",
     "tape": "^2.14.0"
+  },
+  "dependencies": {
+    "bl": "^0.9.1",
+    "inherits": "^2.0.1"
   }
 }
