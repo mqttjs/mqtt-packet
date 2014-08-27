@@ -7,7 +7,7 @@ var bl        = require('bl')
 
 function Parser(opts) {
   if (!(this instanceof Parser)) {
-    return new Parser()
+    return new Parser(opts)
   }
 
   opts = opts || {}

@@ -2,11 +2,11 @@
 var test = require('tape')
   , mqtt = require('./')
 
-function testParse(name, expected, fixture, rest) {
+function testParse(name, expected, fixture, rest, opts) {
   test(name, function(t) {
     t.plan(2)
 
-    var parser = mqtt.parser()
+    var parser = mqtt.parser(opts)
       , rest
 
     console.log(fixture.length)
@@ -80,3 +80,37 @@ testParse('maximal connect', {
     112, 97, 115, 115, 119, 111, 114, 100 //password
  ])
 )
+
+testParse('binary username/password', {
+      cmd: "connect"
+    , retain: false
+    , qos: 0
+    , dup: false
+    , length: 28
+    , protocolId: new Buffer([77, 81, 73, 115, 100, 112])
+    , protocolVersion: 3
+    , clean: false
+    , keepalive: 30
+    , clientId: new Buffer([116, 101, 115, 116])
+    , username: new Buffer([12, 13, 14])
+    , password: new Buffer([15, 16, 17])
+  }, new Buffer([
+      16, 28, // Header
+      0, 6, // Protocol id length
+      77, 81, 73, 115, 100, 112, // Protocol id
+      3, // Protocol version
+      0x80 | 0x40, // Connect flags
+      0, 30, // Keepalive
+      0, 4, //Client id length
+      116, 101, 115, 116, // Client id
+      0, 3, // username length
+      12, 13, 14, // username
+      0, 3, // password length
+      15, 16, 17 //password
+  ]),
+  0,
+  {
+    encoding: 'binary'
+  }
+)
+
