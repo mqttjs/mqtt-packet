@@ -9,13 +9,26 @@ function testParse(name, expected, fixture, rest, opts) {
     var parser = mqtt.parser(opts)
       , rest
 
-    console.log(fixture.length)
-
     parser.on('packet', function(packet) {
       t.deepEqual(packet, expected, 'expected packet')
     })
 
     t.equal(parser.parse(fixture), rest || 0, 'remaining bytes')
+  })
+}
+
+function testError(expected, fixture) {
+  test(expected, function(t) {
+    t.plan(1)
+
+    var parser = mqtt.parser()
+      , rest
+
+    parser.on('error', function(err) {
+      t.equal(err.message, expected, 'expected error message')
+    })
+
+    parser.parse(fixture)
   })
 }
 
@@ -114,3 +127,8 @@ testParse('binary username/password', {
   }
 )
 
+testError('cannot parse protocol id', new Buffer([
+  16, 4,
+  0, 6,
+  77, 81
+]))

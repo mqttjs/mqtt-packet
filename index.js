@@ -134,7 +134,7 @@ Parser.prototype._parseConnect = function () {
   // Parse constants id
   protocolId = this._parseString()
   if (protocolId === null)
-    return this.emit('error', new Error('cannot parse constants id'))
+    return this.emit('error', new Error('cannot parse protocol id'))
 
   packet.protocolId = protocolId
 
