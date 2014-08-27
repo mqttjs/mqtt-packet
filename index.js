@@ -102,7 +102,8 @@ Parser.prototype._parseLength = function () {
 }
 
 var cmdMap = {
-  'connect': '_parseConnect'
+    'connect': '_parseConnect'
+  , 'connack': '_parseConnack'
 }
 
 Parser.prototype._parsePayload = function () {
@@ -204,6 +205,16 @@ Parser.prototype._parseConnect = function () {
   return packet
 }
 
+Parser.prototype._parseConnack = function () {
+  var packet = this.packet
+
+  this._pos = 0
+
+  packet.returnCode = this._parseNum()
+  if(packet.returnCode === -1)
+    return this.emit('error', new Error('cannot parse return code'))
+}
+
 Parser.prototype._parseString = function () {
   var length = this._parseNum()
     , result
@@ -223,7 +234,7 @@ Parser.prototype._parseString = function () {
 }
 
 Parser.prototype._parseNum = function() {
-  if(2 > this._pos + this._len) return -1
+  if(2 > this._pos + this._list.length) return -1
 
   var result = this._list.readUInt16BE(this._pos)
   this._pos += 2
