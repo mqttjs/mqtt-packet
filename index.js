@@ -179,7 +179,7 @@ Parser.prototype._parseConnect = function () {
     packet.will.topic = topic
 
     // Parse will payload
-    payload = this.parse_string()
+    payload = this._parseString()
     if(payload === null)
       return this.emit('error', new Error('cannot parse will payload'))
     packet.will.payload = payload
