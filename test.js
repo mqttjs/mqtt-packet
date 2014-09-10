@@ -216,3 +216,50 @@ testParse('maximal publish', {
   0, 10, // Message id
   116, 101, 115, 116 // Payload
 ]))
+
+testParse('empty publish', {
+    cmd: 'publish'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 6
+  , topic: 'test'
+  , payload: ''
+}, new Buffer([
+  48, 6, // Header
+  0, 4, // Topic length
+  116, 101, 115, 116 // Topic
+  // Empty payload
+]))
+
+
+test('splitted publish parse', function(t) {
+  t.plan(3)
+
+  var parser = mqtt.parser()
+    , rest
+    , expected = {
+          cmd: 'publish'
+        , retain: false
+        , qos: 0
+        , dup: false
+        , length: 10
+        , topic: 'test'
+        , payload: 'test'
+      };
+
+  parser.on('packet', function(packet) {
+    t.deepEqual(packet, expected, 'expected packet')
+  })
+
+  t.equal(parser.parse(new Buffer([
+    48, 10, // Header
+    0, 4, // Topic length
+    116, 101, 115, 116 // Topic (test)
+  ])), 6, 'remaining bytes')
+
+
+  t.equal(parser.parse(new Buffer([
+    116, 101, 115, 116 // Payload (test)
+  ])), 0, 'remaining bytes')
+})

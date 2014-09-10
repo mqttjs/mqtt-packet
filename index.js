@@ -22,19 +22,10 @@ function Parser(opts) {
     , '_parsePayload'
     , '_newPacket'
   ]
-  this._stateCounter = this._states.length
+  this._stateCounter = 0
 }
 
 inherits(Parser, EE)
-
-Parser.prototype._nextState = function () {
-  this._stateCounter++
-  if (this._stateCounter >= this._states.length) {
-    this._stateCounter = 0
-  }
-
-  return this._states[this._stateCounter]
-}
 
 Parser.prototype._newPacket = function () {
   if (this.packet) {
@@ -50,7 +41,13 @@ Parser.prototype._newPacket = function () {
 Parser.prototype.parse = function (buf) {
   this._list.append(buf)
 
-  while (this._list.length > 0 && this[this._nextState()]()) {}
+  while (this._list.length > 0 && this[this._states[this._stateCounter]]()) {
+    this._stateCounter++
+
+    if (this._stateCounter >= this._states.length) {
+      this._stateCounter = 0
+    }
+  }
 
   return this._list.length
 }
@@ -99,11 +96,6 @@ Parser.prototype._parseLength = function () {
   }
 
   return result
-}
-
-var cmdMap = {
-    'connect': '_parseConnect'
-  , 'connack': '_parseConnack'
 }
 
 Parser.prototype._parsePayload = function () {
@@ -244,9 +236,9 @@ Parser.prototype._parsePublish = function () {
   // Parse the payload
   /* No checks - whatever remains in the packet is the payload */
   if (this.encoding !== 'binary') {
-    packet.payload = this._list.toString(this.encoding, this._pos, this._list.length)
+    packet.payload = this._list.toString(this.encoding, this._pos, packet.length)
   } else {
-    packet.payload = this._list.slice(this._pos, this._list.length)
+    packet.payload = this._list.slice(this._pos, packet.length)
   }
 }
 
