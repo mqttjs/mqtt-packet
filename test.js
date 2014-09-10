@@ -311,3 +311,57 @@ testParse('pubcomp', {
   116, 2, // Header
   0, 2 // Message id
 ]))
+
+testParse('subscribe to one topic', {
+    cmd: 'subscribe'
+  , retain: false
+  , qos: 1
+  , dup: false
+  , length: 9
+  , subscriptions: [
+      {
+          topic: "test"
+        , qos: 0
+      }
+    ]
+  , messageId: 6
+}, new Buffer([
+  130, 9, // Header (publish, qos=1, length=9)
+  0, 6, // message id (6)
+  0, 4, // topic length,
+  116, 101, 115, 116, // Topic (test)
+  0 // qos (0)
+]))
+
+testParse('subscribe to three topics', {
+    cmd: 'subscribe'
+  , retain: false
+  , qos: 1
+  , dup: false
+  , length: 23
+  , subscriptions: [
+      {
+          topic: "test"
+        , qos: 0
+      },{
+          topic: "uest"
+        , qos: 1
+      },{
+          topic: "tfst"
+        , qos: 2
+      }
+    ],
+    messageId: 6
+}, new Buffer([
+  130, 23, // Header (publish, qos=1, length=9)
+  0, 6, // message id (6)
+  0, 4, // topic length,
+  116, 101, 115, 116, // Topic (test)
+  0, // qos (0)
+  0, 4, // topic length
+  117, 101, 115, 116, // Topic (uest)
+  1, // qos (1)
+  0, 4, // topic length
+  116, 102, 115, 116, // Topic (tfst)
+  2 // qos (2)
+]))

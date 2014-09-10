@@ -121,7 +121,10 @@ Parser.prototype._parsePayload = function () {
       case 'pubrec':
       case 'pubrel':
       case 'pubcomp':
-        this._parseAck()
+        this._parseMessageId()
+        break
+      case 'subscribe':
+        this._parseSubscribe()
         break
       default:
         this.emit('error', new Error('not supported'))
@@ -233,10 +236,7 @@ Parser.prototype._parsePublish = function () {
 
   // Parse message ID
   if (packet.qos > 0) {
-    packet.messageId = this._parseNum()
-
-    if(packet.messageId === null)
-      return this.emit('error', new Error('cannot parse message id'))
+    this._parseMessageId()
   }
 
   // Parse the payload
@@ -248,12 +248,36 @@ Parser.prototype._parsePublish = function () {
   }
 }
 
-Parser.prototype._parseAck = function () {
+Parser.prototype._parseSubscribe = function() {
+  var packet = this.packet
+    , topic
+    , qos
+
+  packet.subscriptions = []
+
+  this._parseMessageId()
+
+  while (this._pos < packet.length) {
+
+    // Parse topic
+    topic = this._parseString()
+    if (topic === null)
+      return this.emit('error', new Error('Parse error - cannot parse topic'))
+
+    qos = this._list.readUInt8(this._pos++)
+
+    // Push pair to subscriptions
+    packet.subscriptions.push({ topic: topic, qos: qos });
+  }
+}
+
+Parser.prototype._parseMessageId = function() {
   var packet = this.packet
 
   packet.messageId = this._parseNum()
-  if (packet.messageId === null)
-    return this.emit('error', new Error('cannot parse message id'));
+
+  if(packet.messageId === null)
+    return this.emit('error', new Error('cannot parse message id'))
 }
 
 Parser.prototype._parseString = function () {
