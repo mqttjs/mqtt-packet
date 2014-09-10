@@ -365,3 +365,17 @@ testParse('subscribe to three topics', {
   116, 102, 115, 116, // Topic (tfst)
   2 // qos (2)
 ]))
+
+testParse('suback', {
+    cmd: 'suback'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 6
+  , granted: [0, 1, 2, 128]
+  , messageId: 6
+}, new Buffer([
+  144, 6, // Header
+  0, 6, // Message id
+  0, 1, 2, 128 // Granted qos (0, 1, 2) and a rejected being 0x80
+]))

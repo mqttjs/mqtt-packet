@@ -126,6 +126,9 @@ Parser.prototype._parsePayload = function () {
       case 'subscribe':
         this._parseSubscribe()
         break
+      case 'suback':
+        this._parseSuback()
+        break
       default:
         this.emit('error', new Error('not supported'))
     }
@@ -236,7 +239,7 @@ Parser.prototype._parsePublish = function () {
 
   // Parse message ID
   if (packet.qos > 0) {
-    this._parseMessageId()
+    if (!this._parseMessageId()) { return }
   }
 
   // Parse the payload
@@ -255,7 +258,7 @@ Parser.prototype._parseSubscribe = function() {
 
   packet.subscriptions = []
 
-  this._parseMessageId()
+  if (!this._parseMessageId()) { return }
 
   while (this._pos < packet.length) {
 
@@ -271,13 +274,28 @@ Parser.prototype._parseSubscribe = function() {
   }
 }
 
+Parser.prototype._parseSuback = function() {
+  this.packet.granted = []
+
+  if (!this._parseMessageId()) { return }
+
+  // Parse granted QoSes
+  while (this._pos < this.packet.length) {
+    this.packet.granted.push(this._list.readUInt8(this._pos++));
+  }
+}
+
 Parser.prototype._parseMessageId = function() {
   var packet = this.packet
 
   packet.messageId = this._parseNum()
 
-  if(packet.messageId === null)
-    return this.emit('error', new Error('cannot parse message id'))
+  if(packet.messageId === null) {
+    this.emit('error', new Error('cannot parse message id'))
+    return false
+  }
+
+  return true
 }
 
 Parser.prototype._parseString = function () {
