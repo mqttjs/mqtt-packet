@@ -33,16 +33,16 @@ function testError(expected, fixture) {
 }
 
 testParse('minimal connect', {
-    cmd: "connect"
+    cmd: 'connect'
   , retain: false
   , qos: 0
   , dup: false
   , length: 18
-  , protocolId: "MQIsdp"
+  , protocolId: 'MQIsdp'
   , protocolVersion: 3
   , clean: false
   , keepalive: 30
-  , clientId: "test"
+  , clientId: 'test'
 }, new Buffer([
   16, 18, // Header
   0, 6, // Protocol id length
@@ -56,24 +56,24 @@ testParse('minimal connect', {
 
 
 testParse('maximal connect', {
-    cmd: "connect"
+    cmd: 'connect'
   , retain: false
   , qos: 0
   , dup: false
   , length: 54
-  , protocolId: "MQIsdp"
+  , protocolId: 'MQIsdp'
   , protocolVersion: 3
   , will: {
       retain: true
     , qos: 2
-    , topic: "topic"
-    , payload: "payload"
+    , topic: 'topic'
+    , payload: 'payload'
     }
   , clean: true
   , keepalive: 30
-  , clientId: "test"
-  , username: "username"
-  , password: "password"
+  , clientId: 'test'
+  , username: 'username'
+  , password: 'password'
 }, new Buffer([
   16, 54, // Header
   0, 6, // Protocol id length
@@ -94,7 +94,7 @@ testParse('maximal connect', {
 ]))
 
 testParse('binary username/password', {
-    cmd: "connect"
+    cmd: 'connect'
   , retain: false
   , qos: 0
   , dup: false
@@ -149,4 +149,70 @@ testParse('connack with return code 5', {
   , returnCode: 5
 }, new Buffer([
   32, 2, 0, 5
+]))
+
+testParse('minimal publish', {
+    cmd: 'publish'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 10
+  , topic: 'test'
+  , payload: 'test'
+}, new Buffer([
+  48, 10, // Header
+  0, 4, // Topic length
+  116, 101, 115, 116, // Topic (test)
+  116, 101, 115, 116 // Payload (test)
+]))
+
+;(function() {
+  var buffer = new Buffer(2048)
+  testParse('2KB publish packet', {
+      cmd: 'publish'
+    , retain: false
+    , qos: 0
+    , dup: false
+    , length: 2054
+    , topic: new Buffer('test')
+    , payload: buffer
+  }, Buffer.concat([new Buffer([
+    48, 134, 16, // Header
+    0, 4, // Topic length
+    116, 101, 115, 116, // Topic (test)
+  ]), buffer]), 0, { encoding: 'binary' })
+})()
+
+;(function() {
+  var buffer = new Buffer(2 * 1024 * 1024)
+  testParse('2MB publish packet', {
+      cmd: 'publish'
+    , retain: false
+    , qos: 0
+    , dup: false
+    , length: 6 + 2 * 1024 * 1024
+    , topic: new Buffer('test')
+    , payload: buffer
+  }, Buffer.concat([new Buffer([
+    48, 134, 128, 128, 1, // Header
+    0, 4, // Topic length
+    116, 101, 115, 116, // Topic (test)
+  ]), buffer]), 0, { encoding: 'binary' })
+})()
+
+testParse('maximal publish', {
+    cmd:'publish'
+  , retain: true
+  , qos: 2
+  , length: 12
+  , dup: true
+  , topic: 'test'
+  , messageId: 10
+  , payload: 'test'
+}, new Buffer([
+  61, 12, // Header
+  0, 4, // Topic length
+  116, 101, 115, 116, // Topic
+  0, 10, // Message id
+  116, 101, 115, 116 // Payload
 ]))

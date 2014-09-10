@@ -112,8 +112,23 @@ Parser.prototype._parsePayload = function () {
   // Do we have a payload? Do we have enough data to complete the payload?
   // PINGs have no payload
   if (this.packet.length === 0 || this._list.length >= this.packet.length) {
-    // TODO remove try-catch
-    this[cmdMap[this.packet.cmd]]()
+
+    this._pos = 0
+
+    switch (this.packet.cmd) {
+      case 'connect':
+        this._parseConnect()
+        break
+      case 'connack':
+        this._parseConnack()
+        break
+      case 'publish':
+        this._parsePublish()
+        break
+      default:
+        this.emit('error', new Error('not supported'))
+    }
+
     result = true
   }
 
@@ -129,8 +144,6 @@ Parser.prototype._parseConnect = function () {
     , username // Username
     , flags = {}
     , packet = this.packet
-
-  this._pos = 0
 
   // Parse constants id
   protocolId = this._parseString()
@@ -208,11 +221,33 @@ Parser.prototype._parseConnect = function () {
 Parser.prototype._parseConnack = function () {
   var packet = this.packet
 
-  this._pos = 0
-
   packet.returnCode = this._parseNum()
   if(packet.returnCode === -1)
     return this.emit('error', new Error('cannot parse return code'))
+}
+
+Parser.prototype._parsePublish = function () {
+  var packet = this.packet
+  packet.topic = this._parseString()
+
+  if(packet.topic === null)
+    return this.emit('error', new Error('cannot parse topic'))
+
+  // Parse message ID
+  if (packet.qos > 0) {
+    packet.messageId = this._parseNum()
+
+    if(packet.messageId === null)
+      return this.emit('error', new Error('cannot parse message id'))
+  }
+
+  // Parse the payload
+  /* No checks - whatever remains in the packet is the payload */
+  if (this.encoding !== 'binary') {
+    packet.payload = this._list.toString(this.encoding, this._pos, this._list.length)
+  } else {
+    packet.payload = this._list.slice(this._pos, this._list.length)
+  }
 }
 
 Parser.prototype._parseString = function () {
