@@ -263,3 +263,51 @@ test('splitted publish parse', function(t) {
     116, 101, 115, 116 // Payload (test)
   ])), 0, 'remaining bytes')
 })
+
+testParse('puback', {
+    cmd: 'puback'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 2
+  , messageId: 2
+}, new Buffer([
+  64, 2, // Header
+  0, 2 // Message id
+]))
+
+testParse('pubrec', {
+    cmd: 'pubrec'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 2
+  , messageId: 2
+}, new Buffer([
+  80, 2, // Header
+  0, 2 // Message id
+]))
+
+testParse('pubrel', {
+    cmd: 'pubrel'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 2
+  , messageId: 2
+}, new Buffer([
+  96, 2, // Header
+  0, 2 // Message id
+]))
+
+testParse('pubcomp', {
+    cmd: 'pubcomp'
+  , retain: false
+  , qos: 2
+  , dup: false
+  , length: 2
+  , messageId: 2
+}, new Buffer([
+  116, 2, // Header
+  0, 2 // Message id
+]))

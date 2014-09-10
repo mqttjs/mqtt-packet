@@ -117,6 +117,12 @@ Parser.prototype._parsePayload = function () {
       case 'publish':
         this._parsePublish()
         break
+      case 'puback':
+      case 'pubrec':
+      case 'pubrel':
+      case 'pubcomp':
+        this._parseAck()
+        break
       default:
         this.emit('error', new Error('not supported'))
     }
@@ -240,6 +246,14 @@ Parser.prototype._parsePublish = function () {
   } else {
     packet.payload = this._list.slice(this._pos, packet.length)
   }
+}
+
+Parser.prototype._parseAck = function () {
+  var packet = this.packet
+
+  packet.messageId = this._parseNum()
+  if (packet.messageId === null)
+    return this.emit('error', new Error('cannot parse message id'));
 }
 
 Parser.prototype._parseString = function () {
