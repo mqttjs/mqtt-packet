@@ -379,3 +379,23 @@ testParse('suback', {
   0, 6, // Message id
   0, 1, 2, 128 // Granted qos (0, 1, 2) and a rejected being 0x80
 ]))
+
+testParse('unsubscribe', {
+    cmd: 'unsubscribe'
+  , retain: false
+  , qos: 1
+  , dup: false
+  , length: 14
+  , unsubscriptions: [
+        'tfst'
+      , 'test'
+    ],
+    messageId: 7
+}, new Buffer([
+  162, 14,
+  0, 7, // message id (7)
+  0, 4, // topic length
+  116, 102, 115, 116, // Topic (tfst)
+  0, 4, // topic length,
+  116, 101, 115, 116, // Topic (test)
+]))

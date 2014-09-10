@@ -129,6 +129,9 @@ Parser.prototype._parsePayload = function () {
       case 'suback':
         this._parseSuback()
         break
+      case 'unsubscribe':
+        this._parseUnsubscribe()
+        break
       default:
         this.emit('error', new Error('not supported'))
     }
@@ -282,6 +285,27 @@ Parser.prototype._parseSuback = function() {
   // Parse granted QoSes
   while (this._pos < this.packet.length) {
     this.packet.granted.push(this._list.readUInt8(this._pos++));
+  }
+}
+
+Parser.prototype._parseUnsubscribe = function() {
+  var packet = this.packet
+
+  packet.unsubscriptions = []
+
+  // Parse message ID
+  if (!this._parseMessageId()) { return }
+
+  while (this._pos < packet.length) {
+    var topic;
+
+    // Parse topic
+    topic = this._parseString()
+    if (topic === null)
+      return this.emit('error', new Error('cannot parse topic'))
+
+    // Push topic to unsubscriptions
+    packet.unsubscriptions.push(topic);
   }
 }
 
