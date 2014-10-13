@@ -1,6 +1,6 @@
 
 var test = require('tape')
-  , mqtt = require('./')
+  , mqtt = require('../')
 
 function testParse(name, expected, fixture, rest, opts) {
   test(name, function(t) {

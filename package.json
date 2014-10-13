@@ -2,9 +2,9 @@
   "name": "mqtt-packet",
   "version": "0.0.0",
   "description": "Parsing MQTT packets like a breeze",
-  "main": "index.js",
+  "main": "mqtt.js",
   "scripts": {
-    "test": "tape test.js | faucet"
+    "test": "tape test/* | faucet"
   },
   "repository": {
     "type": "git",
