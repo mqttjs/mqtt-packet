@@ -33,7 +33,9 @@ Parser.prototype._newPacket = function () {
     this.emit('packet', this.packet)
   }
 
-  this.packet = {}
+  this.packet = {
+    length: -1
+  }
 
   return true
 }
@@ -41,7 +43,8 @@ Parser.prototype._newPacket = function () {
 Parser.prototype.parse = function (buf) {
   this._list.append(buf)
 
-  while (this._list.length > 0 && this[this._states[this._stateCounter]]()) {
+  while ((this.packet.length != -1 || this._list.length > 0) &&
+         this[this._states[this._stateCounter]]()) {
     this._stateCounter++
 
     if (this._stateCounter >= this._states.length) {
@@ -131,6 +134,14 @@ Parser.prototype._parsePayload = function () {
         break
       case 'unsubscribe':
         this._parseUnsubscribe()
+        break
+      case 'unsuback':
+        this._parseUnsuback()
+        break
+      case 'pingreq':
+      case 'pingresp':
+      case 'disconnect':
+        // these are empty, nothing to do
         break
       default:
         this.emit('error', new Error('not supported'))
@@ -307,6 +318,11 @@ Parser.prototype._parseUnsubscribe = function() {
     // Push topic to unsubscriptions
     packet.unsubscriptions.push(topic);
   }
+}
+
+Parser.prototype._parseUnsuback = function() {
+  if (!this._parseMessageId())
+    return this.emit('error', new Error('cannot parse message id'))
 }
 
 Parser.prototype._parseMessageId = function() {

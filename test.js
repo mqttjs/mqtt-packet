@@ -399,3 +399,45 @@ testParse('unsubscribe', {
   0, 4, // topic length,
   116, 101, 115, 116, // Topic (test)
 ]))
+
+testParse('unsuback', {
+    cmd: 'unsuback'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 2
+  , messageId: 8
+}, new Buffer([
+  176, 2, // Header
+  0, 8 // Message id
+]))
+
+testParse('pingreq', {
+    cmd: 'pingreq'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 0
+}, new Buffer([
+  192, 0 // Header
+]))
+
+testParse('pingresp', {
+    cmd: 'pingresp'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 0
+}, new Buffer([
+  208, 0 // Header
+]))
+
+testParse('disconnect', {
+    cmd: 'disconnect'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 0
+}, new Buffer([
+  224, 0 // Header
+]))
