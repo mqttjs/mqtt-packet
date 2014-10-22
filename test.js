@@ -1,19 +1,40 @@
 
 var test = require('tape')
-  , mqtt = require('../')
+  , mqtt = require('./')
 
-function testParse(name, expected, fixture, rest, opts) {
-  test(name, function(t) {
+
+function testParseGenerate(name, object, buffer, opts) {
+  test(name + ' parse', function(t) {
     t.plan(2)
 
-    var parser = mqtt.parser(opts)
-      , rest
+    var parser    = mqtt.parser(opts)
+      , expected  = object
+      , fixture   = buffer
 
     parser.on('packet', function(packet) {
       t.deepEqual(packet, expected, 'expected packet')
     })
 
-    t.equal(parser.parse(fixture), rest || 0, 'remaining bytes')
+    t.equal(parser.parse(fixture), 0, 'remaining bytes')
+  })
+
+  test(name + ' generate', function(t) {
+    t.equal(mqtt.generate(object).toString('hex'), buffer.toString('hex'))
+    t.end()
+  })
+
+  test(name + ' mirror', function(t) {
+    t.plan(2)
+
+    var parser    = mqtt.parser(opts)
+      , expected  = object
+      , fixture   = mqtt.generate(object)
+
+    parser.on('packet', function(packet) {
+      t.deepEqual(packet, expected, 'expected packet')
+    })
+
+    t.equal(parser.parse(fixture), 0, 'remaining bytes')
   })
 }
 
@@ -32,7 +53,7 @@ function testError(expected, fixture) {
   })
 }
 
-testParse('minimal connect', {
+testParseGenerate('minimal connect', {
     cmd: 'connect'
   , retain: false
   , qos: 0
@@ -55,7 +76,7 @@ testParse('minimal connect', {
 ]))
 
 
-testParse('maximal connect', {
+testParseGenerate('maximal connect', {
     cmd: 'connect'
   , retain: false
   , qos: 0
@@ -93,7 +114,7 @@ testParse('maximal connect', {
   112, 97, 115, 115, 119, 111, 114, 100 //password
 ]))
 
-testParse('binary username/password', {
+testParseGenerate('binary username/password', {
     cmd: 'connect'
   , retain: false
   , qos: 0
@@ -119,7 +140,7 @@ testParse('binary username/password', {
     12, 13, 14, // username
     0, 3, // password length
     15, 16, 17 //password
-]), 0, {
+]), {
   encoding: 'binary'
 })
 
@@ -129,7 +150,7 @@ testError('cannot parse protocol id', new Buffer([
   77, 81
 ]))
 
-testParse('connack with return code 0', {
+testParseGenerate('connack with return code 0', {
     cmd: 'connack'
   , retain: false
   , qos: 0
@@ -140,7 +161,7 @@ testParse('connack with return code 0', {
   32, 2, 0, 0
 ]))
 
-testParse('connack with return code 5', {
+testParseGenerate('connack with return code 5', {
     cmd: 'connack'
   , retain: false
   , qos: 0
@@ -151,7 +172,7 @@ testParse('connack with return code 5', {
   32, 2, 0, 5
 ]))
 
-testParse('minimal publish', {
+testParseGenerate('minimal publish', {
     cmd: 'publish'
   , retain: false
   , qos: 0
@@ -168,7 +189,7 @@ testParse('minimal publish', {
 
 ;(function() {
   var buffer = new Buffer(2048)
-  testParse('2KB publish packet', {
+  testParseGenerate('2KB publish packet', {
       cmd: 'publish'
     , retain: false
     , qos: 0
@@ -180,12 +201,12 @@ testParse('minimal publish', {
     48, 134, 16, // Header
     0, 4, // Topic length
     116, 101, 115, 116, // Topic (test)
-  ]), buffer]), 0, { encoding: 'binary' })
+  ]), buffer]), { encoding: 'binary' })
 })()
 
 ;(function() {
   var buffer = new Buffer(2 * 1024 * 1024)
-  testParse('2MB publish packet', {
+  testParseGenerate('2MB publish packet', {
       cmd: 'publish'
     , retain: false
     , qos: 0
@@ -197,10 +218,10 @@ testParse('minimal publish', {
     48, 134, 128, 128, 1, // Header
     0, 4, // Topic length
     116, 101, 115, 116, // Topic (test)
-  ]), buffer]), 0, { encoding: 'binary' })
+  ]), buffer]), { encoding: 'binary' })
 })()
 
-testParse('maximal publish', {
+testParseGenerate('maximal publish', {
     cmd:'publish'
   , retain: true
   , qos: 2
@@ -217,7 +238,7 @@ testParse('maximal publish', {
   116, 101, 115, 116 // Payload
 ]))
 
-testParse('empty publish', {
+testParseGenerate('empty publish', {
     cmd: 'publish'
   , retain: false
   , qos: 0
@@ -264,7 +285,7 @@ test('splitted publish parse', function(t) {
   ])), 0, 'remaining bytes')
 })
 
-testParse('puback', {
+testParseGenerate('puback', {
     cmd: 'puback'
   , retain: false
   , qos: 0
@@ -276,7 +297,7 @@ testParse('puback', {
   0, 2 // Message id
 ]))
 
-testParse('pubrec', {
+testParseGenerate('pubrec', {
     cmd: 'pubrec'
   , retain: false
   , qos: 0
@@ -288,19 +309,19 @@ testParse('pubrec', {
   0, 2 // Message id
 ]))
 
-testParse('pubrel', {
+testParseGenerate('pubrel', {
     cmd: 'pubrel'
   , retain: false
-  , qos: 0
+  , qos: 1
   , dup: false
   , length: 2
   , messageId: 2
 }, new Buffer([
-  96, 2, // Header
+  98, 2, // Header
   0, 2 // Message id
 ]))
 
-testParse('pubcomp', {
+testParseGenerate('pubcomp', {
     cmd: 'pubcomp'
   , retain: false
   , qos: 2
@@ -312,7 +333,7 @@ testParse('pubcomp', {
   0, 2 // Message id
 ]))
 
-testParse('subscribe to one topic', {
+testParseGenerate('subscribe to one topic', {
     cmd: 'subscribe'
   , retain: false
   , qos: 1
@@ -333,7 +354,7 @@ testParse('subscribe to one topic', {
   0 // qos (0)
 ]))
 
-testParse('subscribe to three topics', {
+testParseGenerate('subscribe to three topics', {
     cmd: 'subscribe'
   , retain: false
   , qos: 1
@@ -366,7 +387,7 @@ testParse('subscribe to three topics', {
   2 // qos (2)
 ]))
 
-testParse('suback', {
+testParseGenerate('suback', {
     cmd: 'suback'
   , retain: false
   , qos: 0
@@ -380,7 +401,7 @@ testParse('suback', {
   0, 1, 2, 128 // Granted qos (0, 1, 2) and a rejected being 0x80
 ]))
 
-testParse('unsubscribe', {
+testParseGenerate('unsubscribe', {
     cmd: 'unsubscribe'
   , retain: false
   , qos: 1
@@ -400,7 +421,7 @@ testParse('unsubscribe', {
   116, 101, 115, 116, // Topic (test)
 ]))
 
-testParse('unsuback', {
+testParseGenerate('unsuback', {
     cmd: 'unsuback'
   , retain: false
   , qos: 0
@@ -412,7 +433,7 @@ testParse('unsuback', {
   0, 8 // Message id
 ]))
 
-testParse('pingreq', {
+testParseGenerate('pingreq', {
     cmd: 'pingreq'
   , retain: false
   , qos: 0
@@ -422,7 +443,7 @@ testParse('pingreq', {
   192, 0 // Header
 ]))
 
-testParse('pingresp', {
+testParseGenerate('pingresp', {
     cmd: 'pingresp'
   , retain: false
   , qos: 0
@@ -432,7 +453,7 @@ testParse('pingresp', {
   208, 0 // Header
 ]))
 
-testParse('disconnect', {
+testParseGenerate('disconnect', {
     cmd: 'disconnect'
   , retain: false
   , qos: 0

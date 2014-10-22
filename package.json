@@ -4,7 +4,7 @@
   "description": "Parsing MQTT packets like a breeze",
   "main": "mqtt.js",
   "scripts": {
-    "test": "tape test/* | faucet"
+    "test": "tape test.js | faucet"
   },
   "repository": {
     "type": "git",
