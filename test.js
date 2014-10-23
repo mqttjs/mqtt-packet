@@ -18,6 +18,21 @@ function testParseGenerate(name, object, buffer, opts) {
     t.equal(parser.parse(fixture), 0, 'remaining bytes')
   })
 
+  test(name + ' parseStream', function(t) {
+    t.plan(1)
+
+    var parser    = mqtt.parseStream(opts)
+      , expected  = object
+      , fixture   = buffer
+
+    parser.on('data', function(packet) {
+      console.log(packet)
+      t.deepEqual(packet, expected, 'expected packet')
+    })
+
+    parser.end(fixture)
+  })
+
   test(name + ' generate', function(t) {
     t.equal(mqtt.generate(object).toString('hex'), buffer.toString('hex'))
     t.end()
