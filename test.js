@@ -1,6 +1,7 @@
 
-var test = require('tape')
-  , mqtt = require('./')
+var test    = require('tape')
+  , mqtt    = require('./')
+  , through = require('through2')
 
 
 function testParseGenerate(name, object, buffer, opts) {
@@ -76,6 +77,18 @@ function testParseGenerate(name, object, buffer, opts) {
     })
 
     generator.end(object)
+  })
+
+  test(name + ' connection stream', function(t) {
+    t.plan(1)
+
+    var connection = mqtt.connection(through(), opts)
+
+    connection.on('data', function(packet) {
+      t.deepEqual(packet, object, 'expected packet')
+    })
+
+    connection.end(object)
   })
 }
 
