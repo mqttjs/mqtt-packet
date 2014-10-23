@@ -26,7 +26,6 @@ function testParseGenerate(name, object, buffer, opts) {
       , fixture   = buffer
 
     parser.on('data', function(packet) {
-      console.log(packet)
       t.deepEqual(packet, expected, 'expected packet')
     })
 
@@ -36,6 +35,18 @@ function testParseGenerate(name, object, buffer, opts) {
   test(name + ' generate', function(t) {
     t.equal(mqtt.generate(object).toString('hex'), buffer.toString('hex'))
     t.end()
+  })
+
+  test(name + ' generateStream', function(t) {
+    t.plan(1)
+
+    var generator = mqtt.generateStream()
+
+    generator.on('data', function (buf) {
+      t.equal(buf.toString('hex'), buffer.toString('hex'))
+    })
+
+    generator.end(object)
   })
 
   test(name + ' mirror', function(t) {
@@ -50,6 +61,21 @@ function testParseGenerate(name, object, buffer, opts) {
     })
 
     t.equal(parser.parse(fixture), 0, 'remaining bytes')
+  })
+
+  test(name + ' mirror stream', function(t) {
+    t.plan(1)
+
+    var parser    = mqtt.parseStream(opts)
+      , generator = mqtt.generateStream()
+
+    generator.pipe(parser)
+
+    parser.on('data', function(packet) {
+      t.deepEqual(packet, object, 'expected packet')
+    })
+
+    generator.end(object)
   })
 }
 
