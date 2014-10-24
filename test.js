@@ -516,3 +516,16 @@ testParseGenerate('disconnect', {
 }, new Buffer([
   224, 0 // Header
 ]))
+
+test('Connection#destroy', function(t) {
+    t.plan(1)
+
+    var stream      = through()
+      , connection  = mqtt.connection(stream)
+
+    stream.destroy = function() {
+      t.pass('destroy called')
+    }
+
+    connection.destroy()
+})
