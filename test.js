@@ -92,7 +92,7 @@ function testParseGenerate(name, object, buffer, opts) {
   })
 }
 
-function testError(expected, fixture) {
+function testParseError(expected, fixture) {
   test(expected, function(t) {
     t.plan(1)
 
@@ -104,6 +104,30 @@ function testError(expected, fixture) {
     })
 
     parser.parse(fixture)
+  })
+}
+
+function testGenerateError(expected, fixture) {
+  test(expected, function(t) {
+    t.plan(1)
+
+    try {
+      mqtt.generate(fixture)
+    } catch(err) {
+      t.equal(expected, err.message)
+    }
+  })
+
+  test(expected + 'through generateStream', function(t) {
+    t.plan(1)
+
+    var generate = mqtt.generateStream()
+
+    generate.on('error', function(err) {
+      t.equal(expected, err.message)
+    })
+
+    generate.end(fixture)
   })
 }
 
@@ -198,7 +222,7 @@ testParseGenerate('binary username/password', {
   encoding: 'binary'
 })
 
-testError('cannot parse protocol id', new Buffer([
+testParseError('cannot parse protocol id', new Buffer([
   16, 4,
   0, 6,
   77, 81
@@ -518,14 +542,175 @@ testParseGenerate('disconnect', {
 ]))
 
 test('Connection#destroy', function(t) {
-    t.plan(1)
+  t.plan(1)
 
-    var stream      = through()
-      , connection  = mqtt.connection(stream)
+  var stream      = through()
+    , connection  = mqtt.connection(stream)
 
-    stream.destroy = function() {
-      t.pass('destroy called')
+  stream.destroy = function() {
+    t.pass('destroy called')
+  }
+
+  connection.destroy()
+})
+
+testGenerateError('unknown command', {})
+
+testGenerateError('Invalid protocol id', {
+    cmd: 'connect'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 54
+  , protocolVersion: 3
+  , will: {
+      retain: true
+    , qos: 2
+    , topic: 'topic'
+    , payload: 'payload'
     }
+  , clean: true
+  , keepalive: 30
+  , clientId: 'test'
+  , username: 'username'
+  , password: 'password'
+})
 
-    connection.destroy()
+testGenerateError('Invalid client id', {
+    cmd: 'connect'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 54
+  , protocolId: 'MQIsdp'
+  , protocolVersion: 3
+  , will: {
+      retain: true
+    , qos: 2
+    , topic: 'topic'
+    , payload: 'payload'
+    }
+  , clean: true
+  , keepalive: 30
+  , username: 'username'
+  , password: 'password'
+})
+
+testGenerateError('Invalid keepalive', {
+    cmd: 'connect'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 54
+  , protocolId: 'MQIsdp'
+  , protocolVersion: 3
+  , will: {
+      retain: true
+    , qos: 2
+    , topic: 'topic'
+    , payload: 'payload'
+    }
+  , clean: true
+  , clientId: 'test'
+  , username: 'username'
+  , password: 'password'
+})
+
+testGenerateError('Invalid will', {
+    cmd: 'connect'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 54
+  , protocolId: 'MQIsdp'
+  , protocolVersion: 3
+  , will: 42
+  , clean: true
+  , keepalive: 30
+  , clientId: 'test'
+  , username: 'username'
+  , password: 'password'
+})
+
+testGenerateError('Invalid will topic', {
+    cmd: 'connect'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 54
+  , protocolId: 'MQIsdp'
+  , protocolVersion: 3
+  , will: {
+      retain: true
+    , qos: 2
+    , payload: 'payload'
+    }
+  , clean: true
+  , keepalive: 30
+  , clientId: 'test'
+  , username: 'username'
+  , password: 'password'
+})
+
+testGenerateError('Invalid will payload', {
+    cmd: 'connect'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 54
+  , protocolId: 'MQIsdp'
+  , protocolVersion: 3
+  , will: {
+        retain: true
+      , qos: 2
+      , topic: 'topic'
+      , payload: 42
+    }
+  , clean: true
+  , keepalive: 30
+  , clientId: 'test'
+  , username: 'username'
+  , password: 'password'
+})
+
+testGenerateError('Invalid username', {
+    cmd: 'connect'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 54
+  , protocolId: 'MQIsdp'
+  , protocolVersion: 3
+  , will: {
+      retain: true
+    , qos: 2
+    , topic: 'topic'
+    , payload: 'payload'
+    }
+  , clean: true
+  , keepalive: 30
+  , clientId: 'test'
+  , username: 42
+  , password: 'password'
+})
+
+testGenerateError('Invalid password', {
+    cmd: 'connect'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 54
+  , protocolId: 'MQIsdp'
+  , protocolVersion: 3
+  , will: {
+      retain: true
+    , qos: 2
+    , topic: 'topic'
+    , payload: 'payload'
+    }
+  , clean: true
+  , keepalive: 30
+  , clientId: 'test'
+  , username: 'username'
+  , password: 42
 })
