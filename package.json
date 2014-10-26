@@ -6,6 +6,7 @@
   "scripts": {
     "test": "tape test.js | faucet"
   },
+  "pre-commit": "test",
   "repository": {
     "type": "git",
     "url": "https://github.com/mcollina/mqtt-packet.git"
@@ -23,6 +24,7 @@
   "homepage": "https://github.com/mcollina/mqtt-packet",
   "devDependencies": {
     "faucet": "0.0.1",
+    "pre-commit": "0.0.9",
     "tape": "^2.14.0"
   },
   "dependencies": {
