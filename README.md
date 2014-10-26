@@ -196,4 +196,4 @@ Packets
 License
 -------
 
-onoIT
+MIT
