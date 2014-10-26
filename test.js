@@ -142,6 +142,16 @@ testParseGenerate('minimal connect', {
   , clean: false
   , keepalive: 30
   , clientId: 'test'
+  , granted: null
+  , messageId: -1
+  , unsubscriptions: null
+  , topic: null
+  , payload: null
+  , password: null
+  , username: null
+  , subscriptions: null
+  , returnCode: -1
+  , will: null
 }, new Buffer([
   16, 18, // Header
   0, 6, // Protocol id length
@@ -173,6 +183,13 @@ testParseGenerate('maximal connect', {
   , clientId: 'test'
   , username: 'username'
   , password: 'password'
+  , granted: null
+  , messageId: -1
+  , unsubscriptions: null
+  , subscriptions: null
+  , returnCode: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   16, 54, // Header
   0, 6, // Protocol id length
@@ -205,6 +222,14 @@ testParseGenerate('binary username/password', {
   , clientId: new Buffer([116, 101, 115, 116])
   , username: new Buffer([12, 13, 14])
   , password: new Buffer([15, 16, 17])
+  , granted: null
+  , messageId: -1
+  , unsubscriptions: null
+  , subscriptions: null
+  , returnCode: -1
+  , topic: null
+  , payload: null
+  , will: null
 }, new Buffer([
     16, 28, // Header
     0, 6, // Protocol id length
@@ -235,6 +260,20 @@ testParseGenerate('connack with return code 0', {
   , dup: false
   , length: 2
   , returnCode: 0
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , subscriptions: null
+  , unsubscriptions: null
+  , messageId: -1
+  , will: null
+  , keepalive: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   32, 2, 0, 0
 ]))
@@ -246,6 +285,20 @@ testParseGenerate('connack with return code 5', {
   , dup: false
   , length: 2
   , returnCode: 5
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , subscriptions: null
+  , unsubscriptions: null
+  , messageId: -1
+  , will: null
+  , keepalive: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   32, 2, 0, 5
 ]))
@@ -258,6 +311,19 @@ testParseGenerate('minimal publish', {
   , length: 10
   , topic: 'test'
   , payload: 'test'
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , subscriptions: null
+  , unsubscriptions: null
+  , messageId: -1
+  , will: null
+  , keepalive: -1
 }, new Buffer([
   48, 10, // Header
   0, 4, // Topic length
@@ -275,6 +341,19 @@ testParseGenerate('minimal publish', {
     , length: 2054
     , topic: new Buffer('test')
     , payload: buffer
+    , returnCode: -1
+    , clientId: null
+    , clean: false
+    , protocolId: null
+    , protocolVersion: -1
+    , username: null
+    , password: null
+    , granted: null
+    , subscriptions: null
+    , unsubscriptions: null
+    , messageId: -1
+    , will: null
+    , keepalive: -1
   }, Buffer.concat([new Buffer([
     48, 134, 16, // Header
     0, 4, // Topic length
@@ -292,6 +371,19 @@ testParseGenerate('minimal publish', {
     , length: 6 + 2 * 1024 * 1024
     , topic: new Buffer('test')
     , payload: buffer
+    , returnCode: -1
+    , clientId: null
+    , clean: false
+    , protocolId: null
+    , protocolVersion: -1
+    , username: null
+    , password: null
+    , granted: null
+    , subscriptions: null
+    , unsubscriptions: null
+    , messageId: -1
+    , will: null
+    , keepalive: -1
   }, Buffer.concat([new Buffer([
     48, 134, 128, 128, 1, // Header
     0, 4, // Topic length
@@ -308,6 +400,18 @@ testParseGenerate('maximal publish', {
   , topic: 'test'
   , messageId: 10
   , payload: 'test'
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , subscriptions: null
+  , unsubscriptions: null
+  , will: null
+  , keepalive: -1
 }, new Buffer([
   61, 12, // Header
   0, 4, // Topic length
@@ -324,6 +428,19 @@ testParseGenerate('empty publish', {
   , length: 6
   , topic: 'test'
   , payload: ''
+  , messageId: -1
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , subscriptions: null
+  , unsubscriptions: null
+  , will: null
+  , keepalive: -1
 }, new Buffer([
   48, 6, // Header
   0, 4, // Topic length
@@ -345,6 +462,19 @@ test('splitted publish parse', function(t) {
         , length: 10
         , topic: 'test'
         , payload: 'test'
+        , messageId: -1
+        , returnCode: -1
+        , clientId: null
+        , clean: false
+        , protocolId: null
+        , protocolVersion: -1
+        , username: null
+        , password: null
+        , granted: null
+        , subscriptions: null
+        , unsubscriptions: null
+        , will: null
+        , keepalive: -1
       };
 
   parser.on('packet', function(packet) {
@@ -370,6 +500,20 @@ testParseGenerate('puback', {
   , dup: false
   , length: 2
   , messageId: 2
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , subscriptions: null
+  , unsubscriptions: null
+  , will: null
+  , keepalive: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   64, 2, // Header
   0, 2 // Message id
@@ -382,6 +526,20 @@ testParseGenerate('pubrec', {
   , dup: false
   , length: 2
   , messageId: 2
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , subscriptions: null
+  , unsubscriptions: null
+  , will: null
+  , keepalive: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   80, 2, // Header
   0, 2 // Message id
@@ -394,6 +552,20 @@ testParseGenerate('pubrel', {
   , dup: false
   , length: 2
   , messageId: 2
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , subscriptions: null
+  , unsubscriptions: null
+  , will: null
+  , keepalive: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   98, 2, // Header
   0, 2 // Message id
@@ -406,6 +578,20 @@ testParseGenerate('pubcomp', {
   , dup: false
   , length: 2
   , messageId: 2
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , subscriptions: null
+  , unsubscriptions: null
+  , will: null
+  , keepalive: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   116, 2, // Header
   0, 2 // Message id
@@ -424,6 +610,19 @@ testParseGenerate('subscribe to one topic', {
       }
     ]
   , messageId: 6
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , unsubscriptions: null
+  , will: null
+  , keepalive: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   130, 9, // Header (publish, qos=1, length=9)
   0, 6, // message id (6)
@@ -449,8 +648,21 @@ testParseGenerate('subscribe to three topics', {
           topic: "tfst"
         , qos: 2
       }
-    ],
-    messageId: 6
+    ]
+  , messageId: 6
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , unsubscriptions: null
+  , will: null
+  , keepalive: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   130, 23, // Header (publish, qos=1, length=9)
   0, 6, // message id (6)
@@ -473,6 +685,19 @@ testParseGenerate('suback', {
   , length: 6
   , granted: [0, 1, 2, 128]
   , messageId: 6
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , subscriptions: null
+  , unsubscriptions: null
+  , will: null
+  , keepalive: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   144, 6, // Header
   0, 6, // Message id
@@ -488,8 +713,21 @@ testParseGenerate('unsubscribe', {
   , unsubscriptions: [
         'tfst'
       , 'test'
-    ],
-    messageId: 7
+    ]
+  , messageId: 7
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , subscriptions: null
+  , will: null
+  , keepalive: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   162, 14,
   0, 7, // message id (7)
@@ -506,6 +744,20 @@ testParseGenerate('unsuback', {
   , dup: false
   , length: 2
   , messageId: 8
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , subscriptions: null
+  , unsubscriptions: null
+  , will: null
+  , keepalive: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   176, 2, // Header
   0, 8 // Message id
@@ -517,6 +769,21 @@ testParseGenerate('pingreq', {
   , qos: 0
   , dup: false
   , length: 0
+  , messageId: -1
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , subscriptions: null
+  , unsubscriptions: null
+  , will: null
+  , keepalive: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   192, 0 // Header
 ]))
@@ -527,6 +794,21 @@ testParseGenerate('pingresp', {
   , qos: 0
   , dup: false
   , length: 0
+  , messageId: -1
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , subscriptions: null
+  , unsubscriptions: null
+  , will: null
+  , keepalive: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   208, 0 // Header
 ]))
@@ -537,6 +819,21 @@ testParseGenerate('disconnect', {
   , qos: 0
   , dup: false
   , length: 0
+  , messageId: -1
+  , returnCode: -1
+  , clientId: null
+  , clean: false
+  , protocolId: null
+  , protocolVersion: -1
+  , username: null
+  , password: null
+  , granted: null
+  , subscriptions: null
+  , unsubscriptions: null
+  , will: null
+  , keepalive: -1
+  , topic: null
+  , payload: null
 }, new Buffer([
   224, 0 // Header
 ]))
