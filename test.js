@@ -131,6 +131,29 @@ function testGenerateError(expected, fixture) {
   })
 }
 
+function testParseGenerateDefaults(name, object, buffer, opts) {
+  test(name + ' parse', function(t) {
+    var parser    = mqtt.parser(opts)
+      , expected  = object
+      , fixture   = buffer
+
+    t.plan(1 + Object.keys(expected).length)
+
+    parser.on('packet', function(packet) {
+      Object.keys(expected).forEach(function(key) {
+        t.deepEqual(packet[key], expected[key], 'expected packet property ' + key)
+      })
+    })
+
+    t.equal(parser.parse(fixture), 0, 'remaining bytes')
+  })
+
+  test(name + ' generate', function(t) {
+    t.equal(mqtt.generate(object).toString('hex'), buffer.toString('hex'))
+    t.end()
+  })
+}
+
 testParseGenerate('minimal connect', {
     cmd: 'connect'
   , retain: false
@@ -151,6 +174,15 @@ testParseGenerate('minimal connect', {
   0, 30, // Keepalive
   0, 4, //Client id length
   116, 101, 115, 116 // Client id
+]))
+
+testParseGenerateDefaults('default connect', {
+    cmd: 'connect'
+  , clientId: 'test'
+}, new Buffer([
+  16, 16, 0, 4, 77, 81, 84,
+  84, 4, 2, 0, 0,
+  0, 4, 116, 101, 115, 116
 ]))
 
 
@@ -562,6 +594,7 @@ testGenerateError('Invalid protocol id', {
   , qos: 0
   , dup: false
   , length: 54
+  , protocolId: 42
   , protocolVersion: 3
   , will: {
       retain: true
@@ -611,6 +644,7 @@ testGenerateError('Invalid keepalive', {
     , payload: 'payload'
     }
   , clean: true
+  , keepalive: 'hello'
   , clientId: 'test'
   , username: 'username'
   , password: 'password'
