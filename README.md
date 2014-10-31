@@ -1,4 +1,4 @@
-mqtt-packet
+mqtt-packet&nbsp;&nbsp;&nbsp;[![Build Status](https://travis-ci.org/mcollina/mqtt-packet.png)](https://travis-ci.org/mcollina/mqtt-packet)
 ===========
 
 Encode and Decode MQTT packets the node way.
