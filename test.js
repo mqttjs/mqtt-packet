@@ -443,6 +443,14 @@ testParseGenerate('pubcomp', {
   0, 2 // Message id
 ]))
 
+testParseError('wrong subscribe header', new Buffer([
+  128, 9, // Header (subscribe, qos=0, length=9)
+  0, 6, // message id (6)
+  0, 4, // topic length,
+  116, 101, 115, 116, // Topic (test)
+  0 // qos (0)
+]))
+
 testParseGenerate('subscribe to one topic', {
     cmd: 'subscribe'
   , retain: false
@@ -457,7 +465,7 @@ testParseGenerate('subscribe to one topic', {
     ]
   , messageId: 6
 }, new Buffer([
-  130, 9, // Header (publish, qos=1, length=9)
+  130, 9, // Header (subscribe, qos=1, length=9)
   0, 6, // message id (6)
   0, 4, // topic length,
   116, 101, 115, 116, // Topic (test)
