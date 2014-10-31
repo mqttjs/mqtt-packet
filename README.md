@@ -19,7 +19,7 @@ This library has been extracted and refactored from
 ## Installation
 
 ```bash
-npm install mqemitter --save
+npm install mqtt-packet --save
 ```
 
 Examples
