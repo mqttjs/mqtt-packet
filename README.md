@@ -25,7 +25,7 @@ npm install mqemitter --save
 Examples
 --------
 
-### Generating:
+### Generating
 
 ```js
 var mqtt    = require('mqtt-packet')
@@ -53,7 +53,7 @@ console.log(mqtt.generate(object))
 // ])
 ```
 
-### Parsing:
+### Parsing
 
 ```js
 var mqtt      = require('mqtt-packet')
@@ -192,6 +192,187 @@ It accepts the same options of [`parser(opts)`](#parser).
 
 Packets
 -------
+
+This section describes the format of all packets emitted by the `Parser`
+and that you can input to `generate`.
+
+### Connect
+
+```js
+{
+    cmd: 'connect'
+  , protocolId: 'MQTT' // or 'MQIsdp' in MQTT 3.1.1
+  , protocolVersion: 4 // or 3 in MQTT 3.1
+  , clean: true // or false
+  , clientId: 'my-device'
+  , keepalive: 0 // seconds, 0 is the default, can be any positive number
+  , username: 'matteo'
+  , password: 'collina'
+  , will: {
+        topic: 'mydevice/status'
+      , payload: 'dead'
+    }
+}
+```
+
+The only mandatory argument is `clientId`, as `generate` will throw if
+missing.
+
+### Connack
+
+```js
+{
+    cmd: 'connack'
+  , returnCode: 0 // or whatever else you see fit
+}
+```
+
+The only mandatory argument is `returnCode`, as `generate` will throw if
+missing.
+
+### Subscribe
+
+```js
+{
+    cmd: 'subscribe'
+  , messageId: 42
+  , subscriptions: [{
+        topic: 'test'
+      , qos: 0
+    }]
+}
+```
+
+All properties are mandatory.
+
+### Suback
+
+```js
+{
+    cmd: 'suback'
+  , messageId: 42
+  , granted: [0, 1, 2, 128]
+}
+```
+
+All the granted qos __must__ be < 256, as they are encoded as UInt8.
+All properties are mandatory.
+
+### Unsubscribe
+
+```js
+{
+    cmd: 'unsubscribe'
+  , messageId: 42
+  , unsubscriptions: [
+        'test'
+      , 'a/topic'
+    ]
+}
+```
+
+All properties are mandatory.
+
+### Unsuback
+
+```js
+{
+    cmd: 'unsuback'
+  , messageId: 42
+}
+```
+
+All properties are mandatory.
+
+### Publish
+
+```js
+{
+    cmd: 'publish'
+  , messageId: 42
+  , qos: 2
+  , dup: false
+  , topic: 'test'
+  , payload: 'test'
+  , retain: false
+}
+```
+
+Only the `topic` and properties are mandatory
+Both `topic` and `payload` can be `Buffer` objects instead of strings.
+`messageId` is mandatory for `qos > 0`.
+
+### Puback
+
+```js
+{
+    cmd: 'puback'
+  , messageId: 42
+}
+```
+
+The only mandatory argument is `messageId`, as `generate` will throw if
+missing.
+
+### Pubrec
+
+```js
+{
+    cmd: 'pubcomp'
+  , messageId: 42
+}
+```
+
+The only mandatory argument is `messageId`, as `generate` will throw if
+missing.
+
+### Pubrel
+
+```js
+{
+    cmd: 'pubrel'
+  , messageId: 42
+}
+```
+
+The only mandatory argument is `messageId`, as `generate` will throw if
+missing.
+
+### Pubcomp
+
+```js
+{
+    cmd: 'pubcomp'
+  , messageId: 42
+}
+```
+
+The only mandatory argument is `messageId`, as `generate` will throw if
+missing.
+
+### Pingreq
+
+```js
+{
+  cmd: 'pingreq'
+}
+```
+
+### Pingresp
+
+```js
+{
+  cmd: 'pingresp'
+}
+```
+
+### Disconnect
+
+```js
+{
+  cmd: 'pingresp'
+}
+```
 
 License
 -------
