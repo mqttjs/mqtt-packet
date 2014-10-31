@@ -1,7 +1,7 @@
 {
   "name": "mqtt-packet",
   "version": "0.0.0",
-  "description": "Parsing MQTT packets like a breeze",
+  "description": "Parse and generate MQTT packets like a breeze",
   "main": "mqtt.js",
   "scripts": {
     "test": "tape test.js | faucet"
@@ -14,7 +14,10 @@
   "keywords": [
     "MQTT",
     "packet",
-    "parsing"
+    "parse",
+    "publish",
+    "subscribe",
+    "pubsub"
   ],
   "author": "Matteo Collina <hello@matteocollina.com>",
   "license": "MIT",
