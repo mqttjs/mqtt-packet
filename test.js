@@ -97,13 +97,24 @@ function testParseError(expected, fixture) {
     t.plan(1)
 
     var parser = mqtt.parser()
-      , rest
 
     parser.on('error', function(err) {
       t.equal(err.message, expected, 'expected error message')
     })
 
     parser.parse(fixture)
+  })
+
+  test(expected + ' over parseStream', function(t) {
+    t.plan(1)
+
+    var parser = mqtt.parseStream()
+
+    parser.on('error', function(err) {
+      t.equal(err.message, expected, 'expected error message')
+    })
+
+    parser.end(fixture)
   })
 }
 
