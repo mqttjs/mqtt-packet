@@ -3,7 +3,7 @@ var mqtt    = require('../')
   , parser  = mqtt.parser()
   , max     = 1000000
   , i
-  , start   = Date.now()
+  , start   = Date.now() / 1000
   , time
 
 for (i = 0; i < max; i++) {
@@ -15,6 +15,7 @@ for (i = 0; i < max; i++) {
   ]))
 }
 
-time = Date.now() - start
-console.log('Total time', time)
-console.log('Packet/s', max / time * 1000)
+time = Date.now() / 1000 - start
+console.log('Total packets', max)
+console.log('Total time', Math.round(time * 100) / 100)
+console.log('Packet/s', max / time)
