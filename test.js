@@ -19,35 +19,9 @@ function testParseGenerate(name, object, buffer, opts) {
     t.equal(parser.parse(fixture), 0, 'remaining bytes')
   })
 
-  test(name + ' parseStream', function(t) {
-    t.plan(1)
-
-    var parser    = mqtt.parseStream(opts)
-      , expected  = object
-      , fixture   = buffer
-
-    parser.on('data', function(packet) {
-      t.deepEqual(packet, expected, 'expected packet')
-    })
-
-    parser.end(fixture)
-  })
-
   test(name + ' generate', function(t) {
     t.equal(mqtt.generate(object).toString('hex'), buffer.toString('hex'))
     t.end()
-  })
-
-  test(name + ' generateStream', function(t) {
-    t.plan(1)
-
-    var generator = mqtt.generateStream()
-
-    generator.on('data', function (buf) {
-      t.equal(buf.toString('hex'), buffer.toString('hex'))
-    })
-
-    generator.end(object)
   })
 
   test(name + ' mirror', function(t) {
@@ -63,33 +37,6 @@ function testParseGenerate(name, object, buffer, opts) {
 
     t.equal(parser.parse(fixture), 0, 'remaining bytes')
   })
-
-  test(name + ' mirror stream', function(t) {
-    t.plan(1)
-
-    var parser    = mqtt.parseStream(opts)
-      , generator = mqtt.generateStream()
-
-    generator.pipe(parser)
-
-    parser.on('data', function(packet) {
-      t.deepEqual(packet, object, 'expected packet')
-    })
-
-    generator.end(object)
-  })
-
-  test(name + ' connection stream', function(t) {
-    t.plan(1)
-
-    var connection = mqtt.connection(through(), opts)
-
-    connection.on('data', function(packet) {
-      t.deepEqual(packet, object, 'expected packet')
-    })
-
-    connection.end(object)
-  })
 }
 
 function testParseError(expected, fixture) {
@@ -104,18 +51,6 @@ function testParseError(expected, fixture) {
 
     parser.parse(fixture)
   })
-
-  test(expected + ' over parseStream', function(t) {
-    t.plan(1)
-
-    var parser = mqtt.parseStream()
-
-    parser.on('error', function(err) {
-      t.equal(err.message, expected, 'expected error message')
-    })
-
-    parser.end(fixture)
-  })
 }
 
 function testGenerateError(expected, fixture) {
@@ -127,18 +62,6 @@ function testGenerateError(expected, fixture) {
     } catch(err) {
       t.equal(expected, err.message)
     }
-  })
-
-  test(expected + 'through generateStream', function(t) {
-    t.plan(1)
-
-    var generate = mqtt.generateStream()
-
-    generate.on('error', function(err) {
-      t.equal(expected, err.message)
-    })
-
-    generate.end(fixture)
   })
 }
 
@@ -629,19 +552,6 @@ testParseGenerate('disconnect', {
 }, new Buffer([
   224, 0 // Header
 ]))
-
-test('Connection#destroy', function(t) {
-  t.plan(1)
-
-  var stream      = through()
-    , connection  = mqtt.connection(stream)
-
-  stream.destroy = function() {
-    t.pass('destroy called')
-  }
-
-  connection.destroy()
-})
 
 testGenerateError('unknown command', {})
 
