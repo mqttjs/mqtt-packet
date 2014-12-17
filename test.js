@@ -1,8 +1,6 @@
 
 var test    = require('tape')
   , mqtt    = require('./')
-  , through = require('through2')
-
 
 function testParseGenerate(name, object, buffer, opts) {
   test(name + ' parse', function(t) {

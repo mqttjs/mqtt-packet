@@ -32,8 +32,6 @@
   },
   "dependencies": {
     "bl": "^0.9.1",
-    "inherits": "^2.0.1",
-    "reduplexer": "^1.0.0",
-    "through2": "^0.6.3"
+    "inherits": "^2.0.1"
   }
 }

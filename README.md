@@ -84,64 +84,11 @@ parser.parse(new Buffer([
 // returns the number of bytes left in the parser
 ```
 
-### Streams
-
-```js
-var mqtt      = require('mqtt-packet')
-  , assert    = require('assert')
-  , parser    = mqtt.parseStream()
-  , generator = mqtt.generateStream()
-  , object  = {
-        cmd: 'publish'
-      , retain: false
-      , qos: 0
-      , dup: false
-      , length: 10
-      , topic: 'test'
-      , payload: 'test'
-    }
-
-generator.pipe(parser)
-
-parser.on('data', function(packet) {
-  assert.deepEqual(packet, object, 'expected packet')
-})
-
-generator.end(object)
-```
-
-### Duplex Wrapper
-
-```js
-var mqtt        = require('mqtt-packet')
-  , assert      = require('assert')
-  , through     = require('through2')
-  , connection  = mqtt.connection(through())
-  , object      = {
-        cmd: 'publish'
-      , retain: false
-      , qos: 0
-      , dup: false
-      , length: 10
-      , topic: 'test'
-      , payload: 'test'
-    }
-
-connection.on('data', function(packet) {
-  assert.deepEqual(packet, object, 'expected packet')
-})
-
-connection.end(object)
-```
-
 API
 ---
 
   * <a href="#generate"><code>mqtt#<b>generate()</b></code></a>
   * <a href="#parser"><code>mqtt#<b>parser()</b></code></a>
-  * <a href="#generateStream"><code>mqtt#<b>generateStream()</b></code></a>
-  * <a href="#parseStream"><code>mqtt#<b>parseStream()</b></code></a>
-  * <a href="#connection"><code>mqtt#<b>connection</b></code></a>
 
 <a name="generate">
 ### mqtt.generate(object)
@@ -169,26 +116,6 @@ strings will remain 'raw', i.e. a `Buffer`.
 
 Parse a given `Buffer` and emits synchronously all the MQTT packets that
 are included. Returns the number of bytes left to parse.
-
-<a name="generateStream">
-### mqtt.generateStream()
-
-Returns a `Transform` stream that calls [`generate()`](#generate).
-The stream is configured into object mode.
-
-<a name="parseStream">
-### mqtt.parseStream(opts)
-
-Returns a `Transform` stream that embeds a `Parser` and calls [`Parser.parse()`](#parse)
-for each new `Buffer`. The stream is configured into object mode. It
-accepts the same options of [`parser(opts)`](#parser).
-
-<a name="connection">
-### mqtt.connection(duplex, opts)
-
-Wraps a duplex using [`reduplexer`](http://npm.im/reduplexer) so that
-the user can both write and read an object, as defined in [packets](#packets).
-It accepts the same options of [`parser(opts)`](#parser).
 
 Packets
 -------
