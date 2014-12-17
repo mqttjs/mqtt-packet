@@ -28,12 +28,12 @@
   "devDependencies": {
     "faucet": "0.0.1",
     "pre-commit": "0.0.9",
-    "tape": "~2.14.0"
+    "tape": "^2.14.0"
   },
   "dependencies": {
-    "bl": "~0.9.1",
-    "inherits": "~2.0.1",
-    "reduplexer": "~1.0.0",
-    "through2": "~0.6.3"
+    "bl": "^0.9.1",
+    "inherits": "^2.0.1",
+    "reduplexer": "^1.0.0",
+    "through2": "^0.6.3"
   }
 }
