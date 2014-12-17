@@ -1,7 +1,7 @@
 
 var mqtt    = require('../')
   , parser  = mqtt.parser()
-  , max     = 1000000
+  , max     = 10000000
   , i
   , start   = Date.now() / 1000
   , time
