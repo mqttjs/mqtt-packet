@@ -1,4 +1,4 @@
-mqtt-packet&nbsp;&nbsp;&nbsp;[![Build Status](https://travis-ci.org/mcollina/mqtt-packet.png)](https://travis-ci.org/mcollina/mqtt-packet)
+mqtt-packet&nbsp;&nbsp;&nbsp;[![Build Status](https://travis-ci.org/mqttjs/mqtt-packet.png)](https://travis-ci.org/mqttjs/mqtt-packet)
 ===========
 
 Encode and Decode MQTT packets the node way.
@@ -7,20 +7,15 @@ Encode and Decode MQTT packets the node way.
   * <a href="#examples">Examples</a>
   * <a href="#packets">Packets</a>
   * <a href="#api">API</a>
+  * <a href="#contributing">Contributing</a>
   * <a href="#licence">Licence &amp; copyright</a>
 
 This library works with node v0.10 and node v0.8, but it requires at
 least NPM 1.4. To upgrade on node v0.8, run `npm install
 npm@v1.4-latest -g`.
 
-Acknowledgements
-----------------
-
-This library has been extracted and refactored from
-[MQTT.js](http://github.com/adamvr/MQTT.js). Thanks [Adam Rudd](http://github.com/adamvr) for the great module.
-
-
-## Installation
+Installation
+------------
 
 ```bash
 npm install mqtt-packet --save
@@ -304,6 +299,25 @@ missing.
   cmd: 'pingresp'
 }
 ```
+
+<a name="contributing"></a>
+Contributing
+------------
+
+mqtt-packet is an **OPEN Open Source Project**. This means that:
+
+> Individuals making significant and valuable contributions are given commit-access to the project to contribute as they see fit. This project is more like an open wiki than a standard guarded open source project.
+
+See the [CONTRIBUTING.md](https://github.com/mqttjs/mqtt-packet/blob/master/CONTRIBUTING.md) file for more details.
+
+### Contributors
+
+mqtt-packet is only possible due to the excellent work of the following contributors:
+
+<table><tbody>
+<tr><th align="left">Matteo Collina</th><td><a href="https://github.com/mcollina">GitHub/mcollina</a></td><td><a href="http://twitter.com/matteocollina">Twitter/@matteocollina</a></td></tr>
+<tr><th align="left">Adam Rudd</th><td><a href="https://github.com/adamvr">GitHub/adamvr</a></td><td><a href="http://twitter.com/adam_vr">Twitter/@adam_vr</a></td></tr>
+</tbody></table>
 
 License
 -------
