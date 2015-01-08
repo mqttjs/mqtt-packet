@@ -3,18 +3,18 @@ mqtt-packet&nbsp;&nbsp;&nbsp;[![Build Status](https://travis-ci.org/mqttjs/mqtt-
 
 Encode and Decode MQTT packets the node way.
 
-  * <a href="#installtion">Installation</a>
+  * <a href="#install">Install</a>
   * <a href="#examples">Examples</a>
   * <a href="#packets">Packets</a>
   * <a href="#api">API</a>
   * <a href="#contributing">Contributing</a>
-  * <a href="#licence">Licence &amp; copyright</a>
+  * <a href="#license">Licence &amp; copyright</a>
 
 This library works with node v0.10 and node v0.8, but it requires at
 least NPM 1.4. To upgrade on node v0.8, run `npm install
 npm@v1.4-latest -g`.
 
-Installation
+Install
 ------------
 
 ```bash
