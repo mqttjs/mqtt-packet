@@ -1,15 +1,19 @@
 {
   "name": "mqtt-packet",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Parse and generate MQTT packets like a breeze",
   "main": "mqtt.js",
+  "contributors": [
+    "Matteo Collina <matteo.collina@gmail.com> (https://github.com/mcollina)",
+    "Adam Rudd <adam.rudd@uqconnect.edu.au>"
+  ],
   "scripts": {
     "test": "tape test.js | faucet"
   },
   "pre-commit": "test",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mcollina/mqtt-packet.git"
+    "url": "https://github.com/mqttjs/mqtt-packet.git"
   },
   "keywords": [
     "MQTT",
@@ -19,12 +23,11 @@
     "subscribe",
     "pubsub"
   ],
-  "author": "Matteo Collina <hello@matteocollina.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mcollina/mqtt-packet/issues"
+    "url": "https://github.com/mqttjs/mqtt-packet/issues"
   },
-  "homepage": "https://github.com/mcollina/mqtt-packet",
+  "homepage": "https://github.com/mqttjs/mqtt-packet",
   "devDependencies": {
     "faucet": "0.0.1",
     "pre-commit": "0.0.9",
