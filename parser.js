@@ -4,16 +4,13 @@ var bl        = require('bl')
   , EE        = require('events').EventEmitter
   , constants = require('./constants')
 
-function Parser(opts) {
+function Parser() {
   if (!(this instanceof Parser)) {
-    return new Parser(opts)
+    return new Parser()
   }
-
-  opts = opts || {}
 
   this._list = bl()
   this._newPacket()
-  this.encoding = opts.encoding || "utf8"
 
   this._states = [
       '_parseHeader'
@@ -210,7 +207,7 @@ Parser.prototype._parseConnect = function () {
     packet.will.topic = topic
 
     // Parse will payload
-    payload = this._parseString()
+    payload = this._parseBuffer()
     if (payload === null)
       return this.emit('error', new Error('cannot parse will payload'))
     packet.will.payload = payload
@@ -226,7 +223,7 @@ Parser.prototype._parseConnect = function () {
 
   // Parse password
   if(flags.password) {
-    password = this._parseString()
+    password = this._parseBuffer()
     if(password === null)
       return this.emit('error', new Error('cannot parse username'))
     packet.password = password
@@ -255,13 +252,7 @@ Parser.prototype._parsePublish = function () {
     if (!this._parseMessageId()) { return }
   }
 
-  // Parse the payload
-  /* No checks - whatever remains in the packet is the payload */
-  if (this.encoding !== 'binary') {
-    packet.payload = this._list.toString(this.encoding, this._pos, packet.length)
-  } else {
-    packet.payload = this._list.slice(this._pos, packet.length)
-  }
+  packet.payload = this._list.slice(this._pos, packet.length)
 }
 
 Parser.prototype._parseSubscribe = function() {
@@ -341,18 +332,28 @@ Parser.prototype._parseMessageId = function() {
   return true
 }
 
-Parser.prototype._parseString = function () {
+Parser.prototype._parseString = function(maybeBuffer) {
   var length = this._parseNum()
     , result
 
   if(length === -1 || length + this._pos > this._list.length)
     return null
 
-  if (this.encoding !== 'binary') {
-    result = this._list.toString(this.encoding || 'utf8', this._pos, this._pos + length)
-  } else {
-    result = this._list.slice(this._pos, this._pos + length)
-  }
+  result = this._list.toString('utf8', this._pos, this._pos + length)
+
+  this._pos += length
+
+  return result
+}
+
+Parser.prototype._parseBuffer = function() {
+  var length = this._parseNum()
+    , result
+
+  if(length === -1 || length + this._pos > this._list.length)
+    return null
+
+  result = this._list.slice(this._pos, this._pos + length)
 
   this._pos += length
 

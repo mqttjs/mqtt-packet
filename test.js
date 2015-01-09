@@ -130,13 +130,13 @@ testParseGenerate('empty will payload', {
         retain: true
       , qos: 2
       , topic: 'topic'
-      , payload: ''
+      , payload: new Buffer(0)
     }
   , clean: true
   , keepalive: 30
   , clientId: 'test'
   , username: 'username'
-  , password: 'password'
+  , password: new Buffer('password')
 }, new Buffer([
   16, 47, // Header
   0, 6, // Protocol id length
@@ -168,13 +168,13 @@ testParseGenerate('maximal connect', {
         retain: true
       , qos: 2
       , topic: 'topic'
-      , payload: 'payload'
+      , payload: new Buffer('payload')
     }
   , clean: true
   , keepalive: 30
   , clientId: 'test'
   , username: 'username'
-  , password: 'password'
+  , password: new Buffer('password')
 }, new Buffer([
   16, 54, // Header
   0, 6, // Protocol id length
@@ -194,34 +194,48 @@ testParseGenerate('maximal connect', {
   112, 97, 115, 115, 119, 111, 114, 100 //password
 ]))
 
-testParseGenerate('binary username/password', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 28
-  , protocolId: new Buffer([77, 81, 73, 115, 100, 112])
-  , protocolVersion: 3
-  , clean: false
-  , keepalive: 30
-  , clientId: new Buffer([116, 101, 115, 116])
-  , username: new Buffer([12, 13, 14])
-  , password: new Buffer([15, 16, 17])
-}, new Buffer([
-    16, 28, // Header
-    0, 6, // Protocol id length
-    77, 81, 73, 115, 100, 112, // Protocol id
-    3, // Protocol version
-    0x80 | 0x40, // Connect flags
-    0, 30, // Keepalive
-    0, 4, //Client id length
-    116, 101, 115, 116, // Client id
-    0, 3, // username length
-    12, 13, 14, // username
-    0, 3, // password length
-    15, 16, 17 //password
-]), {
-  encoding: 'binary'
+test('connect all strings generate', function(t) {
+  var message = {
+          cmd: 'connect'
+        , retain: false
+        , qos: 0
+        , dup: false
+        , length: 54
+        , protocolId: 'MQIsdp'
+        , protocolVersion: 3
+        , will: {
+              retain: true
+            , qos: 2
+            , topic: 'topic'
+            , payload: 'payload'
+          }
+        , clean: true
+        , keepalive: 30
+        , clientId: 'test'
+        , username: 'username'
+        , password: 'password'
+      }
+    , expected = new Buffer([
+        16, 54, // Header
+        0, 6, // Protocol id length
+        77, 81, 73, 115, 100, 112, // Protocol id
+        3, // Protocol version
+        246, // Connect flags
+        0, 30, // Keepalive
+        0, 4, // Client id length
+        116, 101, 115, 116, // Client id
+        0, 5, // will topic length
+        116, 111, 112, 105, 99, // will topic
+        0, 7, // will payload length
+        112, 97, 121, 108, 111, 97, 100, // will payload
+        0, 8, // username length
+        117, 115, 101, 114, 110, 97, 109, 101, // username
+        0, 8, // password length
+        112, 97, 115, 115, 119, 111, 114, 100 //password
+      ])
+
+  t.equal(mqtt.generate(message).toString('hex'), expected.toString('hex'))
+  t.end()
 })
 
 testParseError('cannot parse protocol id', new Buffer([
@@ -259,7 +273,7 @@ testParseGenerate('minimal publish', {
   , dup: false
   , length: 10
   , topic: 'test'
-  , payload: 'test'
+  , payload: new Buffer('test')
 }, new Buffer([
   48, 10, // Header
   0, 4, // Topic length
@@ -275,13 +289,13 @@ testParseGenerate('minimal publish', {
     , qos: 0
     , dup: false
     , length: 2054
-    , topic: new Buffer('test')
+    , topic: 'test'
     , payload: buffer
   }, Buffer.concat([new Buffer([
     48, 134, 16, // Header
     0, 4, // Topic length
     116, 101, 115, 116, // Topic (test)
-  ]), buffer]), { encoding: 'binary' })
+  ]), buffer]))
 })()
 
 ;(function() {
@@ -292,13 +306,13 @@ testParseGenerate('minimal publish', {
     , qos: 0
     , dup: false
     , length: 6 + 2 * 1024 * 1024
-    , topic: new Buffer('test')
+    , topic: 'test'
     , payload: buffer
   }, Buffer.concat([new Buffer([
     48, 134, 128, 128, 1, // Header
     0, 4, // Topic length
     116, 101, 115, 116, // Topic (test)
-  ]), buffer]), { encoding: 'binary' })
+  ]), buffer]))
 })()
 
 testParseGenerate('maximal publish', {
@@ -309,7 +323,7 @@ testParseGenerate('maximal publish', {
   , dup: true
   , topic: 'test'
   , messageId: 10
-  , payload: 'test'
+  , payload: new Buffer('test')
 }, new Buffer([
   61, 12, // Header
   0, 4, // Topic length
@@ -318,6 +332,29 @@ testParseGenerate('maximal publish', {
   116, 101, 115, 116 // Payload
 ]))
 
+test('publish all strings generate', function(t) {
+  var message = {
+          cmd:'publish'
+        , retain: true
+        , qos: 2
+        , length: 12
+        , dup: true
+        , topic: 'test'
+        , messageId: 10
+        , payload: new Buffer('test')
+      }
+    , expected = new Buffer([
+        61, 12, // Header
+        0, 4, // Topic length
+        116, 101, 115, 116, // Topic
+        0, 10, // Message id
+        116, 101, 115, 116 // Payload
+      ])
+
+  t.equal(mqtt.generate(message).toString('hex'), expected.toString('hex'))
+  t.end()
+})
+
 testParseGenerate('empty publish', {
     cmd: 'publish'
   , retain: false
@@ -325,7 +362,7 @@ testParseGenerate('empty publish', {
   , dup: false
   , length: 6
   , topic: 'test'
-  , payload: ''
+  , payload: new Buffer(0)
 }, new Buffer([
   48, 6, // Header
   0, 4, // Topic length
@@ -346,7 +383,7 @@ test('splitted publish parse', function(t) {
         , dup: false
         , length: 10
         , topic: 'test'
-        , payload: 'test'
+        , payload: new Buffer('test')
       };
 
   parser.on('packet', function(packet) {

@@ -1,7 +1,7 @@
 mqtt-packet&nbsp;&nbsp;&nbsp;[![Build Status](https://travis-ci.org/mqttjs/mqtt-packet.png)](https://travis-ci.org/mqttjs/mqtt-packet)
 ===========
 
-Encode and Decode MQTT packets the node way.
+Encode and Decode MQTT 3.1.1 packets the node way.
 
   * <a href="#install">Install</a>
   * <a href="#examples">Examples</a>
@@ -35,7 +35,7 @@ var mqtt    = require('mqtt-packet')
       , dup: false
       , length: 10
       , topic: 'test'
-      , payload: 'test'
+      , payload: 'test' // can also be a Buffer
     }
 
 console.log(mqtt.generate(object))
@@ -70,7 +70,7 @@ parser.on('packet', function(packet) {
   //   , dup: false
   //   , length: 10
   //   , topic: 'test'
-  //   , payload: 'test'
+  //   , payload: <Buffer 74 65 73 74>
   // }
 })
 
@@ -97,7 +97,7 @@ The object must be one of the ones specified by the [packets](#packets)
 section. Throws an `Error` if a packet cannot be generated.
 
 <a name="parser">
-### mqtt.parser(opts)
+### mqtt.parser()
 
 Returns a new `Parser` object. `Parser` inherits from `EventEmitter` and
 will emit:
@@ -105,10 +105,6 @@ will emit:
   * `packet`, when a new packet is parsed, according to
     [packets](#packets)
   * `error`, if an error happens
-
-The only allowed option is `{ encoding: 'binary' }` which will block the
-automatic parsing of all the strings in the package. Instead, the
-strings will remain 'raw', i.e. a `Buffer`.
 
 <a name="parse">
 #### Parser.parse(buffer)
@@ -133,16 +129,19 @@ and that you can input to `generate`.
   , clientId: 'my-device'
   , keepalive: 0 // seconds, 0 is the default, can be any positive number
   , username: 'matteo'
-  , password: 'collina'
+  , password: new Buffer('collina') // passwords are buffers
   , will: {
         topic: 'mydevice/status'
-      , payload: 'dead'
+      , payload: new Buffer('dead') // payloads are buffers
     }
 }
 ```
 
 The only mandatory argument is `clientId`, as `generate` will throw if
 missing.
+
+If `password` or `will.payload` are passed as strings, they will
+automatically be converted into a `Buffer`.
 
 ### Connack
 
@@ -219,7 +218,7 @@ All properties are mandatory.
   , qos: 2
   , dup: false
   , topic: 'test'
-  , payload: 'test'
+  , payload: new Buffer('test')
   , retain: false
 }
 ```
@@ -227,6 +226,9 @@ All properties are mandatory.
 Only the `topic` and properties are mandatory
 Both `topic` and `payload` can be `Buffer` objects instead of strings.
 `messageId` is mandatory for `qos > 0`.
+
+If `payload` is passed to `generate(packet)` as a string, it will be
+automatically converted into a `Buffer`.
 
 ### Puback
 

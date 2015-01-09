@@ -104,8 +104,8 @@ function connect(opts) {
     }
 
     // Payload
-    if (will.payload) {
-      if (will.payload.length) {
+    if (will.payload && will.payload) {
+      if (will.payload.length >= 0) {
         if ('string' === typeof will.payload) {
           length += Buffer.byteLength(will.payload) + 2
         } else {
