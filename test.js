@@ -11,6 +11,10 @@ function testParseGenerate(name, object, buffer, opts) {
       , fixture   = buffer
 
     parser.on('packet', function(packet) {
+      if (packet.cmd !== 'publish') {
+        delete packet.topic
+        delete packet.payload
+      }
       t.deepEqual(packet, expected, 'expected packet')
     })
 
@@ -30,6 +34,10 @@ function testParseGenerate(name, object, buffer, opts) {
       , fixture   = mqtt.generate(object)
 
     parser.on('packet', function(packet) {
+      if (packet.cmd !== 'publish') {
+        delete packet.topic
+        delete packet.payload
+      }
       t.deepEqual(packet, expected, 'expected packet')
     })
 

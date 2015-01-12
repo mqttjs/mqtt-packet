@@ -2,6 +2,7 @@
 var bl        = require('bl')
   , inherits  = require('inherits')
   , EE        = require('events').EventEmitter
+  , Packet    = require('./packet')
   , constants = require('./constants')
 
 function Parser() {
@@ -29,9 +30,7 @@ Parser.prototype._newPacket = function () {
     this.emit('packet', this.packet)
   }
 
-  this.packet = {
-    length: -1
-  }
+  this.packet = new Packet()
 
   return true
 }
