@@ -5,7 +5,7 @@
   "main": "mqtt.js",
   "contributors": [
     "Matteo Collina <matteo.collina@gmail.com> (https://github.com/mcollina)",
-    "Adam Rudd <adam.rudd@uqconnect.edu.au>"
+    "Adam Rudd <damvrr@gmail.com>"
   ],
   "scripts": {
     "test": "tape test.js | faucet"
