@@ -193,13 +193,11 @@ function connack(opts) {
     throw new Error('Invalid return code');
 
   var buffer = new Buffer(4)
-    , pos = 0
-    , sp=0;
+    , pos = 0;
 
   buffer.writeUInt8(protocol.codes['connack'] << protocol.CMD_SHIFT, pos++);
   pos += writeLength(buffer, pos, 2);
-  sp = opts.sessionPresent & protocol.SESSIONPRESENT_MASK;
-  buffer.writeUInt8(sp, pos++);
+  buffer.writeUInt8(opts.sessionPresent & protocol.SESSIONPRESENT_MASK, pos++);
   buffer.writeUInt8(rc, pos++);
 
   return buffer;
