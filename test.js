@@ -258,9 +258,22 @@ testParseGenerate('connack with return code 0', {
   , qos: 0
   , dup: false
   , length: 2
+  , sessionPresent: 0
   , returnCode: 0
 }, new Buffer([
   32, 2, 0, 0
+]))
+
+testParseGenerate('connack with return code 0 session present bit set', {
+   cmd: 'connack'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 2
+  , sessionPresent: 1
+  , returnCode: 0
+}, new Buffer([
+   32, 2, 1, 0
 ]))
 
 testParseGenerate('connack with return code 5', {
@@ -269,6 +282,7 @@ testParseGenerate('connack with return code 5', {
   , qos: 0
   , dup: false
   , length: 2
+  , sessionPresent: 0
   , returnCode: 5
 }, new Buffer([
   32, 2, 0, 5
@@ -758,3 +772,7 @@ testGenerateError('Invalid password', {
   , username: 'username'
   , password: 42
 })
+
+
+
+

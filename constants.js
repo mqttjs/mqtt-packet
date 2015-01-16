@@ -39,6 +39,9 @@ module.exports.RETAIN_MASK = 0x01;
 module.exports.LENGTH_MASK = 0x7F;
 module.exports.LENGTH_FIN_MASK = 0x80;
 
+/* Connack */
+module.exports.SESSIONPRESENT_MASK = 0x01;
+
 /* Connect */
 module.exports.USERNAME_MASK = 0x80;
 module.exports.PASSWORD_MASK = 0x40;
