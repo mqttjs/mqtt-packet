@@ -197,7 +197,8 @@ function connack(opts) {
 
   buffer.writeUInt8(protocol.codes['connack'] << protocol.CMD_SHIFT, pos++);
   pos += writeLength(buffer, pos, 2);
-  pos += writeNumber(buffer, pos, rc);
+  buffer.writeUInt8(opts.sessionPresent & protocol.SESSIONPRESENT_MASK, pos++);
+  buffer.writeUInt8(rc, pos++);
 
   return buffer;
 }

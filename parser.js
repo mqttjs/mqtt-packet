@@ -233,8 +233,8 @@ Parser.prototype._parseConnect = function () {
 
 Parser.prototype._parseConnack = function () {
   var packet = this.packet
-
-  packet.returnCode = this._parseNum()
+  packet.sessionPresent  = this._list.readUInt8(this._pos++) & constants.SESSIONPRESENT_MASK
+  packet.returnCode = this._list.readUInt8(this._pos)
   if(packet.returnCode === -1)
     return this.emit('error', new Error('cannot parse return code'))
 }
