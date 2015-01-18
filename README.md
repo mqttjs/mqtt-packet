@@ -149,6 +149,7 @@ automatically be converted into a `Buffer`.
 {
     cmd: 'connack'
   , returnCode: 0 // or whatever else you see fit
+  , sessionPresent: false // or true.
 }
 ```
 
