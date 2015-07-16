@@ -116,6 +116,27 @@ testParseGenerate('minimal connect', {
   116, 101, 115, 116 // Client id
 ]))
 
+testParseGenerate('no clientId with 3.1.1', {
+    cmd: 'connect'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 12
+  , protocolId: 'MQTT'
+  , protocolVersion: 4
+  , clean: true
+  , keepalive: 30
+  , clientId: ''
+}, new Buffer([
+  16, 12, // Header
+  0, 4, // Protocol id length
+  77, 81, 84, 84, // Protocol id
+  4, // Protocol version
+  2, // Connect flags
+  0, 30, // Keepalive
+  0, 0, //Client id length
+]))
+
 testParseGenerateDefaults('default connect', {
     cmd: 'connect'
   , clientId: 'test'
@@ -633,7 +654,7 @@ testGenerateError('Invalid protocol id', {
   , password: 'password'
 })
 
-testGenerateError('Invalid client id', {
+testGenerateError('clientId must be supplied before 3.1.1', {
     cmd: 'connect'
   , retain: false
   , qos: 0
@@ -648,6 +669,26 @@ testGenerateError('Invalid client id', {
     , payload: 'payload'
     }
   , clean: true
+  , keepalive: 30
+  , username: 'username'
+  , password: 'password'
+})
+
+testGenerateError('clientId must be given if cleanSession set to 0', {
+    cmd: 'connect'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 54
+  , protocolId: 'MQTT'
+  , protocolVersion: 4
+  , will: {
+      retain: true
+    , qos: 2
+    , topic: 'topic'
+    , payload: 'payload'
+    }
+  , clean: false
   , keepalive: 30
   , username: 'username'
   , password: 'password'

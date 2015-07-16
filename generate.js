@@ -41,7 +41,7 @@ function connect(opts) {
     , will = opts.will
     , clean = opts.clean
     , keepalive = opts.keepalive || 0
-    , clientId = opts.clientId
+    , clientId = opts.clientId || ""
     , username = opts.username
     , password = opts.password
 
@@ -70,12 +70,23 @@ function connect(opts) {
     length += 1
   }
 
-  // Must be a non-falsy string
-  if(!clientId ||
-     (typeof clientId !== "string" && !Buffer.isBuffer(clientId))) {
-    throw new Error('Invalid client id')
-  } else {
+  // ClientId might be omitted in 3.1.1, but only if cleanSession is set to 1
+  if((typeof clientId === "string" || Buffer.isBuffer(clientId)) &&
+     (clientId || protocolVersion == 4) &&
+     (clientId || clean)) {
+
     length += clientId.length + 2
+  } else {
+    
+    if(protocolVersion < 4) {
+    
+      throw new Error('clientId must be supplied before 3.1.1');
+    }
+    
+    if(clean == 0) {
+
+      throw new Error('clientId must be given if cleanSession set to 0');
+    } 
   }
 
   // Must be a two byte number
