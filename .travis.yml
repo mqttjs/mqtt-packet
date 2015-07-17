@@ -7,4 +7,4 @@ node_js:
   - 0.10
   - 0.8
 before_install:
-  - node -v | grep v0.8 && npm install npm@1.4.29 -g
+  - node -v | grep v0.8 && npm install npm@1.4.29 -g || echo "no need to update NPM"
