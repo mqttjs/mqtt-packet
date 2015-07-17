@@ -137,7 +137,7 @@ and that you can input to `generate`.
 }
 ```
 
-The only mandatory argument is `clientId`, as `generate` will throw if
+If `protocolVersion` is 3, `clientId` is mandatory and `generate` will throw if
 missing.
 
 If `password` or `will.payload` are passed as strings, they will
