@@ -6,7 +6,7 @@ var protocol = require('./constants')
 
 function generate(packet) {
 
-  switch(packet.cmd) {
+  switch (packet.cmd) {
     case 'connect':
       return connect(packet)
     case 'connack':
@@ -52,7 +52,7 @@ function connect(opts) {
   var length = 0
 
   // Must be a string and non-falsy
-  if(!protocolId ||
+  if (!protocolId ||
      (typeof protocolId !== "string" && !Buffer.isBuffer(protocolId))) {
     throw new Error('Invalid protocol id')
   } else {
@@ -71,7 +71,7 @@ function connect(opts) {
   }
 
   // ClientId might be omitted in 3.1.1, but only if cleanSession is set to 1
-  if((typeof clientId === "string" || Buffer.isBuffer(clientId)) &&
+  if ((typeof clientId === "string" || Buffer.isBuffer(clientId)) &&
      (clientId || protocolVersion == 4) &&
      (clientId || clean)) {
 
