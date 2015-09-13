@@ -77,16 +77,16 @@ function connect(opts) {
 
     length += clientId.length + 2
   } else {
-    
+
     if(protocolVersion < 4) {
-    
+
       throw new Error('clientId must be supplied before 3.1.1');
     }
-    
+
     if(clean == 0) {
 
       throw new Error('clientId must be given if cleanSession set to 0');
-    } 
+    }
   }
 
   // Must be a two byte number
@@ -152,14 +152,14 @@ function connect(opts) {
     , pos = 0
 
   // Generate header
-  buffer.writeUInt8(protocol.codes['connect'] << protocol.CMD_SHIFT, pos++)
+  buffer.writeUInt8(protocol.codes['connect'] << protocol.CMD_SHIFT, pos++, true)
 
   // Generate length
   pos += writeLength(buffer, pos, length)
 
   // Generate protocol ID
   pos += writeStringOrBuffer(buffer, pos, protocolId)
-  buffer.writeUInt8(protocolVersion, pos++)
+  buffer.writeUInt8(protocolVersion, pos++, true)
 
   // Connect flags
   var flags = 0
@@ -171,7 +171,7 @@ function connect(opts) {
   flags |= will ? protocol.WILL_FLAG_MASK : 0
   flags |= clean ? protocol.CLEAN_SESSION_MASK : 0
 
-  buffer.writeUInt8(flags, pos++)
+  buffer.writeUInt8(flags, pos++, true)
 
   // Keepalive
   pos += writeNumber(buffer, pos, keepalive)
@@ -206,10 +206,10 @@ function connack(opts) {
   var buffer = new Buffer(4)
     , pos = 0;
 
-  buffer.writeUInt8(protocol.codes['connack'] << protocol.CMD_SHIFT, pos++);
+  buffer.writeUInt8(protocol.codes['connack'] << protocol.CMD_SHIFT, pos++, true);
   pos += writeLength(buffer, pos, 2);
-  buffer.writeUInt8(opts.sessionPresent && protocol.SESSIONPRESENT_MASK || 0, pos++);
-  buffer.writeUInt8(rc, pos++);
+  buffer.writeUInt8(opts.sessionPresent && protocol.SESSIONPRESENT_MASK || 0, pos++, true);
+  buffer.writeUInt8(rc, pos++, true);
 
   return buffer;
 }
@@ -251,11 +251,11 @@ function publish(opts) {
     , pos = 0;
 
   // Header
-  buffer[pos++] =
+  buffer.writeUInt8(
     protocol.codes['publish'] << protocol.CMD_SHIFT |
     dup |
     qos << protocol.QOS_SHIFT |
-    retain;
+    retain, pos++, true);
 
   // Remaining length
   pos += writeLength(buffer, pos, length);
@@ -354,7 +354,7 @@ function subscribe(opts) {
   buffer.writeUInt8(
     protocol.codes['subscribe'] << protocol.CMD_SHIFT |
     dup |
-    1 << protocol.QOS_SHIFT, pos++);
+    1 << protocol.QOS_SHIFT, pos++, true);
 
   // Generate length
   pos += writeLength(buffer, pos, length);
@@ -371,7 +371,7 @@ function subscribe(opts) {
     // Write topic string
     pos += writeString(buffer, pos, topic);
     // Write qos
-    buffer.writeUInt8(qos, pos++);
+    buffer.writeUInt8(qos, pos++, true);
   }
 
   return buffer;
@@ -406,7 +406,7 @@ function suback(opts) {
     , pos = 0;
 
   // Header
-  buffer.writeUInt8(protocol.codes['suback'] << protocol.CMD_SHIFT, pos++);
+  buffer.writeUInt8(protocol.codes['suback'] << protocol.CMD_SHIFT, pos++, true);
 
   // Length
   pos += writeLength(buffer, pos, length);
@@ -416,7 +416,7 @@ function suback(opts) {
 
   // Subscriptions
   for (var i = 0; i < granted.length; i++) {
-    buffer.writeUInt8(granted[i], pos++);
+    buffer.writeUInt8(granted[i], pos++, true);
   }
 
   return buffer;
@@ -519,7 +519,7 @@ function writeLength(buffer, pos, length) {
     if (length > 0) {
         digit = digit | 0x80
     }
-    buffer.writeUInt8(digit, pos++)
+    buffer.writeUInt8(digit, pos++, true)
   } while (length > 0)
 
   return pos - origPos
@@ -576,8 +576,8 @@ function writeBuffer(buffer, pos, src) {
  * @api private
  */
 function writeNumber(buffer, pos, number) {
-  buffer.writeUInt8(number >> 8, pos)
-  buffer.writeUInt8(number & 0x00FF, pos + 1)
+  buffer.writeUInt8(number >> 8, pos, true)
+  buffer.writeUInt8(number & 0x00FF, pos + 1, true)
 
   return 2
 }

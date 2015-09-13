@@ -4,12 +4,13 @@ var mqtt    = require('../')
   , i
   , start   = Date.now()
   , time
+  , buf     = new Buffer('test')
 
 for (i = 0; i < max; i++) {
   mqtt.generate({
       cmd: 'publish'
     , topic: 'test'
-    , payload: 'test'
+    , payload: buf
   })
 }
 
