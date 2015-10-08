@@ -223,6 +223,44 @@ testParseGenerate('maximal connect', {
   112, 97, 115, 115, 119, 111, 114, 100 //password
 ]))
 
+testParseGenerate('max connect with special chars', {
+    cmd: 'connect'
+  , retain: false
+  , qos: 0
+  , dup: false
+  , length: 57
+  , protocolId: 'MQIsdp'
+  , protocolVersion: 3
+  , will: {
+        retain: true
+      , qos: 2
+      , topic: 'tòpic'
+      , payload: new Buffer('pay£oad')
+    }
+  , clean: true
+  , keepalive: 30
+  , clientId: 'te$t'
+  , username: 'u$ern4me'
+  , password: new Buffer('p4$$w0£d')
+}, new Buffer([
+  16, 57, // Header
+  0, 6, // Protocol id length
+  77, 81, 73, 115, 100, 112, // Protocol id
+  3, // Protocol version
+  246, // Connect flags
+  0, 30, // Keepalive
+  0, 4, // Client id length
+  116, 101, 36, 116, // Client id
+  0, 6, // will topic length
+  116, 195, 178, 112, 105, 99, // will topic
+  0, 8, // will payload length
+  112, 97, 121, 194, 163, 111, 97, 100, // will payload
+  0, 8, // username length
+  117, 36, 101, 114, 110, 52, 109, 101, // username
+  0, 9, // password length
+  112, 52, 36, 36, 119, 48, 194, 163, 100 //password
+]))
+
 test('connect all strings generate', function(t) {
   var message = {
           cmd: 'connect'
@@ -813,7 +851,3 @@ testGenerateError('Invalid password', {
   , username: 'username'
   , password: 42
 })
-
-
-
-

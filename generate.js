@@ -111,7 +111,7 @@ function connect(opts) {
     if (!will.topic || 'string' !== typeof will.topic) {
       throw new Error('Invalid will topic')
     } else {
-      length += will.topic.length + 2
+      length += Buffer.byteLength(will.topic) + 2
     }
 
     // Payload
@@ -133,7 +133,7 @@ function connect(opts) {
   // Username
   if (username) {
     if (username.length) {
-      length += username.length + 2
+      length += Buffer.byteLength(username) + 2
     } else {
       throw new Error('Invalid username')
     }
@@ -142,7 +142,7 @@ function connect(opts) {
   // Password
   if (password) {
     if (password.length) {
-      length += password.length + 2
+      length += Buffer.byteLength(password) + 2
     } else {
       throw new Error('Invalid password')
     }
