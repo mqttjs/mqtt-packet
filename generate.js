@@ -142,7 +142,7 @@ function connect(opts) {
   // Password
   if (password) {
     if (password.length) {
-      length += Buffer.byteLength(password) + 2
+      length += byteLength(password) + 2
     } else {
       throw new Error('Invalid password')
     }
@@ -603,6 +603,14 @@ function writeStringOrBuffer(buffer, pos, toWrite) {
   }
 
   return written
+}
+
+function byteLength(bufOrString) {
+  if (Buffer.isBuffer(bufOrString)) {
+    return bufOrString.length
+  } else {
+    return Buffer.byteLength(bufOrString)
+  }
 }
 
 module.exports = generate
