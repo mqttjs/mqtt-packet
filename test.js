@@ -522,12 +522,12 @@ testParseGenerate('pubrel', {
 testParseGenerate('pubcomp', {
     cmd: 'pubcomp'
   , retain: false
-  , qos: 2
+  , qos: 0
   , dup: false
   , length: 2
   , messageId: 2
 }, new Buffer([
-  116, 2, // Header
+  112, 2, // Header
   0, 2 // Message id
 ]))
 
