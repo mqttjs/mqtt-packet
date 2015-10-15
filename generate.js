@@ -288,8 +288,6 @@ function confirmation(opts) {
 
   if (type === 'pubrel')
     qos = 1
-  else if (type === 'pubcomp')
-    qos = 2
 
   // Check message ID
   if ('number' !== typeof id)
