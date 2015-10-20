@@ -7,6 +7,10 @@ var protocol = require('./constants')
   , numCache = require('./numbers')
 
 function generate(packet, stream) {
+  if (stream.cork) {
+    stream.cork()
+    process.nextTick(uncork, stream)
+  }
 
   switch (packet.cmd) {
     case 'connect':
@@ -35,6 +39,10 @@ function generate(packet, stream) {
       stream.emit('error', new Error('unknown command'));
       return false;
   }
+}
+
+function uncork(stream) {
+  stream.uncork();
 }
 
 function connect(opts, stream) {

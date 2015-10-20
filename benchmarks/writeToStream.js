@@ -35,7 +35,6 @@ function tickWait() {
   //var toSend = new Buffer(5)
 
   for (; i < max && res; i++) {
-    dest.cork()
     res = mqtt.writeToStream({
         cmd: 'publish'
       , topic: 'test'
@@ -43,16 +42,10 @@ function tickWait() {
     }, dest)
     //dest.write(toSend, 'buffer')
     //res = dest.write(buf, 'buffer')
-
-    process.nextTick(uncork, dest);
   }
 
   if (i >= max) {
     dest.end();
     return;
   }
-}
-
-function uncork (stream) {
-  stream.uncork()
 }

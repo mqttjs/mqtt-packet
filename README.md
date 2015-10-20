@@ -103,29 +103,8 @@ section. Throws an `Error` if a packet cannot be generated.
 Writes the mqtt packet defined by `object` to the given stream.
 The object must be one of the ones specified by the [packets](#packets)
 section. Emits an `Error` on the stream if a packet cannot be generated.
-
-This function is best used with `cork()` in the Streams3 API, as
-follows:
-
-```js
-
-funciton send(packet, stream) {
-  stream.cork()
-  var res = mqtt.writeToStream({
-      cmd: 'publish'
-    , topic: 'test'
-    , payload: buf
-  }, stream);
-  process.nextTick(uncork, stream);
-}
-
-// this should be defined at the top
-// level
-function uncork (stream) {
-  stream.uncork()
-}
-
-```
+On node >= 12, this function automatically calls `cork()` on your stream,
+and then it calls `uncork()` on the next tick.
 
 <a name="parser">
 ### mqtt.parser()
