@@ -1,6 +1,6 @@
 
 var mqtt    = require('../')
-  , max     = 10000000
+  , max     = 100000
   , i
   , start   = Date.now()
   , time

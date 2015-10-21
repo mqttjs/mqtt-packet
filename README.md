@@ -87,6 +87,7 @@ API
 ---
 
   * <a href="#generate"><code>mqtt#<b>generate()</b></code></a>
+  * <a href="#writeToStream"><code>mqtt#<b>writeToStream()</b></code></a>
   * <a href="#parser"><code>mqtt#<b>parser()</b></code></a>
 
 <a name="generate">
@@ -95,6 +96,15 @@ API
 Generates a `Buffer` containing an MQTT packet.
 The object must be one of the ones specified by the [packets](#packets)
 section. Throws an `Error` if a packet cannot be generated.
+
+<a name="writeToStream">
+### mqtt.writeToStream(object, stream)
+
+Writes the mqtt packet defined by `object` to the given stream.
+The object must be one of the ones specified by the [packets](#packets)
+section. Emits an `Error` on the stream if a packet cannot be generated.
+On node >= 12, this function automatically calls `cork()` on your stream,
+and then it calls `uncork()` on the next tick.
 
 <a name="parser">
 ### mqtt.parser()

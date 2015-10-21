@@ -29,6 +29,7 @@
   },
   "homepage": "https://github.com/mqttjs/mqtt-packet",
   "devDependencies": {
+    "dev-null": "^0.1.1",
     "faucet": "0.0.1",
     "pre-commit": "^1.1.1",
     "tape": "^4.2.0"
