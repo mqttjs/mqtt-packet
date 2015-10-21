@@ -1,6 +1,7 @@
 
 var test    = require('tape')
   , mqtt    = require('./')
+  , WS      = require('readable-stream').Writable
 
 function testParseGenerate(name, object, buffer, opts) {
   test(name + ' parse', function(t) {
@@ -850,4 +851,31 @@ testGenerateError('Invalid password', {
   , clientId: 'test'
   , username: 'username'
   , password: 42
+})
+
+test('support cork', function (t) {
+  t.plan(9)
+
+  var dest = WS()
+    , count = 0
+
+  dest._write = function (chunk, enc, cb) {
+    t.pass('_write called')
+    cb()
+  }
+
+  mqtt.writeToStream({
+      cmd: 'connect'
+    , retain: false
+    , qos: 0
+    , dup: false
+    , length: 18
+    , protocolId: 'MQIsdp'
+    , protocolVersion: 3
+    , clean: false
+    , keepalive: 30
+    , clientId: 'test'
+  }, dest)
+
+  dest.end()
 })

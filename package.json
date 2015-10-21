@@ -32,6 +32,7 @@
     "dev-null": "^0.1.1",
     "faucet": "0.0.1",
     "pre-commit": "^1.1.1",
+    "readable-stream": "^2.0.2",
     "tape": "^4.2.0"
   },
   "dependencies": {
