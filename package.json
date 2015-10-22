@@ -1,6 +1,6 @@
 {
   "name": "mqtt-packet",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "description": "Parse and generate MQTT packets like a breeze",
   "main": "mqtt.js",
   "contributors": [
