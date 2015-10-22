@@ -9,10 +9,10 @@ var protocol = require('./constants')
 
 if (process.version.indexOf('v0.1') === 0) {
   (function () {
-    nextTick = function tickShim (func, stream) {
-      return function () {
+    nextTick = function tickShim(func, stream) {
+      process.nextTick(function tickWrap() {
         return func(stream)
-      }
+      })
     }
   })()
 }
