@@ -36,15 +36,23 @@ Parser.prototype._newPacket = function () {
 }
 
 Parser.prototype.parse = function (buf) {
+
   this._list.append(buf)
 
-  while ((this.packet.length != -1 || this._list.length > 0) &&
-         this[this._states[this._stateCounter]]()) {
-    this._stateCounter++
+  try {
 
-    if (this._stateCounter >= this._states.length) {
-      this._stateCounter = 0
+    while ((this.packet.length != -1 || this._list.length > 0) &&
+           (noError = this[this._states[this._stateCounter]]())) {
+      this._stateCounter++
+
+      if (this._stateCounter >= this._states.length) {
+        this._stateCounter = 0
+      }
     }
+  }
+  catch (e) {
+
+    return this.emit('error', e);
   }
 
   return this._list.length
@@ -93,7 +101,7 @@ Parser.prototype._parseLength = function () {
     this._list.consume(bytes)
   }
 
-  return result
+  return result 
 }
 
 Parser.prototype._parsePayload = function () {
@@ -163,14 +171,27 @@ Parser.prototype._parseConnect = function () {
   if (protocolId === null)
     return this.emit('error', new Error('cannot parse protocol id'))
 
+  if (['MQTT', 'MQIsdp'].indexOf(protocolId) < 0) {
+
+    return this.emit('error', new Error('invalid protocol id'))
+  }
+
   packet.protocolId = protocolId
 
   // Parse constants version number
-  if(this._pos > this._list.length)
+  if(this._pos >= this._list.length)
     return this.emit('error', new Error('packet too short'))
 
   packet.protocolVersion = this._list.readUInt8(this._pos)
+
+  if([3,4].indexOf(packet.protocolVersion) < 0) {
+
+    return this.emit('error', new Error('invalid protocol version'))
+  }
+
   this._pos++
+  if(this._pos >= this._list.length)
+    return this.emit('error', new Error('packet too short'))
 
   // Parse connect flags
   flags.username  = (this._list.readUInt8(this._pos) & constants.USERNAME_MASK)
@@ -335,7 +356,7 @@ Parser.prototype._parseString = function(maybeBuffer) {
   var length = this._parseNum()
     , result
 
-  if(length === -1 || length + this._pos > this._list.length)
+  if(length === -1 || length + this._pos > this._list.length || length + this._pos > this.packet.length)
     return null
 
   result = this._list.toString('utf8', this._pos, this._pos + length)
