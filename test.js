@@ -851,3 +851,43 @@ testGenerateError('Invalid password', {
   , username: 'username'
   , password: 42
 })
+
+// the following test case was designed after experiencing errors
+// when trying to connect with tls on a non tls mqtt port
+// the specific behaviour is:
+// - first byte suggests this is a connect message
+// - second byte suggests message length to be smaller than buffer length
+//   thus payload processing starts
+// - the first two bytes suggest a protocol identifier string length
+//   that leads the parser pointer close to the end of the buffer
+// - when trying to read further connect flags the buffer produces
+//   a "out of range" Error
+//
+testParseError('packet too short', new Buffer([
+  16, 9,
+  0, 6,
+  77, 81, 73, 115, 100, 112,
+  3
+]))
+
+testParseError('invalid protocol id', new Buffer([
+  16, 18,
+  0, 6,
+  65,65,65,65,65,65, // AAAAAA
+  3, // protocol version
+  0, // connect flags
+  0, 10, // keep alive
+  0, 4, //Client id length
+  116, 101, 115, 116 // Client id
+]))
+
+testParseError('invalid protocol version', new Buffer([
+  16, 18,
+  0, 6,
+  77, 81, 73, 115, 100, 112, // Protocol id
+  1, // protocol version
+  0, // connect flags
+  0, 10, // keep alive
+  0, 4, //Client id length
+  116, 101, 115, 116 // Client id
+]))
