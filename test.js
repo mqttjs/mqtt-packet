@@ -919,3 +919,16 @@ testParseError('invalid protocol version', new Buffer([
   0, 4, //Client id length
   116, 101, 115, 116 // Client id
 ]))
+
+testParseError('cannot parse protocol id', new Buffer([
+  16, 8,
+  0, 15,
+  77, 81, 73, 115, 100, 112,
+  77, 81, 73, 115, 100, 112,
+  77, 81, 73, 115, 100, 112,
+  77, 81, 73, 115, 100, 112,
+  77, 81, 73, 115, 100, 112,
+  77, 81, 73, 115, 100, 112,
+  77, 81, 73, 115, 100, 112,
+  77, 81, 73, 115, 100, 112
+]))
