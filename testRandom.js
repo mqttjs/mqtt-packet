@@ -1,12 +1,12 @@
 
 var mqtt    = require('./')
-, crypto  = require('crypto')
-, max     = 100000
-, i
-, start   = Date.now() / 1000
-, time
-, errors  = 0
-, randomPacket
+  , crypto  = require('crypto')
+  , max     = 100000
+  , i
+  , start   = Date.now() / 1000
+  , time
+  , errors  = 0
+  , randomPacket
 
 function doParse () {
   var parser  = mqtt.parser()
