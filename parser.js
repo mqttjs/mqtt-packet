@@ -40,7 +40,7 @@ Parser.prototype.parse = function (buf) {
   this._list.append(buf)
 
   while ((this.packet.length != -1 || this._list.length > 0) &&
-         (noError = this[this._states[this._stateCounter]]())) {
+         this[this._states[this._stateCounter]]()) {
     this._stateCounter++
 
     if (this._stateCounter >= this._states.length) {
@@ -348,11 +348,12 @@ Parser.prototype._parseMessageId = function() {
 Parser.prototype._parseString = function(maybeBuffer) {
   var length = this._parseNum()
     , result
+    , end = length + this._pos
 
-  if(length === -1 || length + this._pos > this._list.length || length + this._pos > this.packet.length)
+  if(length === -1 || end > this._list.length || end > this.packet.length)
     return null
 
-  result = this._list.toString('utf8', this._pos, this._pos + length)
+  result = this._list.toString('utf8', this._pos, end)
 
   this._pos += length
 
@@ -362,11 +363,12 @@ Parser.prototype._parseString = function(maybeBuffer) {
 Parser.prototype._parseBuffer = function() {
   var length = this._parseNum()
     , result
+    , end = length + this._pos
 
-  if(length === -1 || length + this._pos > this._list.length)
+  if(length === -1 || end > this._list.length || end > this.packet.length)
     return null
 
-  result = this._list.slice(this._pos, this._pos + length)
+  result = this._list.slice(this._pos, end)
 
   this._pos += length
 
