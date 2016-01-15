@@ -23,8 +23,8 @@ try {
 }
 catch(e) {
 
-  console.log('Exception occured at packet ')
-  console.log(new Buffer(randomPacket))
+  console.log('Exception occured at packet')
+  console.log(randomPacket)
   console.log(e.message)
   console.log(e.stack)
 }
