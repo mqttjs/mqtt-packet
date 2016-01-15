@@ -8,7 +8,8 @@
     "Adam Rudd <damvrr@gmail.com>"
   ],
   "scripts": {
-    "test": "tape test.js | faucet"
+    "test": "tape test.js | faucet",
+    "ci": "tape test.js && node testRandom"
   },
   "pre-commit": "test",
   "repository": {
