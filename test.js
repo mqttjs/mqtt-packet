@@ -870,6 +870,9 @@ testParseError('packet too short', new Buffer([
   3
 ]))
 
+// CONNECT Packets that show other protocol ids than
+// the valid values MQTT and MQIsdp should cause an error
+// those packets are a hint that this is not a mqtt connection
 testParseError('invalid protocol id', new Buffer([
   16, 18,
   0, 6,
@@ -881,6 +884,8 @@ testParseError('invalid protocol id', new Buffer([
   116, 101, 115, 116 // Client id
 ]))
 
+// CONNECT Packets that contain an unsupported protocol version 
+// flag (i.e. not `3` or `4`) should cause an error
 testParseError('invalid protocol version', new Buffer([
   16, 18,
   0, 6,
@@ -892,9 +897,16 @@ testParseError('invalid protocol version', new Buffer([
   116, 101, 115, 116 // Client id
 ]))
 
+// when a packet contains a string in the variable header and the
+// given string length of this exceeds the overall length of the packet that 
+// was specified in the fixed header, parsing must fail.
+// this case simulates this behavior with the protocol id string of the
+// CONNECT packet. The fixed header suggests a remaining length of 8 bytes
+// which would be exceeded by the string length of 15
+// in this case, a protocol id parse error is expected
 testParseError('cannot parse protocol id', new Buffer([
-  16, 8,
-  0, 15,
+  16, 8, // fixed header
+  0, 15, // string length 15 --> 15 > 8 --> error!
   77, 81, 73, 115, 100, 112,
   77, 81, 73, 115, 100, 112,
   77, 81, 73, 115, 100, 112,

@@ -39,20 +39,13 @@ Parser.prototype.parse = function (buf) {
 
   this._list.append(buf)
 
-  try {
+  while ((this.packet.length != -1 || this._list.length > 0) &&
+         (noError = this[this._states[this._stateCounter]]())) {
+    this._stateCounter++
 
-    while ((this.packet.length != -1 || this._list.length > 0) &&
-           (noError = this[this._states[this._stateCounter]]())) {
-      this._stateCounter++
-
-      if (this._stateCounter >= this._states.length) {
-        this._stateCounter = 0
-      }
+    if (this._stateCounter >= this._states.length) {
+      this._stateCounter = 0
     }
-  }
-  catch (e) {
-
-    return this.emit('error', e);
   }
 
   return this._list.length
@@ -101,7 +94,7 @@ Parser.prototype._parseLength = function () {
     this._list.consume(bytes)
   }
 
-  return result 
+  return result
 }
 
 Parser.prototype._parsePayload = function () {
@@ -171,7 +164,7 @@ Parser.prototype._parseConnect = function () {
   if (protocolId === null)
     return this.emit('error', new Error('cannot parse protocol id'))
 
-  if (['MQTT', 'MQIsdp'].indexOf(protocolId) < 0) {
+  if (protocolId != 'MQTT' && protocolId != 'MQIsdp') {
 
     return this.emit('error', new Error('invalid protocol id'))
   }
@@ -184,7 +177,7 @@ Parser.prototype._parseConnect = function () {
 
   packet.protocolVersion = this._list.readUInt8(this._pos)
 
-  if([3,4].indexOf(packet.protocolVersion) < 0) {
+  if(packet.protocolVersion != 3 && packet.protocolVersion != 4) {
 
     return this.emit('error', new Error('invalid protocol version'))
   }
