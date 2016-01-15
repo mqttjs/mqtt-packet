@@ -40,7 +40,7 @@ Parser.prototype.parse = function (buf) {
   this._list.append(buf)
 
   while ((this.packet.length != -1 || this._list.length > 0) &&
-         (noError = this[this._states[this._stateCounter]]())) {
+         this[this._states[this._stateCounter]]()) {
     this._stateCounter++
 
     if (this._stateCounter >= this._states.length) {
