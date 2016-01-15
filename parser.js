@@ -247,6 +247,8 @@ Parser.prototype._parseConnect = function () {
 
 Parser.prototype._parseConnack = function () {
   var packet = this.packet
+  if (this._list.length < 2)
+    return null
   packet.sessionPresent = !!(this._list.readUInt8(this._pos++) & constants.SESSIONPRESENT_MASK)
   packet.returnCode = this._list.readUInt8(this._pos)
   if(packet.returnCode === -1)
@@ -376,7 +378,7 @@ Parser.prototype._parseBuffer = function() {
 }
 
 Parser.prototype._parseNum = function() {
-  if(2 > this._pos + this._list.length) return -1
+  if(this._list.length - this._pos < 2) return -1
 
   var result = this._list.readUInt16BE(this._pos)
   this._pos += 2
