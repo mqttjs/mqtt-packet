@@ -563,7 +563,7 @@ function writeBuffer(buffer, pos, src) {
  * @api private
  */
 function writeNumber(stream, number) {
-  return stream.write(numCache[number])
+  return stream.write(numCache[number | 0])
 }
 
 /**
