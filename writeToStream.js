@@ -108,7 +108,8 @@ function connect(opts, stream) {
   // Must be a two byte number
   if ('number' !== typeof keepalive ||
       keepalive < 0 ||
-      keepalive > 65535) {
+      keepalive > 65535 ||
+      keepalive % 1 !== 0) {
     stream.emit('error', new Error('Invalid keepalive'))
   } else {
     length += 2
@@ -563,7 +564,7 @@ function writeBuffer(buffer, pos, src) {
  * @api private
  */
 function writeNumber(stream, number) {
-  return stream.write(numCache[number | 0])
+  return stream.write(numCache[number])
 }
 
 /**
