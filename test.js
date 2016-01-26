@@ -754,6 +754,11 @@ testGenerateError('Invalid keepalive', {
   , password: 'password'
 })
 
+testGenerateError('Invalid keepalive', {
+    cmd: 'connect'
+    , keepalive: 3.1416
+})
+
 testGenerateError('Invalid will', {
     cmd: 'connect'
   , retain: false
@@ -912,7 +917,7 @@ testParseError('invalid protocol id', new Buffer([
   116, 101, 115, 116 // Client id
 ]))
 
-// CONNECT Packets that contain an unsupported protocol version 
+// CONNECT Packets that contain an unsupported protocol version
 // flag (i.e. not `3` or `4`) should cause an error
 testParseError('invalid protocol version', new Buffer([
   16, 18,
@@ -926,7 +931,7 @@ testParseError('invalid protocol version', new Buffer([
 ]))
 
 // when a packet contains a string in the variable header and the
-// given string length of this exceeds the overall length of the packet that 
+// given string length of this exceeds the overall length of the packet that
 // was specified in the fixed header, parsing must fail.
 // this case simulates this behavior with the protocol id string of the
 // CONNECT packet. The fixed header suggests a remaining length of 8 bytes
