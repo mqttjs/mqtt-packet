@@ -5,17 +5,7 @@ var protocol = require('./constants')
   , empty = new Buffer(0)
   , zeroBuf = new Buffer([0])
   , numCache = require('./numbers')
-  , nextTick = process.nextTick
-
-if (process.version.indexOf('v0.1') === 0) {
-  (function () {
-    nextTick = function tickShim(func, stream) {
-      process.nextTick(function tickWrap() {
-        return func(stream)
-      })
-    }
-  })()
-}
+  , nextTick = require('process-nextick-args')
 
 function generate(packet, stream) {
   if (stream.cork) {
