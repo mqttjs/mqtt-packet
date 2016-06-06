@@ -352,7 +352,7 @@ Parser.prototype._parseString = function(maybeBuffer) {
     , result
     , end = length + this._pos
 
-  if(length === -1 || end > this._list.length || end > this.packet.length)
+  if(length === -1 || end > this._list.length || end > this.packet.length)
     return null
 
   result = this._list.toString('utf8', this._pos, end)
@@ -367,7 +367,7 @@ Parser.prototype._parseBuffer = function() {
     , result
     , end = length + this._pos
 
-  if(length === -1 || end > this._list.length || end > this.packet.length)
+  if(length === -1 || end > this._list.length || end > this.packet.length)
     return null
 
   result = this._list.slice(this._pos, end)
