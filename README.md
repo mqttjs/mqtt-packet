@@ -112,6 +112,10 @@ will emit:
 Parse a given `Buffer` and emits synchronously all the MQTT packets that
 are included. Returns the number of bytes left to parse.
 
+If an error happens, an `error` event will be emitted, but no `packet` events
+will be emitted after that. Calling `parse()` again clears the error and
+previous buffer as if you created a new `Parser`.
+
 Packets
 -------
 
