@@ -10,9 +10,8 @@ Encode and Decode MQTT 3.1.1 packets the node way.
   * <a href="#contributing">Contributing</a>
   * <a href="#license">Licence &amp; copyright</a>
 
-This library works with node v4.x, v0.12.x, v0.10.x and all iojs releases, but it requires at
-least NPM 1.4. To upgrade NPM on node v0.8, run `npm install
-npm@1.4.28 -g`.
+This library is tested with node v4 and v6. The last version to support
+older versions of node was mqtt-packet@4.1.2.
 
 Install
 ------------
