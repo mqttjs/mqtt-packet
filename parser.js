@@ -10,37 +10,35 @@ function Parser() {
     return new Parser()
   }
 
-  this._list = bl()
-  this._newPacket()
-
   this._states = [
       '_parseHeader'
     , '_parseLength'
     , '_parsePayload'
     , '_newPacket'
   ]
-  this._stateCounter = 0
+
+  this._resetState()
 }
 
 inherits(Parser, EE)
 
-Parser.prototype._newPacket = function () {
-  if (this.packet) {
-    this._list.consume(this.packet.length)
-    this.emit('packet', this.packet)
-  }
-
+Parser.prototype._resetState = function () {
   this.packet = new Packet()
-
-  return true
+  this.error = null
+  this._list = bl()
+  this._stateCounter = 0
 }
 
 Parser.prototype.parse = function (buf) {
+  if (this.error) {
+    this._resetState()
+  }
 
   this._list.append(buf)
 
   while ((this.packet.length != -1 || this._list.length > 0) &&
-         this[this._states[this._stateCounter]]()) {
+         this[this._states[this._stateCounter]]() &&
+         !this.error) {
     this._stateCounter++
 
     if (this._stateCounter >= this._states.length) {
@@ -140,7 +138,7 @@ Parser.prototype._parsePayload = function () {
         // these are empty, nothing to do
         break
       default:
-        this.emit('error', new Error('not supported'))
+        this._emitError(new Error('not supported'))
     }
 
     result = true
@@ -162,29 +160,29 @@ Parser.prototype._parseConnect = function () {
   // Parse constants id
   protocolId = this._parseString()
   if (protocolId === null)
-    return this.emit('error', new Error('cannot parse protocol id'))
+    return this._emitError(new Error('cannot parse protocol id'))
 
   if (protocolId != 'MQTT' && protocolId != 'MQIsdp') {
 
-    return this.emit('error', new Error('invalid protocol id'))
+    return this._emitError(new Error('invalid protocol id'))
   }
 
   packet.protocolId = protocolId
 
   // Parse constants version number
   if(this._pos >= this._list.length)
-    return this.emit('error', new Error('packet too short'))
+    return this._emitError(new Error('packet too short'))
 
   packet.protocolVersion = this._list.readUInt8(this._pos)
 
   if(packet.protocolVersion != 3 && packet.protocolVersion != 4) {
 
-    return this.emit('error', new Error('invalid protocol version'))
+    return this._emitError(new Error('invalid protocol version'))
   }
 
   this._pos++
   if(this._pos >= this._list.length)
-    return this.emit('error', new Error('packet too short'))
+    return this._emitError(new Error('packet too short'))
 
   // Parse connect flags
   flags.username  = (this._list.readUInt8(this._pos) & constants.USERNAME_MASK)
@@ -204,25 +202,25 @@ Parser.prototype._parseConnect = function () {
   // Parse keepalive
   packet.keepalive = this._parseNum()
   if(packet.keepalive === -1)
-    return this.emit('error', new Error('packet too short'))
+    return this._emitError(new Error('packet too short'))
 
   // Parse client ID
   clientId = this._parseString()
   if(clientId === null)
-    return this.emit('error', new Error('packet too short'))
+    return this._emitError(new Error('packet too short'))
   packet.clientId = clientId
 
   if (flags.will) {
     // Parse will topic
     topic = this._parseString()
     if (topic === null)
-      return this.emit('error', new Error('cannot parse will topic'))
+      return this._emitError(new Error('cannot parse will topic'))
     packet.will.topic = topic
 
     // Parse will payload
     payload = this._parseBuffer()
     if (payload === null)
-      return this.emit('error', new Error('cannot parse will payload'))
+      return this._emitError(new Error('cannot parse will payload'))
     packet.will.payload = payload
   }
 
@@ -230,7 +228,7 @@ Parser.prototype._parseConnect = function () {
   if (flags.username) {
     username = this._parseString()
     if(username === null)
-      return this.emit('error', new Error('cannot parse username'))
+      return this._emitError(new Error('cannot parse username'))
     packet.username = username
   }
 
@@ -238,7 +236,7 @@ Parser.prototype._parseConnect = function () {
   if(flags.password) {
     password = this._parseBuffer()
     if(password === null)
-      return this.emit('error', new Error('cannot parse username'))
+      return this._emitError(new Error('cannot parse username'))
     packet.password = password
   }
 
@@ -252,7 +250,7 @@ Parser.prototype._parseConnack = function () {
   packet.sessionPresent = !!(this._list.readUInt8(this._pos++) & constants.SESSIONPRESENT_MASK)
   packet.returnCode = this._list.readUInt8(this._pos)
   if(packet.returnCode === -1)
-    return this.emit('error', new Error('cannot parse return code'))
+    return this._emitError(new Error('cannot parse return code'))
 }
 
 Parser.prototype._parsePublish = function () {
@@ -260,7 +258,7 @@ Parser.prototype._parsePublish = function () {
   packet.topic = this._parseString()
 
   if(packet.topic === null)
-    return this.emit('error', new Error('cannot parse topic'))
+    return this._emitError(new Error('cannot parse topic'))
 
   // Parse message ID
   if (packet.qos > 0) {
@@ -276,7 +274,7 @@ Parser.prototype._parseSubscribe = function() {
     , qos
 
   if (packet.qos != 1) {
-    return this.emit('error', new Error('wrong subscribe header'))
+    return this._emitError(new Error('wrong subscribe header'))
   }
 
   packet.subscriptions = []
@@ -288,7 +286,7 @@ Parser.prototype._parseSubscribe = function() {
     // Parse topic
     topic = this._parseString()
     if (topic === null)
-      return this.emit('error', new Error('Parse error - cannot parse topic'))
+      return this._emitError(new Error('Parse error - cannot parse topic'))
 
     qos = this._list.readUInt8(this._pos++)
 
@@ -322,7 +320,7 @@ Parser.prototype._parseUnsubscribe = function() {
     // Parse topic
     topic = this._parseString()
     if (topic === null)
-      return this.emit('error', new Error('cannot parse topic'))
+      return this._emitError(new Error('cannot parse topic'))
 
     // Push topic to unsubscriptions
     packet.unsubscriptions.push(topic);
@@ -331,7 +329,7 @@ Parser.prototype._parseUnsubscribe = function() {
 
 Parser.prototype._parseUnsuback = function() {
   if (!this._parseMessageId())
-    return this.emit('error', new Error('cannot parse message id'))
+    return this._emitError(new Error('cannot parse message id'))
 }
 
 Parser.prototype._parseMessageId = function() {
@@ -340,7 +338,7 @@ Parser.prototype._parseMessageId = function() {
   packet.messageId = this._parseNum()
 
   if(packet.messageId === null) {
-    this.emit('error', new Error('cannot parse message id'))
+    this._emitError(new Error('cannot parse message id'))
     return false
   }
 
@@ -383,6 +381,22 @@ Parser.prototype._parseNum = function() {
   var result = this._list.readUInt16BE(this._pos)
   this._pos += 2
   return result
+}
+
+Parser.prototype._newPacket = function () {
+  if (this.packet) {
+    this._list.consume(this.packet.length)
+    this.emit('packet', this.packet)
+  }
+
+  this.packet = new Packet()
+
+  return true
+}
+
+Parser.prototype._emitError = function(err) {
+  this.error = err
+  this.emit('error', err)
 }
 
 module.exports = Parser
