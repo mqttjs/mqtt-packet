@@ -10,9 +10,8 @@ Encode and Decode MQTT 3.1.1 packets the node way.
   * <a href="#contributing">Contributing</a>
   * <a href="#license">Licence &amp; copyright</a>
 
-This library works with node v4.x, v0.12.x, v0.10.x and all iojs releases, but it requires at
-least NPM 1.4. To upgrade NPM on node v0.8, run `npm install
-npm@1.4.28 -g`.
+This library is tested with node v4 and v6. The last version to support
+older versions of node was mqtt-packet@4.1.2.
 
 Install
 ------------
@@ -121,6 +120,10 @@ will emit:
 
 Parse a given `Buffer` and emits synchronously all the MQTT packets that
 are included. Returns the number of bytes left to parse.
+
+If an error happens, an `error` event will be emitted, but no `packet` events
+will be emitted after that. Calling `parse()` again clears the error and
+previous buffer as if you created a new `Parser`.
 
 Packets
 -------

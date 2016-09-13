@@ -56,6 +56,10 @@ function testParseError(expected, fixture) {
       t.equal(err.message, expected, 'expected error message')
     })
 
+    parser.on('packet', function() {
+      t.fail('parse errors should not be followed by packet events')
+    })
+
     parser.parse(fixture)
   })
 }
@@ -92,6 +96,21 @@ function testParseGenerateDefaults(name, object, buffer, opts) {
   test(name + ' generate', function(t) {
     t.equal(mqtt.generate(object).toString('hex'), buffer.toString('hex'))
     t.end()
+  })
+}
+
+function testWriteToStreamError(expected, fixture) {
+  test('writeToStream ' + expected + ' error', function(t) {
+    t.plan(2)
+
+    var stream = WS()
+
+    stream.write = () => t.fail('should not have called write')
+    stream.on('error', () => t.pass('error emitted'))
+
+    var result = mqtt.writeToStream(fixture, stream)
+
+    t.false(result, 'result should be false')
   })
 }
 
@@ -949,3 +968,91 @@ testParseError('cannot parse protocol id', new Buffer([
   77, 81, 73, 115, 100, 112,
   77, 81, 73, 115, 100, 112
 ]))
+
+test('stops parsing after first error', function(t) {
+  t.plan(4)
+
+  var parser = mqtt.parser()
+
+  var packetCount = 0
+  var errorCount = 0
+  var expectedPackets = 1
+  var expectedErrors = 1
+
+  parser.on('packet', function(packet) {
+    t.ok(++packetCount <= expectedPackets, 'expected <= ' + expectedPackets + ' packets')
+  })
+
+  parser.on('error', function(err) {
+    t.ok(++errorCount <= expectedErrors, 'expected <= ' + expectedErrors + ' errors')
+  })
+
+  parser.parse(new Buffer([
+    // first, a valid connect packet:
+
+    16, 12, // Header
+    0, 4, // Protocol id length
+    77, 81, 84, 84, // Protocol id
+    4, // Protocol version
+    2, // Connect flags
+    0, 30, // Keepalive
+    0, 0, //Client id length
+
+    // then an invalid subscribe packet:
+
+    128, 9, // Header (subscribe, qos=0, length=9)
+    0, 6, // message id (6)
+    0, 4, // topic length,
+    116, 101, 115, 116, // Topic (test)
+    0, // qos (0)
+
+    // and another invalid subscribe packet:
+
+    128, 9, // Header (subscribe, qos=0, length=9)
+    0, 6, // message id (6)
+    0, 4, // topic length,
+    116, 101, 115, 116, // Topic (test)
+    0, // qos (0)
+
+    // finally, a valid disconnect packet:
+
+    224, 0, // Header
+  ]))
+
+  // calling parse again clears the error and continues parsing
+  packetCount = 0
+  errorCount = 0
+  expectedPackets = 2
+  expectedErrors = 0
+
+  parser.parse(new Buffer([
+    // connect:
+
+    16, 12, // Header
+    0, 4, // Protocol id length
+    77, 81, 84, 84, // Protocol id
+    4, // Protocol version
+    2, // Connect flags
+    0, 30, // Keepalive
+    0, 0, //Client id length
+
+    // disconnect:
+
+    224, 0, // Header
+  ]))
+})
+
+testWriteToStreamError('Invalid protocol id', {
+  cmd: 'connect',
+  protocolId: {}
+})
+
+testWriteToStreamError('Invalid topic', {
+  cmd: 'publish',
+  topic: {}
+})
+
+testWriteToStreamError('Invalid message id', {
+  cmd: 'subscribe',
+  mid: {}
+})
