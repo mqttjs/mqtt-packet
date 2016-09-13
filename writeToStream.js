@@ -37,7 +37,7 @@ function generate(packet, stream) {
     case 'disconnect':
       return emptyPacket(packet, stream);
     default:
-      return stream.emit('error', new Error('unknown command'));
+      stream.emit('error', new Error('unknown command'));
       return false;
   }
 }
@@ -66,14 +66,16 @@ function connect(opts, stream) {
   // Must be a string and non-falsy
   if (!protocolId ||
      (typeof protocolId !== "string" && !Buffer.isBuffer(protocolId))) {
-    return stream.emit('error', new Error('Invalid protocol id'))
+    stream.emit('error', new Error('Invalid protocol id'))
+    return false
   } else {
     length += protocolId.length + 2
   }
 
   // Must be 3 or 4
   if (protocolVersion !== 3 && protocolVersion !== 4) {
-    return stream.emit('error', new Error('Invalid protocol version'))
+    stream.emit('error', new Error('Invalid protocol version'))
+    return false
   } else {
     length += 1
   }
@@ -87,11 +89,13 @@ function connect(opts, stream) {
   } else {
 
     if (protocolVersion < 4) {
-      return stream.emit('error', new Error('clientId must be supplied before 3.1.1'));
+      stream.emit('error', new Error('clientId must be supplied before 3.1.1'))
+      return false
     }
 
     if (clean == 0) {
-      return stream.emit('error', new Error('clientId must be given if cleanSession set to 0'));
+      stream.emit('error', new Error('clientId must be given if cleanSession set to 0'))
+      return false
     }
   }
 
@@ -100,7 +104,8 @@ function connect(opts, stream) {
       keepalive < 0 ||
       keepalive > 65535 ||
       keepalive % 1 !== 0) {
-    return stream.emit('error', new Error('Invalid keepalive'))
+    stream.emit('error', new Error('Invalid keepalive'))
+    return false
   } else {
     length += 2
   }
@@ -112,11 +117,13 @@ function connect(opts, stream) {
   if (will) {
     // It must be an object
     if ('object' !== typeof will) {
-      return stream.emit('error', new Error('Invalid will'))
+      stream.emit('error', new Error('Invalid will'))
+      return false
     }
     // It must have topic typeof string
     if (!will.topic || 'string' !== typeof will.topic) {
-      return stream.emit('error', new Error('Invalid will topic'))
+      stream.emit('error', new Error('Invalid will topic'))
+      return false
     } else {
       length += Buffer.byteLength(will.topic) + 2
     }
@@ -130,7 +137,8 @@ function connect(opts, stream) {
           length += will.payload.length + 2
         }
       } else {
-        return stream.emit('error', new Error('Invalid will payload'))
+        stream.emit('error', new Error('Invalid will payload'))
+        return false
       }
     } else {
       length += 2
@@ -142,7 +150,8 @@ function connect(opts, stream) {
     if (username.length) {
       length += Buffer.byteLength(username) + 2
     } else {
-      return stream.emit('error', new Error('Invalid username'))
+      stream.emit('error', new Error('Invalid username'))
+      return false
     }
   }
 
@@ -151,7 +160,8 @@ function connect(opts, stream) {
     if (password.length) {
       length += byteLength(password) + 2
     } else {
-      return stream.emit('error', new Error('Invalid password'))
+      stream.emit('error', new Error('Invalid password'))
+      return false
     }
   }
 
@@ -211,8 +221,10 @@ function connack(opts, stream) {
     , rc = opts.returnCode;
 
   // Check return code
-  if ('number' !== typeof rc)
-    return stream.emit('error', new Error('Invalid return code'));
+  if ('number' !== typeof rc) {
+    stream.emit('error', new Error('Invalid return code'))
+    return false
+  }
 
   stream.write(protocol.CONNACK_HEADER);
   writeLength(stream, 2);
@@ -237,8 +249,10 @@ function publish(opts, stream) {
     length += Buffer.byteLength(topic) + 2;
   else if (Buffer.isBuffer(topic))
     length += topic.length + 2;
-  else
-    return stream.emit('error', new Error('Invalid topic'));
+  else {
+    stream.emit('error', new Error('Invalid topic'));
+    return false;
+  }
 
   // get the payload length
   if (!Buffer.isBuffer(payload)) {
@@ -249,7 +263,8 @@ function publish(opts, stream) {
 
   // Message id must a number if qos > 0
   if (qos && 'number' !== typeof id) {
-    return stream.emit('error', new Error('Invalid message id'))
+    stream.emit('error', new Error('Invalid message id'))
+    return false
   } else if (qos) {
     length += 2;
   }
@@ -285,8 +300,10 @@ function confirmation(opts, stream) {
     qos = 1
 
   // Check message ID
-  if ('number' !== typeof id)
-    return stream.emit('error', new Error('Invalid message id'));
+  if ('number' !== typeof id) {
+    stream.emit('error', new Error('Invalid message id'));
+    return false
+  }
 
   // Header
   stream.write(protocol.ACKS[type][qos][dup][0])
@@ -309,7 +326,8 @@ function subscribe(opts, stream) {
 
   // Check mid
   if ('number' !== typeof id) {
-    return stream.emit('error', new Error('Invalid message id'));
+    stream.emit('error', new Error('Invalid message id'));
+    return false
   } else {
     length += 2;
   }
@@ -320,16 +338,19 @@ function subscribe(opts, stream) {
         , qos = subs[i].qos;
 
       if ('string' !== typeof topic) {
-        return stream.emit('error', new Error('Invalid subscriptions - invalid topic'));
+        stream.emit('error', new Error('Invalid subscriptions - invalid topic'));
+        return false
       }
       if ('number' !== typeof qos) {
-        return stream.emit('error', new Error('Invalid subscriptions - invalid qos'));
+        stream.emit('error', new Error('Invalid subscriptions - invalid qos'));
+        return false;
       }
 
       length += Buffer.byteLength(topic) + 2 + 1;
     }
   } else {
-    return stream.emit('error', new Error('Invalid subscriptions'));
+    stream.emit('error', new Error('Invalid subscriptions'));
+    return false;
   }
 
   // Generate header
@@ -367,7 +388,8 @@ function suback(opts, stream) {
 
   // Check message id
   if ('number' !== typeof id) {
-    return stream.emit('error', new Error('Invalid message id'));
+    stream.emit('error', new Error('Invalid message id'));
+    return false;
   } else {
     length += 2;
   }
@@ -375,12 +397,14 @@ function suback(opts, stream) {
   if ('object' === typeof granted && granted.length) {
     for (var i = 0; i < granted.length; i += 1) {
       if ('number' !== typeof granted[i]) {
-        return stream.emit('error', new Error('Invalid qos vector'));
+        stream.emit('error', new Error('Invalid qos vector'));
+        return false;
       }
       length += 1;
     }
   } else {
-    return stream.emit('error', new Error('Invalid qos vector'));
+    stream.emit('error', new Error('Invalid qos vector'));
+    return false;
   }
 
   // header
@@ -405,7 +429,8 @@ function unsubscribe(opts, stream) {
 
   // Check message id
   if ('number' !== typeof id) {
-    return stream.emit('error', new Error('Invalid message id'));
+    stream.emit('error', new Error('Invalid message id'));
+    return false;
   } else {
     length += 2;
   }
@@ -413,12 +438,14 @@ function unsubscribe(opts, stream) {
   if ('object' === typeof unsubs && unsubs.length) {
     for (var i = 0; i < unsubs.length; i += 1) {
       if ('string' !== typeof unsubs[i]) {
-        return stream.emit('error', new Error('Invalid unsubscriptions'));
+        stream.emit('error', new Error('Invalid unsubscriptions'));
+        return false;
       }
       length += Buffer.byteLength(unsubs[i]) + 2;
     }
   } else {
-    return stream.emit('error', new Error('Invalid unsubscriptions'));
+    stream.emit('error', new Error('Invalid unsubscriptions'));
+    return false;
   }
 
   // Header

@@ -101,14 +101,16 @@ function testParseGenerateDefaults(name, object, buffer, opts) {
 
 function testWriteToStreamError(expected, fixture) {
   test('writeToStream ' + expected + ' error', function(t) {
-    t.plan(1)
+    t.plan(2)
 
     var stream = WS()
 
     stream.write = () => t.fail('should not have called write')
     stream.on('error', () => t.pass('error emitted'))
 
-    mqtt.writeToStream(fixture, stream)
+    var result = mqtt.writeToStream(fixture, stream)
+
+    t.false(result, 'result should be false')
   })
 }
 
