@@ -99,6 +99,21 @@ function testParseGenerateDefaults(name, object, buffer, opts) {
   })
 }
 
+function testWriteToStreamError(expected, fixture) {
+  test('writeToStream ' + expected + ' error', function(t) {
+    t.plan(2)
+
+    var stream = WS()
+
+    stream.write = () => t.fail('should not have called write')
+    stream.on('error', () => t.pass('error emitted'))
+
+    var result = mqtt.writeToStream(fixture, stream)
+
+    t.false(result, 'result should be false')
+  })
+}
+
 testParseGenerate('minimal connect', {
     cmd: 'connect'
   , retain: false
@@ -1025,4 +1040,19 @@ test('stops parsing after first error', function(t) {
 
     224, 0, // Header
   ]))
+})
+
+testWriteToStreamError('Invalid protocol id', {
+  cmd: 'connect',
+  protocolId: {}
+})
+
+testWriteToStreamError('Invalid topic', {
+  cmd: 'publish',
+  topic: {}
+})
+
+testWriteToStreamError('Invalid message id', {
+  cmd: 'subscribe',
+  mid: {}
 })
