@@ -1,17 +1,17 @@
 
-var test    = require('tape')
-  , mqtt    = require('./')
-  , WS      = require('readable-stream').Writable
+var test = require('tape')
+var mqtt = require('./')
+var WS = require('readable-stream').Writable
 
-function testParseGenerate(name, object, buffer, opts) {
-  test(name + ' parse', function(t) {
+function testParseGenerate (name, object, buffer, opts) {
+  test(name + ' parse', function (t) {
     t.plan(2)
 
-    var parser    = mqtt.parser(opts)
-      , expected  = object
-      , fixture   = buffer
+    var parser = mqtt.parser(opts)
+    var expected = object
+    var fixture = buffer
 
-    parser.on('packet', function(packet) {
+    parser.on('packet', function (packet) {
       if (packet.cmd !== 'publish') {
         delete packet.topic
         delete packet.payload
@@ -22,19 +22,19 @@ function testParseGenerate(name, object, buffer, opts) {
     t.equal(parser.parse(fixture), 0, 'remaining bytes')
   })
 
-  test(name + ' generate', function(t) {
+  test(name + ' generate', function (t) {
     t.equal(mqtt.generate(object).toString('hex'), buffer.toString('hex'))
     t.end()
   })
 
-  test(name + ' mirror', function(t) {
+  test(name + ' mirror', function (t) {
     t.plan(2)
 
-    var parser    = mqtt.parser(opts)
-      , expected  = object
-      , fixture   = mqtt.generate(object)
+    var parser = mqtt.parser(opts)
+    var expected = object
+    var fixture = mqtt.generate(object)
 
-    parser.on('packet', function(packet) {
+    parser.on('packet', function (packet) {
       if (packet.cmd !== 'publish') {
         delete packet.topic
         delete packet.payload
@@ -46,17 +46,17 @@ function testParseGenerate(name, object, buffer, opts) {
   })
 }
 
-function testParseError(expected, fixture) {
-  test(expected, function(t) {
+function testParseError (expected, fixture) {
+  test(expected, function (t) {
     t.plan(1)
 
     var parser = mqtt.parser()
 
-    parser.on('error', function(err) {
+    parser.on('error', function (err) {
       t.equal(err.message, expected, 'expected error message')
     })
 
-    parser.on('packet', function() {
+    parser.on('packet', function () {
       t.fail('parse errors should not be followed by packet events')
     })
 
@@ -64,28 +64,28 @@ function testParseError(expected, fixture) {
   })
 }
 
-function testGenerateError(expected, fixture) {
-  test(expected, function(t) {
+function testGenerateError (expected, fixture) {
+  test(expected, function (t) {
     t.plan(1)
 
     try {
       mqtt.generate(fixture)
-    } catch(err) {
+    } catch (err) {
       t.equal(expected, err.message)
     }
   })
 }
 
-function testParseGenerateDefaults(name, object, buffer, opts) {
-  test(name + ' parse', function(t) {
-    var parser    = mqtt.parser(opts)
-      , expected  = object
-      , fixture   = buffer
+function testParseGenerateDefaults (name, object, buffer, opts) {
+  test(name + ' parse', function (t) {
+    var parser = mqtt.parser(opts)
+    var expected = object
+    var fixture = buffer
 
     t.plan(1 + Object.keys(expected).length)
 
-    parser.on('packet', function(packet) {
-      Object.keys(expected).forEach(function(key) {
+    parser.on('packet', function (packet) {
+      Object.keys(expected).forEach(function (key) {
         t.deepEqual(packet[key], expected[key], 'expected packet property ' + key)
       })
     })
@@ -93,14 +93,14 @@ function testParseGenerateDefaults(name, object, buffer, opts) {
     t.equal(parser.parse(fixture), 0, 'remaining bytes')
   })
 
-  test(name + ' generate', function(t) {
+  test(name + ' generate', function (t) {
     t.equal(mqtt.generate(object).toString('hex'), buffer.toString('hex'))
     t.end()
   })
 }
 
-function testWriteToStreamError(expected, fixture) {
-  test('writeToStream ' + expected + ' error', function(t) {
+function testWriteToStreamError (expected, fixture) {
+  test('writeToStream ' + expected + ' error', function (t) {
     t.plan(2)
 
     var stream = WS()
@@ -115,16 +115,16 @@ function testWriteToStreamError(expected, fixture) {
 }
 
 testParseGenerate('minimal connect', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 18
-  , protocolId: 'MQIsdp'
-  , protocolVersion: 3
-  , clean: false
-  , keepalive: 30
-  , clientId: 'test'
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 18,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  clean: false,
+  keepalive: 30,
+  clientId: 'test'
 }, new Buffer([
   16, 18, // Header
   0, 6, // Protocol id length
@@ -132,21 +132,21 @@ testParseGenerate('minimal connect', {
   3, // Protocol version
   0, // Connect flags
   0, 30, // Keepalive
-  0, 4, //Client id length
+  0, 4, // Client id length
   116, 101, 115, 116 // Client id
 ]))
 
 testParseGenerate('no clientId with 3.1.1', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 12
-  , protocolId: 'MQTT'
-  , protocolVersion: 4
-  , clean: true
-  , keepalive: 30
-  , clientId: ''
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 12,
+  protocolId: 'MQTT',
+  protocolVersion: 4,
+  clean: true,
+  keepalive: 30,
+  clientId: ''
 }, new Buffer([
   16, 12, // Header
   0, 4, // Protocol id length
@@ -154,38 +154,37 @@ testParseGenerate('no clientId with 3.1.1', {
   4, // Protocol version
   2, // Connect flags
   0, 30, // Keepalive
-  0, 0, //Client id length
+  0, 0 // Client id length
 ]))
 
 testParseGenerateDefaults('default connect', {
-    cmd: 'connect'
-  , clientId: 'test'
+  cmd: 'connect',
+  clientId: 'test'
 }, new Buffer([
   16, 16, 0, 4, 77, 81, 84,
   84, 4, 2, 0, 0,
   0, 4, 116, 101, 115, 116
 ]))
 
-
 testParseGenerate('empty will payload', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 47
-  , protocolId: 'MQIsdp'
-  , protocolVersion: 3
-  , will: {
-        retain: true
-      , qos: 2
-      , topic: 'topic'
-      , payload: new Buffer(0)
-    }
-  , clean: true
-  , keepalive: 30
-  , clientId: 'test'
-  , username: 'username'
-  , password: new Buffer('password')
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 47,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  will: {
+    retain: true,
+    qos: 2,
+    topic: 'topic',
+    payload: new Buffer(0)
+  },
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: 'username',
+  password: new Buffer('password')
 }, new Buffer([
   16, 47, // Header
   0, 6, // Protocol id length
@@ -195,35 +194,35 @@ testParseGenerate('empty will payload', {
   0, 30, // Keepalive
   0, 4, // Client id length
   116, 101, 115, 116, // Client id
-  0, 5, // will topic length
-  116, 111, 112, 105, 99, // will topic
-  0, 0, // will payload length
-  // will payload
-  0, 8, // username length
-  117, 115, 101, 114, 110, 97, 109, 101, // username
-  0, 8, // password length
-  112, 97, 115, 115, 119, 111, 114, 100 //password
+  0, 5, // Will topic length
+  116, 111, 112, 105, 99, // Will topic
+  0, 0, // Will payload length
+  // Will payload
+  0, 8, // Username length
+  117, 115, 101, 114, 110, 97, 109, 101, // Username
+  0, 8, // Password length
+  112, 97, 115, 115, 119, 111, 114, 100 // Password
 ]))
 
 testParseGenerate('maximal connect', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 54
-  , protocolId: 'MQIsdp'
-  , protocolVersion: 3
-  , will: {
-        retain: true
-      , qos: 2
-      , topic: 'topic'
-      , payload: new Buffer('payload')
-    }
-  , clean: true
-  , keepalive: 30
-  , clientId: 'test'
-  , username: 'username'
-  , password: new Buffer('password')
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 54,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  will: {
+    retain: true,
+    qos: 2,
+    topic: 'topic',
+    payload: new Buffer('payload')
+  },
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: 'username',
+  password: new Buffer('password')
 }, new Buffer([
   16, 54, // Header
   0, 6, // Protocol id length
@@ -233,35 +232,35 @@ testParseGenerate('maximal connect', {
   0, 30, // Keepalive
   0, 4, // Client id length
   116, 101, 115, 116, // Client id
-  0, 5, // will topic length
-  116, 111, 112, 105, 99, // will topic
-  0, 7, // will payload length
-  112, 97, 121, 108, 111, 97, 100, // will payload
-  0, 8, // username length
-  117, 115, 101, 114, 110, 97, 109, 101, // username
-  0, 8, // password length
-  112, 97, 115, 115, 119, 111, 114, 100 //password
+  0, 5, // Will topic length
+  116, 111, 112, 105, 99, // Will topic
+  0, 7, // Will payload length
+  112, 97, 121, 108, 111, 97, 100, // Will payload
+  0, 8, // Username length
+  117, 115, 101, 114, 110, 97, 109, 101, // Username
+  0, 8, // Password length
+  112, 97, 115, 115, 119, 111, 114, 100 // Password
 ]))
 
 testParseGenerate('max connect with special chars', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 57
-  , protocolId: 'MQIsdp'
-  , protocolVersion: 3
-  , will: {
-        retain: true
-      , qos: 2
-      , topic: 'tòpic'
-      , payload: new Buffer('pay£oad')
-    }
-  , clean: true
-  , keepalive: 30
-  , clientId: 'te$t'
-  , username: 'u$ern4me'
-  , password: new Buffer('p4$$w0£d')
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 57,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  will: {
+    retain: true,
+    qos: 2,
+    topic: 'tòpic',
+    payload: new Buffer('pay£oad')
+  },
+  clean: true,
+  keepalive: 30,
+  clientId: 'te$t',
+  username: 'u$ern4me',
+  password: new Buffer('p4$$w0£d')
 }, new Buffer([
   16, 57, // Header
   0, 6, // Protocol id length
@@ -271,110 +270,110 @@ testParseGenerate('max connect with special chars', {
   0, 30, // Keepalive
   0, 4, // Client id length
   116, 101, 36, 116, // Client id
-  0, 6, // will topic length
-  116, 195, 178, 112, 105, 99, // will topic
-  0, 8, // will payload length
-  112, 97, 121, 194, 163, 111, 97, 100, // will payload
-  0, 8, // username length
-  117, 36, 101, 114, 110, 52, 109, 101, // username
-  0, 9, // password length
-  112, 52, 36, 36, 119, 48, 194, 163, 100 //password
+  0, 6, // Will topic length
+  116, 195, 178, 112, 105, 99, // Will topic
+  0, 8, // Will payload length
+  112, 97, 121, 194, 163, 111, 97, 100, // Will payload
+  0, 8, // Username length
+  117, 36, 101, 114, 110, 52, 109, 101, // Username
+  0, 9, // Password length
+  112, 52, 36, 36, 119, 48, 194, 163, 100 // Password
 ]))
 
-test('connect all strings generate', function(t) {
+test('connect all strings generate', function (t) {
   var message = {
-          cmd: 'connect'
-        , retain: false
-        , qos: 0
-        , dup: false
-        , length: 54
-        , protocolId: 'MQIsdp'
-        , protocolVersion: 3
-        , will: {
-              retain: true
-            , qos: 2
-            , topic: 'topic'
-            , payload: 'payload'
-          }
-        , clean: true
-        , keepalive: 30
-        , clientId: 'test'
-        , username: 'username'
-        , password: 'password'
-      }
-    , expected = new Buffer([
-        16, 54, // Header
-        0, 6, // Protocol id length
-        77, 81, 73, 115, 100, 112, // Protocol id
-        3, // Protocol version
-        246, // Connect flags
-        0, 30, // Keepalive
-        0, 4, // Client id length
-        116, 101, 115, 116, // Client id
-        0, 5, // will topic length
-        116, 111, 112, 105, 99, // will topic
-        0, 7, // will payload length
-        112, 97, 121, 108, 111, 97, 100, // will payload
-        0, 8, // username length
-        117, 115, 101, 114, 110, 97, 109, 101, // username
-        0, 8, // password length
-        112, 97, 115, 115, 119, 111, 114, 100 //password
-      ])
+    cmd: 'connect',
+    retain: false,
+    qos: 0,
+    dup: false,
+    length: 54,
+    protocolId: 'MQIsdp',
+    protocolVersion: 3,
+    will: {
+      retain: true,
+      qos: 2,
+      topic: 'topic',
+      payload: 'payload'
+    },
+    clean: true,
+    keepalive: 30,
+    clientId: 'test',
+    username: 'username',
+    password: 'password'
+  }
+  var expected = new Buffer([
+    16, 54, // Header
+    0, 6, // Protocol id length
+    77, 81, 73, 115, 100, 112, // Protocol id
+    3, // Protocol version
+    246, // Connect flags
+    0, 30, // Keepalive
+    0, 4, // Client id length
+    116, 101, 115, 116, // Client id
+    0, 5, // Will topic length
+    116, 111, 112, 105, 99, // Will topic
+    0, 7, // Will payload length
+    112, 97, 121, 108, 111, 97, 100, // Will payload
+    0, 8, // Username length
+    117, 115, 101, 114, 110, 97, 109, 101, // Username
+    0, 8, // Password length
+    112, 97, 115, 115, 119, 111, 114, 100 // Password
+  ])
 
   t.equal(mqtt.generate(message).toString('hex'), expected.toString('hex'))
   t.end()
 })
 
-testParseError('cannot parse protocol id', new Buffer([
+testParseError('Cannot parse protocol id', new Buffer([
   16, 4,
   0, 6,
   77, 81
 ]))
 
 testParseGenerate('connack with return code 0', {
-    cmd: 'connack'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 2
-  , sessionPresent: false
-  , returnCode: 0
+  cmd: 'connack',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  sessionPresent: false,
+  returnCode: 0
 }, new Buffer([
   32, 2, 0, 0
 ]))
 
 testParseGenerate('connack with return code 0 session present bit set', {
-   cmd: 'connack'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 2
-  , sessionPresent: true
-  , returnCode: 0
+  cmd: 'connack',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  sessionPresent: true,
+  returnCode: 0
 }, new Buffer([
-   32, 2, 1, 0
+  32, 2, 1, 0
 ]))
 
 testParseGenerate('connack with return code 5', {
-    cmd: 'connack'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 2
-  , sessionPresent: false
-  , returnCode: 5
+  cmd: 'connack',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  sessionPresent: false,
+  returnCode: 5
 }, new Buffer([
   32, 2, 0, 5
 ]))
 
 testParseGenerate('minimal publish', {
-    cmd: 'publish'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 10
-  , topic: 'test'
-  , payload: new Buffer('test')
+  cmd: 'publish',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 10,
+  topic: 'test',
+  payload: new Buffer('test')
 }, new Buffer([
   48, 10, // Header
   0, 4, // Topic length
@@ -382,49 +381,49 @@ testParseGenerate('minimal publish', {
   116, 101, 115, 116 // Payload (test)
 ]))
 
-;(function() {
+;(function () {
   var buffer = new Buffer(2048)
   testParseGenerate('2KB publish packet', {
-      cmd: 'publish'
-    , retain: false
-    , qos: 0
-    , dup: false
-    , length: 2054
-    , topic: 'test'
-    , payload: buffer
+    cmd: 'publish',
+    retain: false,
+    qos: 0,
+    dup: false,
+    length: 2054,
+    topic: 'test',
+    payload: buffer
   }, Buffer.concat([new Buffer([
     48, 134, 16, // Header
     0, 4, // Topic length
-    116, 101, 115, 116, // Topic (test)
+    116, 101, 115, 116 // Topic (test)
   ]), buffer]))
 })()
 
-;(function() {
+;(function () {
   var buffer = new Buffer(2 * 1024 * 1024)
   testParseGenerate('2MB publish packet', {
-      cmd: 'publish'
-    , retain: false
-    , qos: 0
-    , dup: false
-    , length: 6 + 2 * 1024 * 1024
-    , topic: 'test'
-    , payload: buffer
+    cmd: 'publish',
+    retain: false,
+    qos: 0,
+    dup: false,
+    length: 6 + 2 * 1024 * 1024,
+    topic: 'test',
+    payload: buffer
   }, Buffer.concat([new Buffer([
     48, 134, 128, 128, 1, // Header
     0, 4, // Topic length
-    116, 101, 115, 116, // Topic (test)
+    116, 101, 115, 116 // Topic (test)
   ]), buffer]))
 })()
 
 testParseGenerate('maximal publish', {
-    cmd:'publish'
-  , retain: true
-  , qos: 2
-  , length: 12
-  , dup: true
-  , topic: 'test'
-  , messageId: 10
-  , payload: new Buffer('test')
+  cmd: 'publish',
+  retain: true,
+  qos: 2,
+  length: 12,
+  dup: true,
+  topic: 'test',
+  messageId: 10,
+  payload: new Buffer('test')
 }, new Buffer([
   61, 12, // Header
   0, 4, // Topic length
@@ -433,37 +432,37 @@ testParseGenerate('maximal publish', {
   116, 101, 115, 116 // Payload
 ]))
 
-test('publish all strings generate', function(t) {
+test('publish all strings generate', function (t) {
   var message = {
-          cmd:'publish'
-        , retain: true
-        , qos: 2
-        , length: 12
-        , dup: true
-        , topic: 'test'
-        , messageId: 10
-        , payload: new Buffer('test')
-      }
-    , expected = new Buffer([
-        61, 12, // Header
-        0, 4, // Topic length
-        116, 101, 115, 116, // Topic
-        0, 10, // Message id
-        116, 101, 115, 116 // Payload
-      ])
+    cmd: 'publish',
+    retain: true,
+    qos: 2,
+    length: 12,
+    dup: true,
+    topic: 'test',
+    messageId: 10,
+    payload: new Buffer('test')
+  }
+  var expected = new Buffer([
+    61, 12, // Header
+    0, 4, // Topic length
+    116, 101, 115, 116, // Topic
+    0, 10, // Message id
+    116, 101, 115, 116 // Payload
+  ])
 
   t.equal(mqtt.generate(message).toString('hex'), expected.toString('hex'))
   t.end()
 })
 
 testParseGenerate('empty publish', {
-    cmd: 'publish'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 6
-  , topic: 'test'
-  , payload: new Buffer(0)
+  cmd: 'publish',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 6,
+  topic: 'test',
+  payload: new Buffer(0)
 }, new Buffer([
   48, 6, // Header
   0, 4, // Topic length
@@ -471,23 +470,21 @@ testParseGenerate('empty publish', {
   // Empty payload
 ]))
 
-
-test('splitted publish parse', function(t) {
+test('splitted publish parse', function (t) {
   t.plan(3)
 
   var parser = mqtt.parser()
-    , rest
-    , expected = {
-          cmd: 'publish'
-        , retain: false
-        , qos: 0
-        , dup: false
-        , length: 10
-        , topic: 'test'
-        , payload: new Buffer('test')
-      };
+  var expected = {
+    cmd: 'publish',
+    retain: false,
+    qos: 0,
+    dup: false,
+    length: 10,
+    topic: 'test',
+    payload: new Buffer('test')
+  }
 
-  parser.on('packet', function(packet) {
+  parser.on('packet', function (packet) {
     t.deepEqual(packet, expected, 'expected packet')
   })
 
@@ -497,130 +494,129 @@ test('splitted publish parse', function(t) {
     116, 101, 115, 116 // Topic (test)
   ])), 6, 'remaining bytes')
 
-
   t.equal(parser.parse(new Buffer([
     116, 101, 115, 116 // Payload (test)
   ])), 0, 'remaining bytes')
 })
 
 testParseGenerate('puback', {
-    cmd: 'puback'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 2
-  , messageId: 2
+  cmd: 'puback',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  messageId: 2
 }, new Buffer([
   64, 2, // Header
   0, 2 // Message id
 ]))
 
 testParseGenerate('pubrec', {
-    cmd: 'pubrec'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 2
-  , messageId: 2
+  cmd: 'pubrec',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  messageId: 2
 }, new Buffer([
   80, 2, // Header
   0, 2 // Message id
 ]))
 
 testParseGenerate('pubrel', {
-    cmd: 'pubrel'
-  , retain: false
-  , qos: 1
-  , dup: false
-  , length: 2
-  , messageId: 2
+  cmd: 'pubrel',
+  retain: false,
+  qos: 1,
+  dup: false,
+  length: 2,
+  messageId: 2
 }, new Buffer([
   98, 2, // Header
   0, 2 // Message id
 ]))
 
 testParseGenerate('pubcomp', {
-    cmd: 'pubcomp'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 2
-  , messageId: 2
+  cmd: 'pubcomp',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  messageId: 2
 }, new Buffer([
   112, 2, // Header
   0, 2 // Message id
 ]))
 
-testParseError('wrong subscribe header', new Buffer([
-  128, 9, // Header (subscribe, qos=0, length=9)
-  0, 6, // message id (6)
-  0, 4, // topic length,
+testParseError('Wrong subscribe header', new Buffer([
+  128, 9, // Header (subscribeqos=0length=9)
+  0, 6, // Message id (6)
+  0, 4, // Topic length,
   116, 101, 115, 116, // Topic (test)
-  0 // qos (0)
+  0 // Qos (0)
 ]))
 
 testParseGenerate('subscribe to one topic', {
-    cmd: 'subscribe'
-  , retain: false
-  , qos: 1
-  , dup: false
-  , length: 9
-  , subscriptions: [
-      {
-          topic: "test"
-        , qos: 0
-      }
-    ]
-  , messageId: 6
+  cmd: 'subscribe',
+  retain: false,
+  qos: 1,
+  dup: false,
+  length: 9,
+  subscriptions: [
+    {
+      topic: 'test',
+      qos: 0
+    }
+  ],
+  messageId: 6
 }, new Buffer([
-  130, 9, // Header (subscribe, qos=1, length=9)
-  0, 6, // message id (6)
-  0, 4, // topic length,
+  130, 9, // Header (subscribeqos=1length=9)
+  0, 6, // Message id (6)
+  0, 4, // Topic length,
   116, 101, 115, 116, // Topic (test)
-  0 // qos (0)
+  0 // Qos (0)
 ]))
 
 testParseGenerate('subscribe to three topics', {
-    cmd: 'subscribe'
-  , retain: false
-  , qos: 1
-  , dup: false
-  , length: 23
-  , subscriptions: [
-      {
-          topic: "test"
-        , qos: 0
-      },{
-          topic: "uest"
-        , qos: 1
-      },{
-          topic: "tfst"
-        , qos: 2
-      }
-    ],
-    messageId: 6
+  cmd: 'subscribe',
+  retain: false,
+  qos: 1,
+  dup: false,
+  length: 23,
+  subscriptions: [
+    {
+      topic: 'test',
+      qos: 0
+    }, {
+      topic: 'uest',
+      qos: 1
+    }, {
+      topic: 'tfst',
+      qos: 2
+    }
+  ],
+  messageId: 6
 }, new Buffer([
-  130, 23, // Header (publish, qos=1, length=9)
-  0, 6, // message id (6)
-  0, 4, // topic length,
+  130, 23, // Header (publishqos=1length=9)
+  0, 6, // Message id (6)
+  0, 4, // Topic length,
   116, 101, 115, 116, // Topic (test)
-  0, // qos (0)
-  0, 4, // topic length
+  0, // Qos (0)
+  0, 4, // Topic length
   117, 101, 115, 116, // Topic (uest)
-  1, // qos (1)
-  0, 4, // topic length
+  1, // Qos (1)
+  0, 4, // Topic length
   116, 102, 115, 116, // Topic (tfst)
-  2 // qos (2)
+  2 // Qos (2)
 ]))
 
 testParseGenerate('suback', {
-    cmd: 'suback'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 6
-  , granted: [0, 1, 2, 128]
-  , messageId: 6
+  cmd: 'suback',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 6,
+  granted: [0, 1, 2, 128],
+  messageId: 6
 }, new Buffer([
   144, 6, // Header
   0, 6, // Message id
@@ -628,260 +624,259 @@ testParseGenerate('suback', {
 ]))
 
 testParseGenerate('unsubscribe', {
-    cmd: 'unsubscribe'
-  , retain: false
-  , qos: 1
-  , dup: false
-  , length: 14
-  , unsubscriptions: [
-        'tfst'
-      , 'test'
-    ],
-    messageId: 7
+  cmd: 'unsubscribe',
+  retain: false,
+  qos: 1,
+  dup: false,
+  length: 14,
+  unsubscriptions: [
+    'tfst',
+    'test'
+  ],
+  messageId: 7
 }, new Buffer([
   162, 14,
-  0, 7, // message id (7)
-  0, 4, // topic length
+  0, 7, // Message id (7)
+  0, 4, // Topic length
   116, 102, 115, 116, // Topic (tfst)
-  0, 4, // topic length,
-  116, 101, 115, 116, // Topic (test)
+  0, 4, // Topic length,
+  116, 101, 115, 116 // Topic (test)
 ]))
 
 testParseGenerate('unsuback', {
-    cmd: 'unsuback'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 2
-  , messageId: 8
+  cmd: 'unsuback',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  messageId: 8
 }, new Buffer([
   176, 2, // Header
   0, 8 // Message id
 ]))
 
 testParseGenerate('pingreq', {
-    cmd: 'pingreq'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 0
+  cmd: 'pingreq',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 0
 }, new Buffer([
   192, 0 // Header
 ]))
 
 testParseGenerate('pingresp', {
-    cmd: 'pingresp'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 0
+  cmd: 'pingresp',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 0
 }, new Buffer([
   208, 0 // Header
 ]))
 
 testParseGenerate('disconnect', {
-    cmd: 'disconnect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 0
+  cmd: 'disconnect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 0
 }, new Buffer([
   224, 0 // Header
 ]))
 
-testGenerateError('unknown command', {})
+testGenerateError('Unknown command', {})
 
 testGenerateError('Invalid protocol id', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 54
-  , protocolId: 42
-  , protocolVersion: 3
-  , will: {
-      retain: true
-    , qos: 2
-    , topic: 'topic'
-    , payload: 'payload'
-    }
-  , clean: true
-  , keepalive: 30
-  , clientId: 'test'
-  , username: 'username'
-  , password: 'password'
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 54,
+  protocolId: 42,
+  protocolVersion: 3,
+  will: {
+    retain: true,
+    qos: 2,
+    topic: 'topic',
+    payload: 'payload'
+  },
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: 'username',
+  password: 'password'
 })
 
 testGenerateError('clientId must be supplied before 3.1.1', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 54
-  , protocolId: 'MQIsdp'
-  , protocolVersion: 3
-  , will: {
-      retain: true
-    , qos: 2
-    , topic: 'topic'
-    , payload: 'payload'
-    }
-  , clean: true
-  , keepalive: 30
-  , username: 'username'
-  , password: 'password'
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 54,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  will: {
+    retain: true,
+    qos: 2,
+    topic: 'topic',
+    payload: 'payload'
+  },
+  clean: true,
+  keepalive: 30,
+  username: 'username',
+  password: 'password'
 })
 
 testGenerateError('clientId must be given if cleanSession set to 0', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 54
-  , protocolId: 'MQTT'
-  , protocolVersion: 4
-  , will: {
-      retain: true
-    , qos: 2
-    , topic: 'topic'
-    , payload: 'payload'
-    }
-  , clean: false
-  , keepalive: 30
-  , username: 'username'
-  , password: 'password'
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 54,
+  protocolId: 'MQTT',
+  protocolVersion: 4,
+  will: {
+    retain: true,
+    qos: 2,
+    topic: 'topic',
+    payload: 'payload'
+  },
+  clean: false,
+  keepalive: 30,
+  username: 'username',
+  password: 'password'
 })
 
 testGenerateError('Invalid keepalive', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 54
-  , protocolId: 'MQIsdp'
-  , protocolVersion: 3
-  , will: {
-      retain: true
-    , qos: 2
-    , topic: 'topic'
-    , payload: 'payload'
-    }
-  , clean: true
-  , keepalive: 'hello'
-  , clientId: 'test'
-  , username: 'username'
-  , password: 'password'
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 54,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  will: {
+    retain: true,
+    qos: 2,
+    topic: 'topic',
+    payload: 'payload'
+  },
+  clean: true,
+  keepalive: 'hello',
+  clientId: 'test',
+  username: 'username',
+  password: 'password'
 })
 
 testGenerateError('Invalid keepalive', {
-    cmd: 'connect'
-    , keepalive: 3.1416
+  cmd: 'connect',
+  keepalive: 3.1416
 })
 
 testGenerateError('Invalid will', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 54
-  , protocolId: 'MQIsdp'
-  , protocolVersion: 3
-  , will: 42
-  , clean: true
-  , keepalive: 30
-  , clientId: 'test'
-  , username: 'username'
-  , password: 'password'
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 54,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  will: 42,
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: 'username',
+  password: 'password'
 })
 
 testGenerateError('Invalid will topic', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 54
-  , protocolId: 'MQIsdp'
-  , protocolVersion: 3
-  , will: {
-      retain: true
-    , qos: 2
-    , payload: 'payload'
-    }
-  , clean: true
-  , keepalive: 30
-  , clientId: 'test'
-  , username: 'username'
-  , password: 'password'
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 54,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  will: {
+    retain: true,
+    qos: 2,
+    payload: 'payload'
+  },
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: 'username',
+  password: 'password'
 })
 
 testGenerateError('Invalid will payload', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 54
-  , protocolId: 'MQIsdp'
-  , protocolVersion: 3
-  , will: {
-        retain: true
-      , qos: 2
-      , topic: 'topic'
-      , payload: 42
-    }
-  , clean: true
-  , keepalive: 30
-  , clientId: 'test'
-  , username: 'username'
-  , password: 'password'
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 54,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  will: {
+    retain: true,
+    qos: 2,
+    topic: 'topic',
+    payload: 42
+  },
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: 'username',
+  password: 'password'
 })
 
 testGenerateError('Invalid username', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 54
-  , protocolId: 'MQIsdp'
-  , protocolVersion: 3
-  , will: {
-      retain: true
-    , qos: 2
-    , topic: 'topic'
-    , payload: 'payload'
-    }
-  , clean: true
-  , keepalive: 30
-  , clientId: 'test'
-  , username: 42
-  , password: 'password'
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 54,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  will: {
+    retain: true,
+    qos: 2,
+    topic: 'topic',
+    payload: 'payload'
+  },
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: 42,
+  password: 'password'
 })
 
 testGenerateError('Invalid password', {
-    cmd: 'connect'
-  , retain: false
-  , qos: 0
-  , dup: false
-  , length: 54
-  , protocolId: 'MQIsdp'
-  , protocolVersion: 3
-  , will: {
-      retain: true
-    , qos: 2
-    , topic: 'topic'
-    , payload: 'payload'
-    }
-  , clean: true
-  , keepalive: 30
-  , clientId: 'test'
-  , username: 'username'
-  , password: 42
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 54,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  will: {
+    retain: true,
+    qos: 2,
+    topic: 'topic',
+    payload: 'payload'
+  },
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: 'username',
+  password: 42
 })
 
 test('support cork', function (t) {
   t.plan(9)
 
   var dest = WS()
-    , count = 0
 
   dest._write = function (chunk, enc, cb) {
     t.pass('_write called')
@@ -889,22 +884,22 @@ test('support cork', function (t) {
   }
 
   mqtt.writeToStream({
-      cmd: 'connect'
-    , retain: false
-    , qos: 0
-    , dup: false
-    , length: 18
-    , protocolId: 'MQIsdp'
-    , protocolVersion: 3
-    , clean: false
-    , keepalive: 30
-    , clientId: 'test'
+    cmd: 'connect',
+    retain: false,
+    qos: 0,
+    dup: false,
+    length: 18,
+    protocolId: 'MQIsdp',
+    protocolVersion: 3,
+    clean: false,
+    keepalive: 30,
+    clientId: 'test'
   }, dest)
 
   dest.end()
 })
 
-// the following test case was designed after experiencing errors
+// The following test case was designed after experiencing errors
 // when trying to connect with tls on a non tls mqtt port
 // the specific behaviour is:
 // - first byte suggests this is a connect message
@@ -915,7 +910,7 @@ test('support cork', function (t) {
 // - when trying to read further connect flags the buffer produces
 //   a "out of range" Error
 //
-testParseError('packet too short', new Buffer([
+testParseError('Packet too short', new Buffer([
   16, 9,
   0, 6,
   77, 81, 73, 115, 100, 112,
@@ -925,39 +920,39 @@ testParseError('packet too short', new Buffer([
 // CONNECT Packets that show other protocol ids than
 // the valid values MQTT and MQIsdp should cause an error
 // those packets are a hint that this is not a mqtt connection
-testParseError('invalid protocol id', new Buffer([
+testParseError('Invalid protocol id', new Buffer([
   16, 18,
   0, 6,
-  65,65,65,65,65,65, // AAAAAA
-  3, // protocol version
-  0, // connect flags
-  0, 10, // keep alive
-  0, 4, //Client id length
+  65, 65, 65, 65, 65, 65, // AAAAAA
+  3, // Protocol version
+  0, // Connect flags
+  0, 10, // Keepalive
+  0, 4, // Client id length
   116, 101, 115, 116 // Client id
 ]))
 
 // CONNECT Packets that contain an unsupported protocol version
-// flag (i.e. not `3` or `4`) should cause an error
-testParseError('invalid protocol version', new Buffer([
+// Flag (i.e. not `3` or `4`) should cause an error
+testParseError('Invalid protocol version', new Buffer([
   16, 18,
   0, 6,
   77, 81, 73, 115, 100, 112, // Protocol id
-  1, // protocol version
-  0, // connect flags
-  0, 10, // keep alive
-  0, 4, //Client id length
+  1, // Protocol version
+  0, // Connect flags
+  0, 10, // Keepalive
+  0, 4, // Client id length
   116, 101, 115, 116 // Client id
 ]))
 
-// when a packet contains a string in the variable header and the
+// When a packet contains a string in the variable header and the
 // given string length of this exceeds the overall length of the packet that
 // was specified in the fixed header, parsing must fail.
 // this case simulates this behavior with the protocol id string of the
 // CONNECT packet. The fixed header suggests a remaining length of 8 bytes
 // which would be exceeded by the string length of 15
 // in this case, a protocol id parse error is expected
-testParseError('cannot parse protocol id', new Buffer([
-  16, 8, // fixed header
+testParseError('Cannot parse protocol id', new Buffer([
+  16, 8, // Fixed header
   0, 15, // string length 15 --> 15 > 8 --> error!
   77, 81, 73, 115, 100, 112,
   77, 81, 73, 115, 100, 112,
@@ -969,7 +964,7 @@ testParseError('cannot parse protocol id', new Buffer([
   77, 81, 73, 115, 100, 112
 ]))
 
-test('stops parsing after first error', function(t) {
+test('stops parsing after first error', function (t) {
   t.plan(4)
 
   var parser = mqtt.parser()
@@ -979,16 +974,16 @@ test('stops parsing after first error', function(t) {
   var expectedPackets = 1
   var expectedErrors = 1
 
-  parser.on('packet', function(packet) {
+  parser.on('packet', function (packet) {
     t.ok(++packetCount <= expectedPackets, 'expected <= ' + expectedPackets + ' packets')
   })
 
-  parser.on('error', function(err) {
+  parser.on('error', function (erroneous) {
     t.ok(++errorCount <= expectedErrors, 'expected <= ' + expectedErrors + ' errors')
   })
 
   parser.parse(new Buffer([
-    // first, a valid connect packet:
+    // First, a valid connect packet:
 
     16, 12, // Header
     0, 4, // Protocol id length
@@ -996,37 +991,37 @@ test('stops parsing after first error', function(t) {
     4, // Protocol version
     2, // Connect flags
     0, 30, // Keepalive
-    0, 0, //Client id length
+    0, 0, // Client id length
 
-    // then an invalid subscribe packet:
+    // Then an invalid subscribe packet:
 
-    128, 9, // Header (subscribe, qos=0, length=9)
-    0, 6, // message id (6)
-    0, 4, // topic length,
+    128, 9, // Header (subscribeqos=0length=9)
+    0, 6, // Message id (6)
+    0, 4, // Topic length,
     116, 101, 115, 116, // Topic (test)
-    0, // qos (0)
+    0, // Qos (0)
 
-    // and another invalid subscribe packet:
+    // And another invalid subscribe packet:
 
-    128, 9, // Header (subscribe, qos=0, length=9)
-    0, 6, // message id (6)
-    0, 4, // topic length,
+    128, 9, // Header (subscribeqos=0length=9)
+    0, 6, // Message id (6)
+    0, 4, // Topic length,
     116, 101, 115, 116, // Topic (test)
-    0, // qos (0)
+    0, // Qos (0)
 
-    // finally, a valid disconnect packet:
+    // Finally, a valid disconnect packet:
 
-    224, 0, // Header
+    224, 0 // Header
   ]))
 
-  // calling parse again clears the error and continues parsing
+  // Calling parse again clears the error and continues parsing
   packetCount = 0
   errorCount = 0
   expectedPackets = 2
   expectedErrors = 0
 
   parser.parse(new Buffer([
-    // connect:
+    // Connect:
 
     16, 12, // Header
     0, 4, // Protocol id length
@@ -1034,11 +1029,11 @@ test('stops parsing after first error', function(t) {
     4, // Protocol version
     2, // Connect flags
     0, 30, // Keepalive
-    0, 0, //Client id length
+    0, 0, // Client id length
 
-    // disconnect:
+    // Disconnect:
 
-    224, 0, // Header
+    224, 0 // Header
   ]))
 })
 

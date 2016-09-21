@@ -3,7 +3,9 @@ mqtt-packet&nbsp;&nbsp;&nbsp;[![Build Status](https://travis-ci.org/mqttjs/mqtt-
 
 Encode and Decode MQTT 3.1.1 packets the node way.
 
-  * <a href="#install">Install</a>
+[![JavaScript Style Guide](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
+
+  * <a href="#install">Installation</a>
   * <a href="#examples">Examples</a>
   * <a href="#packets">Packets</a>
   * <a href="#api">API</a>
@@ -13,7 +15,7 @@ Encode and Decode MQTT 3.1.1 packets the node way.
 This library is tested with node v4 and v6. The last version to support
 older versions of node was mqtt-packet@4.1.2.
 
-Install
+Installation
 ------------
 
 ```bash
@@ -26,22 +28,23 @@ Examples
 ### Generating
 
 ```js
-var mqtt    = require('mqtt-packet')
-  , object  = {
-        cmd: 'publish'
-      , retain: false
-      , qos: 0
-      , dup: false
-      , length: 10
-      , topic: 'test'
-      , payload: 'test' // can also be a Buffer
-    }
+var mqtt = require('mqtt-packet')
+var object = {
+  cmd: 'publish',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 10,
+  topic: 'test',
+  payload: 'test' // Can also be a Buffer
+}
 
 console.log(mqtt.generate(object))
-// prints
+// Prints:
+//
 // <Buffer 30 0a 00 04 74 65 73 74 74 65 73 74>
 //
-// the same as
+// Which is the same as
 //
 // new Buffer([
 //   48, 10, // Header
@@ -54,22 +57,22 @@ console.log(mqtt.generate(object))
 ### Parsing
 
 ```js
-var mqtt      = require('mqtt-packet')
-  , parser    = mqtt.parser()
+var mqtt = require('mqtt-packet')
+var parser = mqtt.parser()
 
-// synchronously emits all the parsed packets
+// Synchronously emits all the parsed packets
 parser.on('packet', function(packet) {
   console.log(packet)
-  // prints:
+  // Prints:
   //
   // {
-  //     cmd: 'publish'
-  //   , retain: false
-  //   , qos: 0
-  //   , dup: false
-  //   , length: 10
-  //   , topic: 'test'
-  //   , payload: <Buffer 74 65 73 74>
+  //   cmd: 'publish',
+  //   retain: false,
+  //   qos: 0,
+  //   dup: false,
+  //   length: 10,
+  //   topic: 'test',
+  //   payload: <Buffer 74 65 73 74>
   // }
 })
 
@@ -79,7 +82,7 @@ parser.parse(new Buffer([
   116, 101, 115, 116, // Topic (test)
   116, 101, 115, 116 // Payload (test)
 ])
-// returns the number of bytes left in the parser
+// Returns the number of bytes left in the parser
 ```
 
 API
@@ -135,18 +138,18 @@ and that you can input to `generate`.
 
 ```js
 {
-    cmd: 'connect'
-  , protocolId: 'MQTT' // or 'MQIsdp' in MQTT 3.1.1
-  , protocolVersion: 4 // or 3 in MQTT 3.1
-  , clean: true // or false
-  , clientId: 'my-device'
-  , keepalive: 0 // seconds, 0 is the default, can be any positive number
-  , username: 'matteo'
-  , password: new Buffer('collina') // passwords are buffers
-  , will: {
-        topic: 'mydevice/status'
-      , payload: new Buffer('dead') // payloads are buffers
-    }
+  cmd: 'connect',
+  protocolId: 'MQTT', // Or 'MQIsdp' in MQTT 3.1.1
+  protocolVersion: 4, // Or 3 in MQTT 3.1
+  clean: true, // Can also be false
+  clientId: 'my-device',
+  keepalive: 0, // Seconds which can be any positive number, with 0 as the default setting
+  username: 'matteo',
+  password: new Buffer('collina'), // Passwords are buffers
+  will: {
+    topic: 'mydevice/status',
+    payload: new Buffer('dead') // Payloads are buffers
+  }
 }
 ```
 
@@ -160,9 +163,9 @@ automatically be converted into a `Buffer`.
 
 ```js
 {
-    cmd: 'connack'
-  , returnCode: 0 // or whatever else you see fit
-  , sessionPresent: false // or true.
+  cmd: 'connack',
+  returnCode: 0, // Or whatever else you see fit
+  sessionPresent: false // Can also be true.
 }
 ```
 
@@ -173,12 +176,12 @@ missing.
 
 ```js
 {
-    cmd: 'subscribe'
-  , messageId: 42
-  , subscriptions: [{
-        topic: 'test'
-      , qos: 0
-    }]
+  cmd: 'subscribe',
+  messageId: 42,
+  subscriptions: [{
+    topic: 'test',
+    qos: 0
+  }]
 }
 ```
 
@@ -188,9 +191,9 @@ All properties are mandatory.
 
 ```js
 {
-    cmd: 'suback'
-  , messageId: 42
-  , granted: [0, 1, 2, 128]
+  cmd: 'suback',
+  messageId: 42,
+  granted: [0, 1, 2, 128]
 }
 ```
 
@@ -201,12 +204,12 @@ All properties are mandatory.
 
 ```js
 {
-    cmd: 'unsubscribe'
-  , messageId: 42
-  , unsubscriptions: [
-        'test'
-      , 'a/topic'
-    ]
+  cmd: 'unsubscribe',
+  messageId: 42,
+  unsubscriptions: [
+    'test',
+    'a/topic'
+  ]
 }
 ```
 
@@ -216,8 +219,8 @@ All properties are mandatory.
 
 ```js
 {
-    cmd: 'unsuback'
-  , messageId: 42
+  cmd: 'unsuback',
+  messageId: 42
 }
 ```
 
@@ -227,13 +230,13 @@ All properties are mandatory.
 
 ```js
 {
-    cmd: 'publish'
-  , messageId: 42
-  , qos: 2
-  , dup: false
-  , topic: 'test'
-  , payload: new Buffer('test')
-  , retain: false
+  cmd: 'publish',
+  messageId: 42,
+  qos: 2,
+  dup: false,
+  topic: 'test',
+  payload: new Buffer('test'),
+  retain: false
 }
 ```
 
@@ -248,8 +251,8 @@ automatically converted into a `Buffer`.
 
 ```js
 {
-    cmd: 'puback'
-  , messageId: 42
+  cmd: 'puback',
+  messageId: 42
 }
 ```
 
@@ -260,8 +263,8 @@ missing.
 
 ```js
 {
-    cmd: 'pubcomp'
-  , messageId: 42
+  cmd: 'pubcomp',
+  messageId: 42
 }
 ```
 
@@ -272,8 +275,8 @@ missing.
 
 ```js
 {
-    cmd: 'pubrel'
-  , messageId: 42
+  cmd: 'pubrel',
+  messageId: 42
 }
 ```
 
@@ -284,8 +287,8 @@ missing.
 
 ```js
 {
-    cmd: 'pubcomp'
-  , messageId: 42
+  cmd: 'pubcomp',
+  messageId: 42
 }
 ```
 
