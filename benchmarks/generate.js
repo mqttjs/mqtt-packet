@@ -1,16 +1,16 @@
 
-var mqtt    = require('../')
-  , max     = 100000
-  , i
-  , start   = Date.now()
-  , time
-  , buf     = new Buffer('test')
+var mqtt = require('../')
+var max = 100000
+var i
+var start = Date.now()
+var time
+var buf = new Buffer('test')
 
 for (i = 0; i < max; i++) {
   mqtt.generate({
-      cmd: 'publish'
-    , topic: 'test'
-    , payload: buf
+    cmd: 'publish',
+    topic: 'test',
+    payload: buf
   })
 }
 

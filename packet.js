@@ -1,5 +1,5 @@
 
-function Packet() {
+function Packet () {
   this.cmd = null
   this.retain = false
   this.qos = 0

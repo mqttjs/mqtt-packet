@@ -1,10 +1,10 @@
 
-var mqtt    = require('../')
-  , parser  = mqtt.parser()
-  , max     = 10000000
-  , i
-  , start   = Date.now() / 1000
-  , time
+var mqtt = require('../')
+var parser = mqtt.parser()
+var max = 10000000
+var i
+var start = Date.now() / 1000
+var time
 
 for (i = 0; i < max; i++) {
   parser.parse(new Buffer([
