@@ -8,8 +8,8 @@
     "Adam Rudd <damvrr@gmail.com>"
   ],
   "scripts": {
-    "test": "tape test.js | faucet && standard",
-    "ci": "tape test.js && node testRandom"
+    "test": "tape test.js | tap-spec && standard",
+    "ci": "tape test.js && node testRandom && standard"
   },
   "pre-commit": "test",
   "repository": {
@@ -31,10 +31,10 @@
   "homepage": "https://github.com/mqttjs/mqtt-packet",
   "devDependencies": {
     "dev-null": "^0.1.1",
-    "faucet": "0.0.1",
     "pre-commit": "^1.1.3",
     "readable-stream": "^2.1.5",
     "standard": "^8.1.0",
+    "tap-spec": "^4.1.1",
     "tape": "^4.6.0"
   },
   "dependencies": {
