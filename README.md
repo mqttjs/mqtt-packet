@@ -5,7 +5,7 @@ Encode and Decode MQTT 3.1.1 packets the node way.
 
 [![JavaScript Style Guide](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
 
-  * <a href="#install">Installation</a>
+  * <a href="#installation">Installation</a>
   * <a href="#examples">Examples</a>
   * <a href="#packets">Packets</a>
   * <a href="#api">API</a>
