@@ -124,6 +124,7 @@ Parser.prototype._parsePayload = function () {
       case 'pingreq':
       case 'pingresp':
       case 'disconnect':
+      case 'reserved':
         // These are empty, nothing to do
         break
       default:
