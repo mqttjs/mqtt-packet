@@ -240,12 +240,9 @@ All properties are mandatory.
 }
 ```
 
-Only the `topic` and properties are mandatory
+Only the `topic` property is mandatory.
 Both `topic` and `payload` can be `Buffer` objects instead of strings.
 `messageId` is mandatory for `qos > 0`.
-
-If `payload` is passed to `generate(packet)` as a string, it will be
-automatically converted into a `Buffer`.
 
 ### Puback
 
@@ -256,7 +253,7 @@ automatically converted into a `Buffer`.
 }
 ```
 
-The only mandatory argument is `messageId`, as `generate` will throw if
+The only mandatory property is `messageId`, as `generate` will throw if
 missing.
 
 ### Pubrec
@@ -268,7 +265,7 @@ missing.
 }
 ```
 
-The only mandatory argument is `messageId`, as `generate` will throw if
+The only mandatory property is `messageId`, as `generate` will throw if
 missing.
 
 ### Pubrel
@@ -280,7 +277,7 @@ missing.
 }
 ```
 
-The only mandatory argument is `messageId`, as `generate` will throw if
+The only mandatory property is `messageId`, as `generate` will throw if
 missing.
 
 ### Pubcomp
@@ -292,7 +289,7 @@ missing.
 }
 ```
 
-The only mandatory argument is `messageId`, as `generate` will throw if
+The only mandatory property is `messageId`, as `generate` will throw if
 missing.
 
 ### Pingreq
