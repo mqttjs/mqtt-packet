@@ -312,7 +312,7 @@ missing.
 
 ```js
 {
-  cmd: 'pingresp'
+  cmd: 'disconnect'
 }
 ```
 
