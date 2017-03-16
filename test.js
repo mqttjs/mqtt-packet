@@ -127,13 +127,13 @@ testParseGenerate('minimal connect', {
   clientId: 'test'
 }, new Buffer([
   16, 18, // Header
-  0, 6, // Protocol id length
-  77, 81, 73, 115, 100, 112, // Protocol id
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
   3, // Protocol version
   0, // Connect flags
   0, 30, // Keepalive
-  0, 4, // Client id length
-  116, 101, 115, 116 // Client id
+  0, 4, // Client ID length
+  116, 101, 115, 116 // Client ID
 ]))
 
 testParseGenerate('no clientId with 3.1.1', {
@@ -149,12 +149,12 @@ testParseGenerate('no clientId with 3.1.1', {
   clientId: ''
 }, new Buffer([
   16, 12, // Header
-  0, 4, // Protocol id length
-  77, 81, 84, 84, // Protocol id
+  0, 4, // Protocol ID length
+  77, 81, 84, 84, // Protocol ID
   4, // Protocol version
   2, // Connect flags
   0, 30, // Keepalive
-  0, 0 // Client id length
+  0, 0 // Client ID length
 ]))
 
 testParseGenerateDefaults('default connect', {
@@ -187,13 +187,13 @@ testParseGenerate('empty will payload', {
   password: new Buffer('password')
 }, new Buffer([
   16, 47, // Header
-  0, 6, // Protocol id length
-  77, 81, 73, 115, 100, 112, // Protocol id
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
   3, // Protocol version
   246, // Connect flags
   0, 30, // Keepalive
-  0, 4, // Client id length
-  116, 101, 115, 116, // Client id
+  0, 4, // Client ID length
+  116, 101, 115, 116, // Client ID
   0, 5, // Will topic length
   116, 111, 112, 105, 99, // Will topic
   0, 0, // Will payload length
@@ -225,13 +225,13 @@ testParseGenerate('maximal connect', {
   password: new Buffer('password')
 }, new Buffer([
   16, 54, // Header
-  0, 6, // Protocol id length
-  77, 81, 73, 115, 100, 112, // Protocol id
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
   3, // Protocol version
   246, // Connect flags
   0, 30, // Keepalive
-  0, 4, // Client id length
-  116, 101, 115, 116, // Client id
+  0, 4, // Client ID length
+  116, 101, 115, 116, // Client ID
   0, 5, // Will topic length
   116, 111, 112, 105, 99, // Will topic
   0, 7, // Will payload length
@@ -263,13 +263,13 @@ testParseGenerate('max connect with special chars', {
   password: new Buffer('p4$$w0£d')
 }, new Buffer([
   16, 57, // Header
-  0, 6, // Protocol id length
-  77, 81, 73, 115, 100, 112, // Protocol id
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
   3, // Protocol version
   246, // Connect flags
   0, 30, // Keepalive
-  0, 4, // Client id length
-  116, 101, 36, 116, // Client id
+  0, 4, // Client ID length
+  116, 101, 36, 116, // Client ID
   0, 6, // Will topic length
   116, 195, 178, 112, 105, 99, // Will topic
   0, 8, // Will payload length
@@ -303,13 +303,13 @@ test('connect all strings generate', function (t) {
   }
   var expected = new Buffer([
     16, 54, // Header
-    0, 6, // Protocol id length
-    77, 81, 73, 115, 100, 112, // Protocol id
+    0, 6, // Protocol ID length
+    77, 81, 73, 115, 100, 112, // Protocol ID
     3, // Protocol version
     246, // Connect flags
     0, 30, // Keepalive
-    0, 4, // Client id length
-    116, 101, 115, 116, // Client id
+    0, 4, // Client ID length
+    116, 101, 115, 116, // Client ID
     0, 5, // Will topic length
     116, 111, 112, 105, 99, // Will topic
     0, 7, // Will payload length
@@ -324,7 +324,7 @@ test('connect all strings generate', function (t) {
   t.end()
 })
 
-testParseError('Cannot parse protocol id', new Buffer([
+testParseError('Cannot parse protocolId', new Buffer([
   16, 4,
   0, 6,
   77, 81
@@ -428,7 +428,7 @@ testParseGenerate('maximal publish', {
   61, 12, // Header
   0, 4, // Topic length
   116, 101, 115, 116, // Topic
-  0, 10, // Message id
+  0, 10, // Message ID
   116, 101, 115, 116 // Payload
 ]))
 
@@ -447,7 +447,7 @@ test('publish all strings generate', function (t) {
     61, 12, // Header
     0, 4, // Topic length
     116, 101, 115, 116, // Topic
-    0, 10, // Message id
+    0, 10, // Message ID
     116, 101, 115, 116 // Payload
   ])
 
@@ -508,7 +508,7 @@ testParseGenerate('puback', {
   messageId: 2
 }, new Buffer([
   64, 2, // Header
-  0, 2 // Message id
+  0, 2 // Message ID
 ]))
 
 testParseGenerate('pubrec', {
@@ -520,7 +520,7 @@ testParseGenerate('pubrec', {
   messageId: 2
 }, new Buffer([
   80, 2, // Header
-  0, 2 // Message id
+  0, 2 // Message ID
 ]))
 
 testParseGenerate('pubrel', {
@@ -532,7 +532,7 @@ testParseGenerate('pubrel', {
   messageId: 2
 }, new Buffer([
   98, 2, // Header
-  0, 2 // Message id
+  0, 2 // Message ID
 ]))
 
 testParseGenerate('pubcomp', {
@@ -544,12 +544,12 @@ testParseGenerate('pubcomp', {
   messageId: 2
 }, new Buffer([
   112, 2, // Header
-  0, 2 // Message id
+  0, 2 // Message ID
 ]))
 
 testParseError('Wrong subscribe header', new Buffer([
   128, 9, // Header (subscribeqos=0length=9)
-  0, 6, // Message id (6)
+  0, 6, // Message ID (6)
   0, 4, // Topic length,
   116, 101, 115, 116, // Topic (test)
   0 // Qos (0)
@@ -570,7 +570,7 @@ testParseGenerate('subscribe to one topic', {
   messageId: 6
 }, new Buffer([
   130, 9, // Header (subscribeqos=1length=9)
-  0, 6, // Message id (6)
+  0, 6, // Message ID (6)
   0, 4, // Topic length,
   116, 101, 115, 116, // Topic (test)
   0 // Qos (0)
@@ -597,7 +597,7 @@ testParseGenerate('subscribe to three topics', {
   messageId: 6
 }, new Buffer([
   130, 23, // Header (publishqos=1length=9)
-  0, 6, // Message id (6)
+  0, 6, // Message ID (6)
   0, 4, // Topic length,
   116, 101, 115, 116, // Topic (test)
   0, // Qos (0)
@@ -619,7 +619,7 @@ testParseGenerate('suback', {
   messageId: 6
 }, new Buffer([
   144, 6, // Header
-  0, 6, // Message id
+  0, 6, // Message ID
   0, 1, 2, 128 // Granted qos (0, 1, 2) and a rejected being 0x80
 ]))
 
@@ -636,7 +636,7 @@ testParseGenerate('unsubscribe', {
   messageId: 7
 }, new Buffer([
   162, 14,
-  0, 7, // Message id (7)
+  0, 7, // Message ID (7)
   0, 4, // Topic length
   116, 102, 115, 116, // Topic (tfst)
   0, 4, // Topic length,
@@ -652,7 +652,7 @@ testParseGenerate('unsuback', {
   messageId: 8
 }, new Buffer([
   176, 2, // Header
-  0, 8 // Message id
+  0, 8 // Message ID
 ]))
 
 testParseGenerate('pingreq', {
@@ -687,7 +687,7 @@ testParseGenerate('disconnect', {
 
 testGenerateError('Unknown command', {})
 
-testGenerateError('Invalid protocol id', {
+testGenerateError('Invalid protocolId', {
   cmd: 'connect',
   retain: false,
   qos: 0,
@@ -917,18 +917,18 @@ testParseError('Packet too short', new Buffer([
   3
 ]))
 
-// CONNECT Packets that show other protocol ids than
+// CONNECT Packets that show other protocol IDs than
 // the valid values MQTT and MQIsdp should cause an error
 // those packets are a hint that this is not a mqtt connection
-testParseError('Invalid protocol id', new Buffer([
+testParseError('Invalid protocolId', new Buffer([
   16, 18,
   0, 6,
   65, 65, 65, 65, 65, 65, // AAAAAA
   3, // Protocol version
   0, // Connect flags
   0, 10, // Keepalive
-  0, 4, // Client id length
-  116, 101, 115, 116 // Client id
+  0, 4, // Client ID length
+  116, 101, 115, 116 // Client ID
 ]))
 
 // CONNECT Packets that contain an unsupported protocol version
@@ -936,22 +936,22 @@ testParseError('Invalid protocol id', new Buffer([
 testParseError('Invalid protocol version', new Buffer([
   16, 18,
   0, 6,
-  77, 81, 73, 115, 100, 112, // Protocol id
+  77, 81, 73, 115, 100, 112, // Protocol ID
   1, // Protocol version
   0, // Connect flags
   0, 10, // Keepalive
-  0, 4, // Client id length
-  116, 101, 115, 116 // Client id
+  0, 4, // Client ID length
+  116, 101, 115, 116 // Client ID
 ]))
 
 // When a packet contains a string in the variable header and the
 // given string length of this exceeds the overall length of the packet that
 // was specified in the fixed header, parsing must fail.
-// this case simulates this behavior with the protocol id string of the
+// this case simulates this behavior with the protocol ID string of the
 // CONNECT packet. The fixed header suggests a remaining length of 8 bytes
 // which would be exceeded by the string length of 15
-// in this case, a protocol id parse error is expected
-testParseError('Cannot parse protocol id', new Buffer([
+// in this case, a protocol ID parse error is expected
+testParseError('Cannot parse protocolId', new Buffer([
   16, 8, // Fixed header
   0, 15, // string length 15 --> 15 > 8 --> error!
   77, 81, 73, 115, 100, 112,
@@ -986,17 +986,17 @@ test('stops parsing after first error', function (t) {
     // First, a valid connect packet:
 
     16, 12, // Header
-    0, 4, // Protocol id length
-    77, 81, 84, 84, // Protocol id
+    0, 4, // Protocol ID length
+    77, 81, 84, 84, // Protocol ID
     4, // Protocol version
     2, // Connect flags
     0, 30, // Keepalive
-    0, 0, // Client id length
+    0, 0, // Client ID length
 
     // Then an invalid subscribe packet:
 
     128, 9, // Header (subscribeqos=0length=9)
-    0, 6, // Message id (6)
+    0, 6, // Message ID (6)
     0, 4, // Topic length,
     116, 101, 115, 116, // Topic (test)
     0, // Qos (0)
@@ -1004,7 +1004,7 @@ test('stops parsing after first error', function (t) {
     // And another invalid subscribe packet:
 
     128, 9, // Header (subscribeqos=0length=9)
-    0, 6, // Message id (6)
+    0, 6, // Message ID (6)
     0, 4, // Topic length,
     116, 101, 115, 116, // Topic (test)
     0, // Qos (0)
@@ -1024,12 +1024,12 @@ test('stops parsing after first error', function (t) {
     // Connect:
 
     16, 12, // Header
-    0, 4, // Protocol id length
-    77, 81, 84, 84, // Protocol id
+    0, 4, // Protocol ID length
+    77, 81, 84, 84, // Protocol ID
     4, // Protocol version
     2, // Connect flags
     0, 30, // Keepalive
-    0, 0, // Client id length
+    0, 0, // Client ID length
 
     // Disconnect:
 
@@ -1037,7 +1037,7 @@ test('stops parsing after first error', function (t) {
   ]))
 })
 
-testWriteToStreamError('Invalid protocol id', {
+testWriteToStreamError('Invalid protocolId', {
   cmd: 'connect',
   protocolId: {}
 })
@@ -1047,7 +1047,7 @@ testWriteToStreamError('Invalid topic', {
   topic: {}
 })
 
-testWriteToStreamError('Invalid message id', {
+testWriteToStreamError('Invalid messageId', {
   cmd: 'subscribe',
   mid: {}
 })
