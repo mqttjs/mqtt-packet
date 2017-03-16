@@ -1,12 +1,13 @@
 {
   "name": "mqtt-packet",
-  "version": "5.2.1",
+  "version": "5.2.2",
   "description": "Parse and generate MQTT packets like a breeze",
   "main": "mqtt.js",
   "contributors": [
     "Matteo Collina <matteo.collina@gmail.com> (https://github.com/mcollina)",
     "Adam Rudd <damvrr@gmail.com>",
-    "Peter Sorowka (https://github.com/psorowka)"
+    "Peter Sorowka (https://github.com/psorowka)",
+    "Wouter Klijn <contact@wuhkuh.com> (https://github.com/wuhkuh)"
   ],
   "scripts": {
     "test": "tape test.js | tap-spec && standard",
