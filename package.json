@@ -1,11 +1,13 @@
 {
   "name": "mqtt-packet",
-  "version": "5.2.1",
+  "version": "5.2.2",
   "description": "Parse and generate MQTT packets like a breeze",
   "main": "mqtt.js",
   "contributors": [
     "Matteo Collina <matteo.collina@gmail.com> (https://github.com/mcollina)",
-    "Adam Rudd <damvrr@gmail.com>"
+    "Adam Rudd <damvrr@gmail.com>",
+    "Peter Sorowka (https://github.com/psorowka)",
+    "Wouter Klijn <contact@wuhkuh.com> (https://github.com/wuhkuh)"
   ],
   "scripts": {
     "test": "tape test.js | tap-spec && standard",
@@ -31,14 +33,14 @@
   "homepage": "https://github.com/mqttjs/mqtt-packet",
   "devDependencies": {
     "dev-null": "^0.1.1",
-    "pre-commit": "^1.1.3",
-    "readable-stream": "^2.1.5",
-    "standard": "^8.1.0",
+    "pre-commit": "^1.2.2",
+    "readable-stream": "^2.2.6",
+    "standard": "^9.0.1",
     "tap-spec": "^4.1.1",
-    "tape": "^4.6.0"
+    "tape": "^4.6.3"
   },
   "dependencies": {
-    "bl": "^1.1.2",
+    "bl": "^1.2.0",
     "inherits": "^2.0.3",
     "process-nextick-args": "^1.0.7"
   }

@@ -45,6 +45,5 @@ function tickWait () {
 
   if (i >= max) {
     dest.end()
-    return
   }
 }

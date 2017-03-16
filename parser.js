@@ -137,8 +137,8 @@ Parser.prototype._parsePayload = function () {
 }
 
 Parser.prototype._parseConnect = function () {
-  var protocolId // constants id
-  var clientId // Client id
+  var protocolId // Protocol ID
+  var clientId // Client ID
   var topic // Will topic
   var payload // Will payload
   var password // Password
@@ -146,12 +146,12 @@ Parser.prototype._parseConnect = function () {
   var flags = {}
   var packet = this.packet
 
-  // Parse constants id
+  // Parse protocolId
   protocolId = this._parseString()
 
-  if (protocolId === null) return this._emitError(new Error('Cannot parse protocol id'))
+  if (protocolId === null) return this._emitError(new Error('Cannot parse protocolId'))
   if (protocolId !== 'MQTT' && protocolId !== 'MQIsdp') {
-    return this._emitError(new Error('Invalid protocol id'))
+    return this._emitError(new Error('Invalid protocolId'))
   }
 
   packet.protocolId = protocolId
@@ -190,7 +190,7 @@ Parser.prototype._parseConnect = function () {
   packet.keepalive = this._parseNum()
   if (packet.keepalive === -1) return this._emitError(new Error('Packet too short'))
 
-  // Parse client ID
+  // Parse clientId
   clientId = this._parseString()
   if (clientId === null) return this._emitError(new Error('Packet too short'))
   packet.clientId = clientId
@@ -241,7 +241,7 @@ Parser.prototype._parsePublish = function () {
 
   if (packet.topic === null) return this._emitError(new Error('Cannot parse topic'))
 
-  // Parse message ID
+  // Parse messageId
   if (packet.qos > 0) if (!this._parseMessageId()) { return }
 
   packet.payload = this._list.slice(this._pos, packet.length)
@@ -288,7 +288,7 @@ Parser.prototype._parseUnsubscribe = function () {
 
   packet.unsubscriptions = []
 
-  // Parse message ID
+  // Parse messageId
   if (!this._parseMessageId()) { return }
 
   while (this._pos < packet.length) {
@@ -304,7 +304,7 @@ Parser.prototype._parseUnsubscribe = function () {
 }
 
 Parser.prototype._parseUnsuback = function () {
-  if (!this._parseMessageId()) return this._emitError(new Error('Cannot parse message id'))
+  if (!this._parseMessageId()) return this._emitError(new Error('Cannot parse messageId'))
 }
 
 Parser.prototype._parseMessageId = function () {
@@ -313,7 +313,7 @@ Parser.prototype._parseMessageId = function () {
   packet.messageId = this._parseNum()
 
   if (packet.messageId === null) {
-    this._emitError(new Error('Cannot parse message id'))
+    this._emitError(new Error('Cannot parse messageId'))
     return false
   }
 

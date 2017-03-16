@@ -1,7 +1,7 @@
 The MIT License (MIT)
 =====================
 
-Copyright (c) 2014-2016 mqtt-packet contributors
+Copyright (c) 2014-2017 mqtt-packet contributors
 ---------------------------------------
 
 *mqtt-packet contributors listed at <https://github.com/mqttjs/mqtt-packet#contributors>*

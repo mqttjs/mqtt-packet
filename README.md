@@ -10,9 +10,9 @@ Encode and Decode MQTT 3.1.1 packets the node way.
   * <a href="#packets">Packets</a>
   * <a href="#api">API</a>
   * <a href="#contributing">Contributing</a>
-  * <a href="#license">Licence &amp; copyright</a>
+  * <a href="#license">License &amp; copyright</a>
 
-This library is tested with node v4 and v6. The last version to support
+This library is tested with node v4, v6 and v7. The last version to support
 older versions of node was mqtt-packet@4.1.2.
 
 Installation
@@ -44,10 +44,10 @@ console.log(mqtt.generate(object))
 //
 // <Buffer 30 0a 00 04 74 65 73 74 74 65 73 74>
 //
-// Which is the same as
+// Which is the same as:
 //
 // new Buffer([
-//   48, 10, // Header
+//   48, 10, // Header (publish)
 //   0, 4, // Topic length
 //   116, 101, 115, 116, // Topic (test)
 //   116, 101, 115, 116 // Payload (test)
@@ -77,7 +77,7 @@ parser.on('packet', function(packet) {
 })
 
 parser.parse(new Buffer([
-  48, 10, // Header
+  48, 10, // Header (publish)
   0, 4, // Topic length
   116, 101, 115, 116, // Topic (test)
   116, 101, 115, 116 // Payload (test)
@@ -93,6 +93,7 @@ API
   * <a href="#parser"><code>mqtt#<b>parser()</b></code></a>
 
 <a name="generate">
+
 ### mqtt.generate(object)
 
 Generates a `Buffer` containing an MQTT packet.
@@ -100,15 +101,17 @@ The object must be one of the ones specified by the [packets](#packets)
 section. Throws an `Error` if a packet cannot be generated.
 
 <a name="writeToStream">
+
 ### mqtt.writeToStream(object, stream)
 
 Writes the mqtt packet defined by `object` to the given stream.
 The object must be one of the ones specified by the [packets](#packets)
 section. Emits an `Error` on the stream if a packet cannot be generated.
-On node >= 12, this function automatically calls `cork()` on your stream,
+On node >= 0.12, this function automatically calls `cork()` on your stream,
 and then it calls `uncork()` on the next tick.
 
 <a name="parser">
+
 ### mqtt.parser()
 
 Returns a new `Parser` object. `Parser` inherits from `EventEmitter` and
@@ -119,14 +122,15 @@ will emit:
   * `error`, if an error happens
 
 <a name="parse">
+
 #### Parser.parse(buffer)
 
-Parse a given `Buffer` and emits synchronously all the MQTT packets that
+Parses a given `Buffer` and emits synchronously all the MQTT packets that
 are included. Returns the number of bytes left to parse.
 
 If an error happens, an `error` event will be emitted, but no `packet` events
 will be emitted after that. Calling `parse()` again clears the error and
-previous buffer as if you created a new `Parser`.
+previous buffer, as if you created a new `Parser`.
 
 Packets
 -------
@@ -317,6 +321,7 @@ missing.
 ```
 
 <a name="contributing"></a>
+
 Contributing
 ------------
 
@@ -333,7 +338,7 @@ mqtt-packet is only possible due to the excellent work of the following contribu
 <table><tbody>
 <tr><th align="left">Matteo Collina</th><td><a href="https://github.com/mcollina">GitHub/mcollina</a></td><td><a href="http://twitter.com/matteocollina">Twitter/@matteocollina</a></td></tr>
 <tr><th align="left">Adam Rudd</th><td><a href="https://github.com/adamvr">GitHub/adamvr</a></td><td><a href="http://twitter.com/adam_vr">Twitter/@adam_vr</a></td></tr>
-<tr><th align="left">Peter Sorowka</th><td><a href="https://github.com/adamvr">GitHub/psorowka</a></td><td><a href="http://twitter.com/psorowka">Twitter/@psorowka</a></td></tr>
+<tr><th align="left">Peter Sorowka</th><td><a href="https://github.com/psorowka">GitHub/psorowka</a></td><td><a href="http://twitter.com/psorowka">Twitter/@psorowka</a></td></tr>
 </tbody></table>
 
 License

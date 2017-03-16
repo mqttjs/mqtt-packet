@@ -63,7 +63,7 @@ function connect (opts, stream) {
   // Must be a string and non-falsy
   if (!protocolId ||
      (typeof protocolId !== 'string' && !Buffer.isBuffer(protocolId))) {
-    stream.emit('error', new Error('Invalid protocol id'))
+    stream.emit('error', new Error('Invalid protocolId'))
     return false
   } else length += protocolId.length + 2
 
@@ -235,9 +235,9 @@ function publish (opts, stream) {
   if (!Buffer.isBuffer(payload)) length += Buffer.byteLength(payload)
   else length += payload.length
 
-  // Message id must a number if qos > 0
+  // Message ID must a number if qos > 0
   if (qos && typeof id !== 'number') {
-    stream.emit('error', new Error('Invalid message id'))
+    stream.emit('error', new Error('Invalid messageId'))
     return false
   } else if (qos) length += 2
 
@@ -270,7 +270,7 @@ function confirmation (opts, stream) {
 
   // Check message ID
   if (typeof id !== 'number') {
-    stream.emit('error', new Error('Invalid message id'))
+    stream.emit('error', new Error('Invalid messageId'))
     return false
   }
 
@@ -292,9 +292,9 @@ function subscribe (opts, stream) {
 
   var length = 0
 
-  // Check mid
+  // Check message ID
   if (typeof id !== 'number') {
-    stream.emit('error', new Error('Invalid message id'))
+    stream.emit('error', new Error('Invalid messageId'))
     return false
   } else length += 2
 
@@ -354,9 +354,9 @@ function suback (opts, stream) {
 
   var length = 0
 
-  // Check message id
+  // Check message ID
   if (typeof id !== 'number') {
-    stream.emit('error', new Error('Invalid message id'))
+    stream.emit('error', new Error('Invalid messageId'))
     return false
   } else length += 2
 
@@ -394,9 +394,9 @@ function unsubscribe (opts, stream) {
 
   var length = 0
 
-  // Check message id
+  // Check message ID
   if (typeof id !== 'number') {
-    stream.emit('error', new Error('Invalid message id'))
+    stream.emit('error', new Error('Invalid messageId'))
     return false
   } else {
     length += 2
