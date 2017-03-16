@@ -5,7 +5,8 @@
   "main": "mqtt.js",
   "contributors": [
     "Matteo Collina <matteo.collina@gmail.com> (https://github.com/mcollina)",
-    "Adam Rudd <damvrr@gmail.com>"
+    "Adam Rudd <damvrr@gmail.com>",
+    "Peter Sorowka (https://github.com/psorowka)"
   ],
   "scripts": {
     "test": "tape test.js | tap-spec && standard",
