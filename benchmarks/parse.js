@@ -8,7 +8,7 @@ var time
 
 for (i = 0; i < max; i++) {
   parser.parse(new Buffer([
-    48, 10, // Header
+    48, 10, // Header (publish)
     0, 4, // Topic length
     116, 101, 115, 116, // Topic (test)
     116, 101, 115, 116 // Payload (test)
