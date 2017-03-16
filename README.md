@@ -10,7 +10,7 @@ Encode and Decode MQTT 3.1.1 packets the node way.
   * <a href="#packets">Packets</a>
   * <a href="#api">API</a>
   * <a href="#contributing">Contributing</a>
-  * <a href="#license">Licence &amp; copyright</a>
+  * <a href="#license">License &amp; copyright</a>
 
 This library is tested with node v4 and v6. The last version to support
 older versions of node was mqtt-packet@4.1.2.
