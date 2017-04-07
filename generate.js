@@ -1,5 +1,6 @@
 'use strict'
 
+var Buffer = require('safe-buffer').Buffer
 var writeToStream = require('./writeToStream')
 var EE = require('events').EventEmitter
 var inherits = require('inherits')
@@ -37,7 +38,7 @@ Accumulator.prototype.concat = function () {
     length += lengths[i]
   }
 
-  result = new Buffer(length)
+  result = Buffer.allocUnsafe(length)
 
   for (i = 0; i < list.length && list[i]; i++) {
     if (typeof list[i] !== 'string') {

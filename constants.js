@@ -1,3 +1,7 @@
+'use strict'
+
+var Buffer = require('safe-buffer').Buffer
+
 /* Protocol - protocol constants */
 var protocol = module.exports
 
@@ -42,8 +46,8 @@ protocol.LENGTH_FIN_MASK = 0x80
 
 /* Connack */
 protocol.SESSIONPRESENT_MASK = 0x01
-protocol.SESSIONPRESENT_HEADER = new Buffer([protocol.SESSIONPRESENT_MASK])
-protocol.CONNACK_HEADER = new Buffer([protocol.codes['connack'] << protocol.CMD_SHIFT])
+protocol.SESSIONPRESENT_HEADER = Buffer.from([protocol.SESSIONPRESENT_MASK])
+protocol.CONNACK_HEADER = Buffer.from([protocol.codes['connack'] << protocol.CMD_SHIFT])
 
 /* Connect */
 protocol.USERNAME_MASK = 0x80
@@ -53,7 +57,7 @@ protocol.WILL_QOS_MASK = 0x18
 protocol.WILL_QOS_SHIFT = 3
 protocol.WILL_FLAG_MASK = 0x04
 protocol.CLEAN_SESSION_MASK = 0x02
-protocol.CONNECT_HEADER = new Buffer([protocol.codes['connect'] << protocol.CMD_SHIFT])
+protocol.CONNECT_HEADER = Buffer.from([protocol.codes['connect'] << protocol.CMD_SHIFT])
 
 function genHeader (type) {
   return [0, 1, 2].map(function (qos) {
@@ -88,20 +92,20 @@ protocol.ACKS = {
   pubrec: genHeader('pubrec')
 }
 
-protocol.SUBACK_HEADER = new Buffer([protocol.codes['suback'] << protocol.CMD_SHIFT])
+protocol.SUBACK_HEADER = Buffer.from([protocol.codes['suback'] << protocol.CMD_SHIFT])
 
 /* Protocol versions */
-protocol.VERSION3 = new Buffer([3])
-protocol.VERSION4 = new Buffer([4])
+protocol.VERSION3 = Buffer.from([3])
+protocol.VERSION4 = Buffer.from([4])
 
 /* QoS */
 protocol.QOS = [0, 1, 2].map(function (qos) {
-  return new Buffer([qos])
+  return Buffer.from([qos])
 })
 
 /* Empty packets */
 protocol.EMPTY = {
-  pingreq: new Buffer([protocol.codes['pingreq'] << 4, 0]),
-  pingresp: new Buffer([protocol.codes['pingresp'] << 4, 0]),
-  disconnect: new Buffer([protocol.codes['disconnect'] << 4, 0])
+  pingreq: Buffer.from([protocol.codes['pingreq'] << 4, 0]),
+  pingresp: Buffer.from([protocol.codes['pingresp'] << 4, 0]),
+  disconnect: Buffer.from([protocol.codes['disconnect'] << 4, 0])
 }

@@ -1,6 +1,8 @@
+'use strict'
 
 var test = require('tape')
 var mqtt = require('./')
+var Buffer = require('safe-buffer').Buffer
 var WS = require('readable-stream').Writable
 
 function testParseGenerate (name, object, buffer, opts) {
@@ -125,7 +127,7 @@ testParseGenerate('minimal connect', {
   clean: false,
   keepalive: 30,
   clientId: 'test'
-}, new Buffer([
+}, Buffer.from([
   16, 18, // Header
   0, 6, // Protocol ID length
   77, 81, 73, 115, 100, 112, // Protocol ID
@@ -147,7 +149,7 @@ testParseGenerate('no clientId with 3.1.1', {
   clean: true,
   keepalive: 30,
   clientId: ''
-}, new Buffer([
+}, Buffer.from([
   16, 12, // Header
   0, 4, // Protocol ID length
   77, 81, 84, 84, // Protocol ID
@@ -160,7 +162,7 @@ testParseGenerate('no clientId with 3.1.1', {
 testParseGenerateDefaults('default connect', {
   cmd: 'connect',
   clientId: 'test'
-}, new Buffer([
+}, Buffer.from([
   16, 16, 0, 4, 77, 81, 84,
   84, 4, 2, 0, 0,
   0, 4, 116, 101, 115, 116
@@ -185,7 +187,7 @@ testParseGenerate('empty will payload', {
   clientId: 'test',
   username: 'username',
   password: new Buffer('password')
-}, new Buffer([
+}, Buffer.from([
   16, 47, // Header
   0, 6, // Protocol ID length
   77, 81, 73, 115, 100, 112, // Protocol ID
@@ -223,7 +225,7 @@ testParseGenerate('maximal connect', {
   clientId: 'test',
   username: 'username',
   password: new Buffer('password')
-}, new Buffer([
+}, Buffer.from([
   16, 54, // Header
   0, 6, // Protocol ID length
   77, 81, 73, 115, 100, 112, // Protocol ID
@@ -261,7 +263,7 @@ testParseGenerate('max connect with special chars', {
   clientId: 'te$t',
   username: 'u$ern4me',
   password: new Buffer('p4$$w0£d')
-}, new Buffer([
+}, Buffer.from([
   16, 57, // Header
   0, 6, // Protocol ID length
   77, 81, 73, 115, 100, 112, // Protocol ID
@@ -301,7 +303,7 @@ test('connect all strings generate', function (t) {
     username: 'username',
     password: 'password'
   }
-  var expected = new Buffer([
+  var expected = Buffer.from([
     16, 54, // Header
     0, 6, // Protocol ID length
     77, 81, 73, 115, 100, 112, // Protocol ID
@@ -324,7 +326,7 @@ test('connect all strings generate', function (t) {
   t.end()
 })
 
-testParseError('Cannot parse protocolId', new Buffer([
+testParseError('Cannot parse protocolId', Buffer.from([
   16, 4,
   0, 6,
   77, 81
@@ -338,7 +340,7 @@ testParseGenerate('connack with return code 0', {
   length: 2,
   sessionPresent: false,
   returnCode: 0
-}, new Buffer([
+}, Buffer.from([
   32, 2, 0, 0
 ]))
 
@@ -350,7 +352,7 @@ testParseGenerate('connack with return code 0 session present bit set', {
   length: 2,
   sessionPresent: true,
   returnCode: 0
-}, new Buffer([
+}, Buffer.from([
   32, 2, 1, 0
 ]))
 
@@ -362,7 +364,7 @@ testParseGenerate('connack with return code 5', {
   length: 2,
   sessionPresent: false,
   returnCode: 5
-}, new Buffer([
+}, Buffer.from([
   32, 2, 0, 5
 ]))
 
@@ -374,7 +376,7 @@ testParseGenerate('minimal publish', {
   length: 10,
   topic: 'test',
   payload: new Buffer('test')
-}, new Buffer([
+}, Buffer.from([
   48, 10, // Header
   0, 4, // Topic length
   116, 101, 115, 116, // Topic (test)
@@ -391,7 +393,7 @@ testParseGenerate('minimal publish', {
     length: 2054,
     topic: 'test',
     payload: buffer
-  }, Buffer.concat([new Buffer([
+  }, Buffer.concat([Buffer.from([
     48, 134, 16, // Header
     0, 4, // Topic length
     116, 101, 115, 116 // Topic (test)
@@ -408,7 +410,7 @@ testParseGenerate('minimal publish', {
     length: 6 + 2 * 1024 * 1024,
     topic: 'test',
     payload: buffer
-  }, Buffer.concat([new Buffer([
+  }, Buffer.concat([Buffer.from([
     48, 134, 128, 128, 1, // Header
     0, 4, // Topic length
     116, 101, 115, 116 // Topic (test)
@@ -424,7 +426,7 @@ testParseGenerate('maximal publish', {
   topic: 'test',
   messageId: 10,
   payload: new Buffer('test')
-}, new Buffer([
+}, Buffer.from([
   61, 12, // Header
   0, 4, // Topic length
   116, 101, 115, 116, // Topic
@@ -443,7 +445,7 @@ test('publish all strings generate', function (t) {
     messageId: 10,
     payload: new Buffer('test')
   }
-  var expected = new Buffer([
+  var expected = Buffer.from([
     61, 12, // Header
     0, 4, // Topic length
     116, 101, 115, 116, // Topic
@@ -463,7 +465,7 @@ testParseGenerate('empty publish', {
   length: 6,
   topic: 'test',
   payload: new Buffer(0)
-}, new Buffer([
+}, Buffer.from([
   48, 6, // Header
   0, 4, // Topic length
   116, 101, 115, 116 // Topic
@@ -488,13 +490,13 @@ test('splitted publish parse', function (t) {
     t.deepEqual(packet, expected, 'expected packet')
   })
 
-  t.equal(parser.parse(new Buffer([
+  t.equal(parser.parse(Buffer.from([
     48, 10, // Header
     0, 4, // Topic length
     116, 101, 115, 116 // Topic (test)
   ])), 6, 'remaining bytes')
 
-  t.equal(parser.parse(new Buffer([
+  t.equal(parser.parse(Buffer.from([
     116, 101, 115, 116 // Payload (test)
   ])), 0, 'remaining bytes')
 })
@@ -506,7 +508,7 @@ testParseGenerate('puback', {
   dup: false,
   length: 2,
   messageId: 2
-}, new Buffer([
+}, Buffer.from([
   64, 2, // Header
   0, 2 // Message ID
 ]))
@@ -518,7 +520,7 @@ testParseGenerate('pubrec', {
   dup: false,
   length: 2,
   messageId: 2
-}, new Buffer([
+}, Buffer.from([
   80, 2, // Header
   0, 2 // Message ID
 ]))
@@ -530,7 +532,7 @@ testParseGenerate('pubrel', {
   dup: false,
   length: 2,
   messageId: 2
-}, new Buffer([
+}, Buffer.from([
   98, 2, // Header
   0, 2 // Message ID
 ]))
@@ -542,12 +544,12 @@ testParseGenerate('pubcomp', {
   dup: false,
   length: 2,
   messageId: 2
-}, new Buffer([
+}, Buffer.from([
   112, 2, // Header
   0, 2 // Message ID
 ]))
 
-testParseError('Wrong subscribe header', new Buffer([
+testParseError('Wrong subscribe header', Buffer.from([
   128, 9, // Header (subscribeqos=0length=9)
   0, 6, // Message ID (6)
   0, 4, // Topic length,
@@ -568,7 +570,7 @@ testParseGenerate('subscribe to one topic', {
     }
   ],
   messageId: 6
-}, new Buffer([
+}, Buffer.from([
   130, 9, // Header (subscribeqos=1length=9)
   0, 6, // Message ID (6)
   0, 4, // Topic length,
@@ -595,7 +597,7 @@ testParseGenerate('subscribe to three topics', {
     }
   ],
   messageId: 6
-}, new Buffer([
+}, Buffer.from([
   130, 23, // Header (publishqos=1length=9)
   0, 6, // Message ID (6)
   0, 4, // Topic length,
@@ -617,7 +619,7 @@ testParseGenerate('suback', {
   length: 6,
   granted: [0, 1, 2, 128],
   messageId: 6
-}, new Buffer([
+}, Buffer.from([
   144, 6, // Header
   0, 6, // Message ID
   0, 1, 2, 128 // Granted qos (0, 1, 2) and a rejected being 0x80
@@ -634,7 +636,7 @@ testParseGenerate('unsubscribe', {
     'test'
   ],
   messageId: 7
-}, new Buffer([
+}, Buffer.from([
   162, 14,
   0, 7, // Message ID (7)
   0, 4, // Topic length
@@ -650,7 +652,7 @@ testParseGenerate('unsuback', {
   dup: false,
   length: 2,
   messageId: 8
-}, new Buffer([
+}, Buffer.from([
   176, 2, // Header
   0, 8 // Message ID
 ]))
@@ -661,7 +663,7 @@ testParseGenerate('pingreq', {
   qos: 0,
   dup: false,
   length: 0
-}, new Buffer([
+}, Buffer.from([
   192, 0 // Header
 ]))
 
@@ -671,7 +673,7 @@ testParseGenerate('pingresp', {
   qos: 0,
   dup: false,
   length: 0
-}, new Buffer([
+}, Buffer.from([
   208, 0 // Header
 ]))
 
@@ -681,7 +683,7 @@ testParseGenerate('disconnect', {
   qos: 0,
   dup: false,
   length: 0
-}, new Buffer([
+}, Buffer.from([
   224, 0 // Header
 ]))
 
@@ -910,7 +912,7 @@ test('support cork', function (t) {
 // - when trying to read further connect flags the buffer produces
 //   a "out of range" Error
 //
-testParseError('Packet too short', new Buffer([
+testParseError('Packet too short', Buffer.from([
   16, 9,
   0, 6,
   77, 81, 73, 115, 100, 112,
@@ -920,7 +922,7 @@ testParseError('Packet too short', new Buffer([
 // CONNECT Packets that show other protocol IDs than
 // the valid values MQTT and MQIsdp should cause an error
 // those packets are a hint that this is not a mqtt connection
-testParseError('Invalid protocolId', new Buffer([
+testParseError('Invalid protocolId', Buffer.from([
   16, 18,
   0, 6,
   65, 65, 65, 65, 65, 65, // AAAAAA
@@ -933,7 +935,7 @@ testParseError('Invalid protocolId', new Buffer([
 
 // CONNECT Packets that contain an unsupported protocol version
 // Flag (i.e. not `3` or `4`) should cause an error
-testParseError('Invalid protocol version', new Buffer([
+testParseError('Invalid protocol version', Buffer.from([
   16, 18,
   0, 6,
   77, 81, 73, 115, 100, 112, // Protocol ID
@@ -951,7 +953,7 @@ testParseError('Invalid protocol version', new Buffer([
 // CONNECT packet. The fixed header suggests a remaining length of 8 bytes
 // which would be exceeded by the string length of 15
 // in this case, a protocol ID parse error is expected
-testParseError('Cannot parse protocolId', new Buffer([
+testParseError('Cannot parse protocolId', Buffer.from([
   16, 8, // Fixed header
   0, 15, // string length 15 --> 15 > 8 --> error!
   77, 81, 73, 115, 100, 112,
@@ -982,7 +984,7 @@ test('stops parsing after first error', function (t) {
     t.ok(++errorCount <= expectedErrors, 'expected <= ' + expectedErrors + ' errors')
   })
 
-  parser.parse(new Buffer([
+  parser.parse(Buffer.from([
     // First, a valid connect packet:
 
     16, 12, // Header
@@ -1020,7 +1022,7 @@ test('stops parsing after first error', function (t) {
   expectedPackets = 2
   expectedErrors = 0
 
-  parser.parse(new Buffer([
+  parser.parse(Buffer.from([
     // Connect:
 
     16, 12, // Header

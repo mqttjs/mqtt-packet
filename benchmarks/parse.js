@@ -7,7 +7,7 @@ var start = Date.now() / 1000
 var time
 
 for (i = 0; i < max; i++) {
-  parser.parse(new Buffer([
+  parser.parse(Buffer.from([
     48, 10, // Header (publish)
     0, 4, // Topic length
     116, 101, 115, 116, // Topic (test)
