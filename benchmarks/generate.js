@@ -4,7 +4,7 @@ var max = 100000
 var i
 var start = Date.now()
 var time
-var buf = new Buffer('test')
+var buf = Buffer.from('test')
 
 for (i = 0; i < max; i++) {
   mqtt.generate({

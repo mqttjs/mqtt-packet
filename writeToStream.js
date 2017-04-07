@@ -1,8 +1,9 @@
 'use strict'
 
 var protocol = require('./constants')
-var empty = new Buffer(0)
-var zeroBuf = new Buffer([0])
+var Buffer = require('safe-buffer').Buffer
+var empty = Buffer.allocUnsafe(0)
+var zeroBuf = Buffer.from([0])
 var numCache = require('./numbers')
 var nextTick = require('process-nextick-args')
 
@@ -173,7 +174,7 @@ function connect (opts, stream) {
   flags |= will ? protocol.WILL_FLAG_MASK : 0
   flags |= clean ? protocol.CLEAN_SESSION_MASK : 0
 
-  stream.write(new Buffer([flags]))
+  stream.write(Buffer.from([flags]))
 
   // Keepalive
   writeNumber(stream, keepalive)
@@ -210,7 +211,7 @@ function connack (opts, stream) {
   writeLength(stream, 2)
   stream.write(opts.sessionPresent ? protocol.SESSIONPRESENT_HEADER : zeroBuf)
 
-  return stream.write(new Buffer([rc]))
+  return stream.write(Buffer.from([rc]))
 }
 
 function publish (opts, stream) {
@@ -383,7 +384,7 @@ function suback (opts, stream) {
   // Message ID
   writeNumber(stream, id)
 
-  return stream.write(new Buffer(granted))
+  return stream.write(Buffer.from(granted))
 }
 
 function unsubscribe (opts, stream) {
@@ -454,7 +455,7 @@ function calcLengthLength (length) {
 function genBufLength (length) {
   var digit = 0
   var pos = 0
-  var buffer = new Buffer(calcLengthLength(length))
+  var buffer = Buffer.allocUnsafe(calcLengthLength(length))
 
   do {
     digit = length % 128 | 0

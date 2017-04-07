@@ -4,7 +4,7 @@ var max = 1000000
 var i = 0
 var start = Date.now()
 var time
-var buf = new Buffer(10)
+var buf = Buffer.allocUnsafe(10)
 var net = require('net')
 var server = net.createServer(handle)
 var dest

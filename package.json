@@ -35,13 +35,14 @@
     "dev-null": "^0.1.1",
     "pre-commit": "^1.2.2",
     "readable-stream": "^2.2.6",
-    "standard": "^9.0.1",
+    "standard": "^10.0.1",
     "tap-spec": "^4.1.1",
     "tape": "^4.6.3"
   },
   "dependencies": {
     "bl": "^1.2.0",
     "inherits": "^2.0.3",
-    "process-nextick-args": "^1.0.7"
+    "process-nextick-args": "^1.0.7",
+    "safe-buffer": "^5.0.1"
   }
 }
