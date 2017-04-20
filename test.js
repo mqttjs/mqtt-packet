@@ -687,6 +687,16 @@ testParseGenerate('disconnect', {
   224, 0 // Header
 ]))
 
+testParseGenerate('reserved', {
+  cmd: 'reserved',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 0
+}, new Buffer([
+  240, 0 // Header
+]))
+
 testGenerateError('Unknown command', {})
 
 testGenerateError('Invalid protocolId', {
