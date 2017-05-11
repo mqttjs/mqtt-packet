@@ -41,6 +41,10 @@ function generate (packet, stream) {
       return false
   }
 }
+/**
+ * Controls numbers cache.
+ * Set to "false" to allocate buffers on-the-flight instead of pre-generated cache
+ */
 generate.cacheNumbers = true
 
 function uncork (stream) {
