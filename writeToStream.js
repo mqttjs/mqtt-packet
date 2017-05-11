@@ -41,6 +41,7 @@ function generate (packet, stream) {
       return false
   }
 }
+generate.cacheNumbers = true
 
 function uncork (stream) {
   stream.uncork()
@@ -520,7 +521,7 @@ function writeString (stream, string) {
  * @api private
  */
 function writeNumber (stream, number) {
-  return stream.write(numCache[number])
+  return stream.write(numCache.get(number, generate.cacheNumbers))
 }
 
 /**
