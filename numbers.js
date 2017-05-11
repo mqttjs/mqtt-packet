@@ -19,17 +19,15 @@ function generateCache () {
   }
 }
 
-function get (number, cacheNumbers) {
+function getCachedNumber (number) {
   if (cache[number]) return cache[number]
 
-  if (cacheNumbers) {
-    generateCache()
-    return cache[number]
-  }
+  generateCache()
 
-  return generateBuffer(number)
+  return cache[number]
 }
 
 module.exports = {
-  get: get
+  getCachedNumber: getCachedNumber,
+  allocateNumber: generateBuffer
 }

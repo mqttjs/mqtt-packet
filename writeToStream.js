@@ -7,6 +7,8 @@ var zeroBuf = Buffer.from([0])
 var numCache = require('./numbers')
 var nextTick = require('process-nextick-args')
 
+var getNumber = numCache.getCachedNumber
+
 function generate (packet, stream) {
   if (stream.cork) {
     stream.cork()
@@ -45,7 +47,15 @@ function generate (packet, stream) {
  * Controls numbers cache.
  * Set to "false" to allocate buffers on-the-flight instead of pre-generated cache
  */
-generate.cacheNumbers = true
+Object.defineProperty(generate, 'cacheNumbers', {
+  get: function () {
+    return getNumber === numCache.getCachedNumber
+  },
+  set: function (value) {
+    if (value) getNumber = numCache.getCachedNumber
+    else getNumber = numCache.allocateNumber
+  }
+})
 
 function uncork (stream) {
   stream.uncork()
@@ -525,7 +535,7 @@ function writeString (stream, string) {
  * @api private
  */
 function writeNumber (stream, number) {
-  return stream.write(numCache.get(number, generate.cacheNumbers))
+  return stream.write(getNumber(number))
 }
 
 /**
