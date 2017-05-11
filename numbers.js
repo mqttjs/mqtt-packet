@@ -20,5 +20,6 @@ function generateCache () {
 
 module.exports = {
   cache: cache,
-  generateCache: generateCache
+  generateCache: generateCache,
+  generateNumber: generateBuffer
 }
