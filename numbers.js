@@ -3,10 +3,9 @@
 var Buffer = require('safe-buffer').Buffer
 var max = 65536
 var cache = {}
-var buffer
 
 function generateBuffer (i) {
-  buffer = Buffer.allocUnsafe(2)
+  var buffer = Buffer.allocUnsafe(2)
   buffer.writeUInt8(i >> 8, 0, true)
   buffer.writeUInt8(i & 0x00FF, 0 + 1, true)
 
@@ -19,15 +18,7 @@ function generateCache () {
   }
 }
 
-function getCachedNumber (number) {
-  if (cache[number]) return cache[number]
-
-  generateCache()
-
-  return cache[number]
-}
-
 module.exports = {
-  getCachedNumber: getCachedNumber,
-  allocateNumber: generateBuffer
+  cache: cache,
+  generateCache: generateCache
 }

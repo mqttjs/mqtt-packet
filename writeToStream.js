@@ -4,15 +4,24 @@ var protocol = require('./constants')
 var Buffer = require('safe-buffer').Buffer
 var empty = Buffer.allocUnsafe(0)
 var zeroBuf = Buffer.from([0])
-var numCache = require('./numbers')
+var numbers = require('./numbers')
 var nextTick = require('process-nextick-args')
 
-var getNumber = numCache.getCachedNumber
+var numCache = numbers.cache
+var generateNumber = numbers.generateNumber
+var generateCache = numbers.generateCache
+var writeNumber = writeNumberCached
+var toGenerate = true
 
 function generate (packet, stream) {
   if (stream.cork) {
     stream.cork()
     nextTick(uncork, stream)
+  }
+
+  if (toGenerate) {
+    toGenerate = false
+    generateCache()
   }
 
   switch (packet.cmd) {
@@ -49,11 +58,15 @@ function generate (packet, stream) {
  */
 Object.defineProperty(generate, 'cacheNumbers', {
   get: function () {
-    return getNumber === numCache.getCachedNumber
+    return writeNumber === writeNumberCached
   },
   set: function (value) {
-    if (value) getNumber = numCache.getCachedNumber
-    else getNumber = numCache.allocateNumber
+    if (value) {
+      writeNumber = writeNumberCached
+    } else {
+      toGenerate = false
+      writeNumber = writeNumberGenerated
+    }
   }
 })
 
@@ -534,8 +547,11 @@ function writeString (stream, string) {
  *
  * @api private
  */
-function writeNumber (stream, number) {
-  return stream.write(getNumber(number))
+function writeNumberCached (stream, number) {
+  return stream.write(numCache[number])
+}
+function writeNumberGenerated (stream, number) {
+  return stream.write(generateNumber(number))
 }
 
 /**
