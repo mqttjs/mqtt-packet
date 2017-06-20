@@ -62,6 +62,7 @@ Object.defineProperty(generate, 'cacheNumbers', {
   },
   set: function (value) {
     if (value) {
+      if (!numCache || Object.keys(numCache).length === 0) toGenerate = true
       writeNumber = writeNumberCached
     } else {
       toGenerate = false
