@@ -116,6 +116,40 @@ function testWriteToStreamError (expected, fixture) {
   })
 }
 
+test('disabled numbers cache', function (t) {
+  var stream = WS()
+  var message = {
+    cmd: 'publish',
+    retain: false,
+    qos: 0,
+    dup: false,
+    length: 10,
+    topic: Buffer.from('test'),
+    payload: Buffer.from('test')
+  }
+  var expected = Buffer.from([
+    48, 10, // Header
+    0, 4, // Topic length
+    116, 101, 115, 116, // Topic (test)
+    116, 101, 115, 116 // Payload (test)
+  ])
+  var written = Buffer.alloc(0)
+
+  stream.write = (chunk) => {
+    written = Buffer.concat([written, chunk])
+  }
+  mqtt.writeToStream.cacheNumbers = false
+
+  mqtt.writeToStream(message, stream)
+
+  t.deepEqual(written, expected, 'written buffer is expected')
+
+  mqtt.writeToStream.cacheNumbers = true
+
+  stream.end()
+  t.end()
+})
+
 testParseGenerate('minimal connect', {
   cmd: 'connect',
   retain: false,

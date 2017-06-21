@@ -109,6 +109,9 @@ The object must be one of the ones specified by the [packets](#packets)
 section. Emits an `Error` on the stream if a packet cannot be generated.
 On node >= 0.12, this function automatically calls `cork()` on your stream,
 and then it calls `uncork()` on the next tick.
+By default cache for number buffers is enabled.
+It creates a list of buffers for faster write. To disable cache set `mqtt.writeToStream.cacheNumbers = false`.
+Should be set before any `writeToStream` calls.
 
 <a name="parser">
 
