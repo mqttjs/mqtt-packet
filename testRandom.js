@@ -57,7 +57,7 @@ try {
     doParse()
   }
 } catch (e) {
-  console.log('Exception occured at packet')
+  console.log('Exception occurred at packet')
   console.log(randomPacket)
   console.log(e.message)
   console.log(e.stack)
