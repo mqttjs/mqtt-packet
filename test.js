@@ -240,6 +240,87 @@ testParseGenerate('empty will payload', {
   112, 97, 115, 115, 119, 111, 114, 100 // Password
 ]))
 
+testParseGenerate('empty string username payload', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 20,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: ''
+}, Buffer.from([
+  16, 20, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  3, // Protocol version
+  130, // Connect flags
+  0, 30, // Keepalive
+  0, 4, // Client ID length
+  116, 101, 115, 116, // Client ID
+  0, 0 // Username length
+  // Empty Username payload
+]))
+
+testParseGenerate('empty string password payload', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 30,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: 'username',
+  password: new Buffer('')
+}, Buffer.from([
+  16, 30, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  3, // Protocol version
+  194, // Connect flags
+  0, 30, // Keepalive
+  0, 4, // Client ID length
+  116, 101, 115, 116, // Client ID
+  0, 8, // Username length
+  117, 115, 101, 114, 110, 97, 109, 101, // Username payload
+  0, 0 // Password length
+  // Empty password payload
+]))
+
+testParseGenerate('empty string username and password payload', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 22,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: '',
+  password: new Buffer('')
+}, Buffer.from([
+  16, 22, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  3, // Protocol version
+  194, // Connect flags
+  0, 30, // Keepalive
+  0, 4, // Client ID length
+  116, 101, 115, 116, // Client ID
+  0, 0, // Username length
+  // Empty Username payload
+  0, 0 // Password length
+  // Empty password payload
+]))
+
 testParseGenerate('maximal connect', {
   cmd: 'connect',
   retain: false,
