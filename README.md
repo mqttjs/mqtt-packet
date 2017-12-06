@@ -146,7 +146,7 @@ and that you can input to `generate`.
 ```js
 {
   cmd: 'connect',
-  protocolId: 'MQTT', // Or 'MQIsdp' in MQTT 3.1.1
+  protocolId: 'MQTT', // Or 'MQIsdp' in MQTT 3.1
   protocolVersion: 4, // Or 3 in MQTT 3.1
   clean: true, // Can also be false
   clientId: 'my-device',
