@@ -15,6 +15,35 @@ Encode and Decode MQTT 3.1.1 packets the node way.
 This library is tested with node v4, v6 and v7. The last version to support
 older versions of node was mqtt-packet@4.1.2.
 
+## MQTTv5 support in progress
+
+The implementation is not yet complete, see 
+below for a full overview of already supported MQTTv5 features
+
+| Feature           | Status        | Comment
+| ----------------- | ------------- | -------
+| Session expiry    | no |
+| Message expiry    | no |
+| Reason code on all ACKs | no |
+| Reason string on all ACKs | no |
+| Server disconnect | no |
+| Payload format and content type | no |
+| Request / Response | no |
+| Shared Subscriptions | no |
+| Subscription ID | no |
+| Topic Alias | no |
+| Flow control | no |
+| User properties | no |
+| Maximum Packet Size | no |
+| Optional Server feature availability | no |
+| Enhanced authentication | no |
+| Subscription options | no |
+| Will delay | no |
+| Server Keep Alive | no |
+| Assigned ClientID | no |
+| Server reference | no |
+
+
 Installation
 ------------
 
