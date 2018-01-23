@@ -998,6 +998,26 @@ testGenerateError('Invalid password', {
   password: 42
 })
 
+testGenerateError('Username is required to use password', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 54,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  will: {
+    retain: true,
+    qos: 2,
+    topic: 'topic',
+    payload: 'payload'
+  },
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  password: 'password'
+})
+
 test('support cork', function (t) {
   t.plan(9)
 

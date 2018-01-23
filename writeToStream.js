@@ -176,7 +176,12 @@ function connect (opts, stream) {
 
   // Password
   if (password != null) {
-    if (providedUsername && (typeof password === 'string' || Buffer.isBuffer(password))) {
+    if (!providedUsername) {
+      stream.emit('error', new Error('Username is required to use password'))
+      return false
+    }
+
+    if (typeof password === 'string' || Buffer.isBuffer(password)) {
       length += byteLength(password) + 2
     } else {
       stream.emit('error', new Error('Invalid password'))
