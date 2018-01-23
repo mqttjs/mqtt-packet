@@ -21,6 +21,10 @@ function testParseGenerate (name, object, buffer, opts) {
       t.deepEqual(packet, expected, 'expected packet')
     })
 
+    parser.on('error', function (err) {
+      t.fail(err)
+    })
+
     t.equal(parser.parse(fixture), 0, 'remaining bytes')
   })
 
@@ -42,6 +46,10 @@ function testParseGenerate (name, object, buffer, opts) {
         delete packet.payload
       }
       t.deepEqual(packet, expected, 'expected packet')
+    })
+
+    parser.on('error', function (err) {
+      t.fail(err)
     })
 
     t.equal(parser.parse(fixture), 0, 'remaining bytes')

@@ -40,7 +40,7 @@ Accumulator.prototype.concat = function () {
 
   result = Buffer.allocUnsafe(length)
 
-  for (i = 0; i < list.length && list[i]; i++) {
+  for (i = 0; i < list.length && list[i] !== undefined; i++) {
     if (typeof list[i] !== 'string') {
       list[i].copy(result, pos)
       pos += lengths[i]
