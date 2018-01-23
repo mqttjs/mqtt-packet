@@ -5,6 +5,12 @@ var mqtt = require('./')
 var Buffer = require('safe-buffer').Buffer
 var WS = require('readable-stream').Writable
 
+function normalExpectedObject (object) {
+  if (object.username != null) object.username = object.username.toString()
+  if (object.password != null) object.password = Buffer.from(object.password)
+  return object
+}
+
 function testParseGenerate (name, object, buffer, opts) {
   test(name + ' parse', function (t) {
     t.plan(2)
@@ -18,7 +24,7 @@ function testParseGenerate (name, object, buffer, opts) {
         delete packet.topic
         delete packet.payload
       }
-      t.deepEqual(packet, expected, 'expected packet')
+      t.deepEqual(packet, normalExpectedObject(expected), 'expected packet')
     })
 
     parser.on('error', function (err) {
@@ -45,7 +51,7 @@ function testParseGenerate (name, object, buffer, opts) {
         delete packet.topic
         delete packet.payload
       }
-      t.deepEqual(packet, expected, 'expected packet')
+      t.deepEqual(packet, normalExpectedObject(expected), 'expected packet')
     })
 
     parser.on('error', function (err) {
@@ -248,6 +254,31 @@ testParseGenerate('empty will payload', {
   112, 97, 115, 115, 119, 111, 114, 100 // Password
 ]))
 
+testParseGenerate('empty buffer username payload', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 20,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: new Buffer('')
+}, Buffer.from([
+  16, 20, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  3, // Protocol version
+  130, // Connect flags
+  0, 30, // Keepalive
+  0, 4, // Client ID length
+  116, 101, 115, 116, // Client ID
+  0, 0 // Username length
+  // Empty Username payload
+]))
+
 testParseGenerate('empty string username payload', {
   cmd: 'connect',
   retain: false,
@@ -273,7 +304,7 @@ testParseGenerate('empty string username payload', {
   // Empty Username payload
 ]))
 
-testParseGenerate('empty string password payload', {
+testParseGenerate('empty buffer password payload', {
   cmd: 'connect',
   retain: false,
   qos: 0,
@@ -286,6 +317,34 @@ testParseGenerate('empty string password payload', {
   clientId: 'test',
   username: 'username',
   password: new Buffer('')
+}, Buffer.from([
+  16, 30, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  3, // Protocol version
+  194, // Connect flags
+  0, 30, // Keepalive
+  0, 4, // Client ID length
+  116, 101, 115, 116, // Client ID
+  0, 8, // Username length
+  117, 115, 101, 114, 110, 97, 109, 101, // Username payload
+  0, 0 // Password length
+  // Empty password payload
+]))
+
+testParseGenerate('empty string password payload', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 30,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: 'username',
+  password: ''
 }, Buffer.from([
   16, 30, // Header
   0, 6, // Protocol ID length

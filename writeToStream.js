@@ -165,7 +165,7 @@ function connect (opts, stream) {
   // Username
   var providedUsername = false
   if (username != null) {
-    if (typeof username === 'string') {
+    if (isStringOrBuffer(username)) {
       providedUsername = true
       length += Buffer.byteLength(username) + 2
     } else {
@@ -181,7 +181,7 @@ function connect (opts, stream) {
       return false
     }
 
-    if (typeof password === 'string' || Buffer.isBuffer(password)) {
+    if (isStringOrBuffer(password)) {
       length += byteLength(password) + 2
     } else {
       stream.emit('error', new Error('Invalid password'))
@@ -226,10 +226,10 @@ function connect (opts, stream) {
 
   // Username and password
   if (username != null) {
-    writeString(stream, username)
+    writeStringOrBuffer(stream, username)
   }
   if (password != null) {
-    writeStringOrBuffer(stream, Buffer.from(password))
+    writeStringOrBuffer(stream, password)
   }
   // This is a small packet that happens only once on a stream
   // We assume the stream is always free to receive more data after this
@@ -586,6 +586,10 @@ function byteLength (bufOrString) {
   if (!bufOrString) return 0
   else if (Buffer.isBuffer(bufOrString)) return bufOrString.length
   else return Buffer.byteLength(bufOrString)
+}
+
+function isStringOrBuffer (field) {
+  return typeof field === 'string' || Buffer.isBuffer(field)
 }
 
 module.exports = generate
