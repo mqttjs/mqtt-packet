@@ -163,8 +163,10 @@ function connect (opts, stream) {
   }
 
   // Username
-  if (username) {
-    if (username.length) {
+  var providedUsername = false
+  if (username != null) {
+    if (isStringOrBuffer(username)) {
+      providedUsername = true
       length += Buffer.byteLength(username) + 2
     } else {
       stream.emit('error', new Error('Invalid username'))
@@ -173,8 +175,13 @@ function connect (opts, stream) {
   }
 
   // Password
-  if (password) {
-    if (password.length) {
+  if (password != null) {
+    if (!providedUsername) {
+      stream.emit('error', new Error('Username is required to use password'))
+      return false
+    }
+
+    if (isStringOrBuffer(password)) {
       length += byteLength(password) + 2
     } else {
       stream.emit('error', new Error('Invalid password'))
@@ -196,8 +203,8 @@ function connect (opts, stream) {
 
   // Connect flags
   var flags = 0
-  flags |= username ? protocol.USERNAME_MASK : 0
-  flags |= password ? protocol.PASSWORD_MASK : 0
+  flags |= (username != null) ? protocol.USERNAME_MASK : 0
+  flags |= (password != null) ? protocol.PASSWORD_MASK : 0
   flags |= (will && will.retain) ? protocol.WILL_RETAIN_MASK : 0
   flags |= (will && will.qos) ? will.qos << protocol.WILL_QOS_SHIFT : 0
   flags |= will ? protocol.WILL_FLAG_MASK : 0
@@ -218,9 +225,12 @@ function connect (opts, stream) {
   }
 
   // Username and password
-  if (username) writeStringOrBuffer(stream, username)
-  if (password) writeStringOrBuffer(stream, password)
-
+  if (username != null) {
+    writeStringOrBuffer(stream, username)
+  }
+  if (password != null) {
+    writeStringOrBuffer(stream, password)
+  }
   // This is a small packet that happens only once on a stream
   // We assume the stream is always free to receive more data after this
   return true
@@ -564,8 +574,9 @@ function writeNumberGenerated (stream, number) {
  * @return <Number> number of bytes written
  */
 function writeStringOrBuffer (stream, toWrite) {
-  if (toWrite && typeof toWrite === 'string') writeString(stream, toWrite)
-  else if (toWrite) {
+  if (typeof toWrite === 'string') {
+    writeString(stream, toWrite)
+  } else if (toWrite) {
     writeNumber(stream, toWrite.length)
     stream.write(toWrite)
   } else writeNumber(stream, 0)
@@ -575,6 +586,10 @@ function byteLength (bufOrString) {
   if (!bufOrString) return 0
   else if (Buffer.isBuffer(bufOrString)) return bufOrString.length
   else return Buffer.byteLength(bufOrString)
+}
+
+function isStringOrBuffer (field) {
+  return typeof field === 'string' || Buffer.isBuffer(field)
 }
 
 module.exports = generate
