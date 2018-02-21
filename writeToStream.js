@@ -584,12 +584,12 @@ function writeStringOrBuffer (stream, toWrite) {
 
 function byteLength (bufOrString) {
   if (!bufOrString) return 0
-  else if (Buffer.isBuffer(bufOrString)) return bufOrString.length
+  else if (bufOrString instanceof Buffer) return bufOrString.length
   else return Buffer.byteLength(bufOrString)
 }
 
 function isStringOrBuffer (field) {
-  return typeof field === 'string' || Buffer.isBuffer(field)
+  return typeof field === 'string' || field instanceof Buffer
 }
 
 module.exports = generate
