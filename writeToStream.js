@@ -5,7 +5,7 @@ var Buffer = require('safe-buffer').Buffer
 var empty = Buffer.allocUnsafe(0)
 var zeroBuf = Buffer.from([0])
 var numbers = require('./numbers')
-var nextTick = require('process-nextick-args')
+var nextTick = require('process-nextick-args').nextTick
 
 var numCache = numbers.cache
 var generateNumber = numbers.generateNumber
@@ -584,12 +584,12 @@ function writeStringOrBuffer (stream, toWrite) {
 
 function byteLength (bufOrString) {
   if (!bufOrString) return 0
-  else if (Buffer.isBuffer(bufOrString)) return bufOrString.length
+  else if (bufOrString instanceof Buffer) return bufOrString.length
   else return Buffer.byteLength(bufOrString)
 }
 
 function isStringOrBuffer (field) {
-  return typeof field === 'string' || Buffer.isBuffer(field)
+  return typeof field === 'string' || field instanceof Buffer
 }
 
 module.exports = generate
