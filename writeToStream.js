@@ -501,7 +501,7 @@ function genBufLength (length) {
     length = length / 128 | 0
     if (length > 0) digit = digit | 0x80
 
-    buffer.writeUInt8(digit, pos++, true)
+    buffer.writeUInt8(digit, pos++)
   } while (length > 0)
 
   return buffer
