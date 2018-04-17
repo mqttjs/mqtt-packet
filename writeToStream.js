@@ -272,7 +272,7 @@ function publish (opts, stream) {
   }
 
   // Get the payload length
-  if (!Buffer.isBuffer(payload)) length += Buffer.byteLength(payload)
+  if (Buffer.isBuffer(payload)) length += Buffer.byteLength(payload)
   else length += payload.length
 
   // Message ID must a number if qos > 0
