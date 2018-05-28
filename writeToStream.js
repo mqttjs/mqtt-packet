@@ -10,10 +10,12 @@ var nextTick = require('process-nextick-args').nextTick
 var numCache = numbers.cache
 var generateNumber = numbers.generateNumber
 var generateCache = numbers.generateCache
+var genBufVariableByteInt = numbers.genBufVariableByteInt
+var generate4ByteBuffer = numbers.generate4ByteBuffer
 var writeNumber = writeNumberCached
 var toGenerate = true
 
-function generate (packet, stream) {
+function generate (packet, stream, opts) {
   if (stream.cork) {
     stream.cork()
     nextTick(uncork, stream)
@@ -26,27 +28,31 @@ function generate (packet, stream) {
 
   switch (packet.cmd) {
     case 'connect':
-      return connect(packet, stream)
+      return connect(packet, stream, opts)
     case 'connack':
-      return connack(packet, stream)
+      return connack(packet, stream, opts)
     case 'publish':
-      return publish(packet, stream)
+      return publish(packet, stream, opts)
     case 'puback':
     case 'pubrec':
     case 'pubrel':
     case 'pubcomp':
-    case 'unsuback':
-      return confirmation(packet, stream)
+      return confirmation(packet, stream, opts)
     case 'subscribe':
-      return subscribe(packet, stream)
+      return subscribe(packet, stream, opts)
     case 'suback':
-      return suback(packet, stream)
+      return suback(packet, stream, opts)
     case 'unsubscribe':
-      return unsubscribe(packet, stream)
+      return unsubscribe(packet, stream, opts)
+    case 'unsuback':
+      return unsuback(packet, stream, opts)
     case 'pingreq':
     case 'pingresp':
+      return emptyPacket(packet, stream, opts)
     case 'disconnect':
-      return emptyPacket(packet, stream)
+      return disconnect(packet, stream, opts)
+    case 'auth':
+      return auth(packet, stream, opts)
     default:
       stream.emit('error', new Error('Unknown command'))
       return false
@@ -75,8 +81,8 @@ function uncork (stream) {
   stream.uncork()
 }
 
-function connect (opts, stream) {
-  var settings = opts || {}
+function connect (packet, stream, opts) {
+  var settings = packet || {}
   var protocolId = settings.protocolId || 'MQTT'
   var protocolVersion = settings.protocolVersion || 4
   var will = settings.will
@@ -85,6 +91,8 @@ function connect (opts, stream) {
   var clientId = settings.clientId || ''
   var username = settings.username
   var password = settings.password
+  /* mqtt5 new oprions */
+  var properties = settings.properties
 
   if (clean === undefined) clean = true
 
@@ -97,8 +105,8 @@ function connect (opts, stream) {
     return false
   } else length += protocolId.length + 2
 
-  // Must be 3 or 4
-  if (protocolVersion !== 3 && protocolVersion !== 4) {
+  // Must be 3 or 4 or 5
+  if (protocolVersion !== 3 && protocolVersion !== 4 && protocolVersion !== 5) {
     stream.emit('error', new Error('Invalid protocol version'))
     return false
   } else length += 1
@@ -130,6 +138,12 @@ function connect (opts, stream) {
   // Connect flags
   length += 1
 
+  // Properties
+  if (protocolVersion === 5) {
+    var propertiesData = getProperties(stream, properties)
+    length += propertiesData.length
+  }
+
   // If will exists...
   if (will) {
     // It must be an object
@@ -146,7 +160,7 @@ function connect (opts, stream) {
     }
 
     // Payload
-    if (will.payload && will.payload) {
+    if (will.payload) {
       if (will.payload.length >= 0) {
         if (typeof will.payload === 'string') {
           length += Buffer.byteLength(will.payload) + 2
@@ -157,8 +171,13 @@ function connect (opts, stream) {
         stream.emit('error', new Error('Invalid will payload'))
         return false
       }
-    } else {
-      length += 2
+
+      // will properties
+      var willProperties = {}
+      if (protocolVersion === 5) {
+        willProperties = getProperties(stream, will.properties)
+        length += willProperties.length
+      }
     }
   }
 
@@ -193,12 +212,16 @@ function connect (opts, stream) {
   stream.write(protocol.CONNECT_HEADER)
 
   // Generate length
-  writeLength(stream, length)
+  writeVarByteInt(stream, length)
 
   // Generate protocol ID
   writeStringOrBuffer(stream, protocolId)
   stream.write(
-    protocolVersion === 4 ? protocol.VERSION4 : protocol.VERSION3
+    protocolVersion === 4
+      ? protocol.VERSION4
+      : protocolVersion === 5
+        ? protocol.VERSION5
+        : protocol.VERSION3
   )
 
   // Connect flags
@@ -215,11 +238,19 @@ function connect (opts, stream) {
   // Keepalive
   writeNumber(stream, keepalive)
 
+  // Properties
+  if (protocolVersion === 5) {
+    propertiesData.write()
+  }
+
   // Client ID
   writeStringOrBuffer(stream, clientId)
 
   // Will
   if (will) {
+    if (protocolVersion === 5) {
+      willProperties.write()
+    }
     writeString(stream, will.topic)
     writeStringOrBuffer(stream, will.payload)
   }
@@ -236,30 +267,46 @@ function connect (opts, stream) {
   return true
 }
 
-function connack (opts, stream) {
-  var settings = opts || {}
-  var rc = settings.returnCode
+function connack (packet, stream, opts) {
+  var version = opts ? opts.protocolVersion : 4
+  var settings = packet || {}
+  var rc = version === 5 ? settings.reasonCode : settings.returnCode
+  var properties = settings.properties
+  var length = 2 // length of rc and sessionHeader
 
   // Check return code
   if (typeof rc !== 'number') {
     stream.emit('error', new Error('Invalid return code'))
     return false
   }
+  // mqtt5 properties
+  var propertiesData = null
+  if (version === 5) {
+    propertiesData = getProperties(stream, properties)
+    length += propertiesData.length
+  }
 
   stream.write(protocol.CONNACK_HEADER)
-  writeLength(stream, 2)
-  stream.write(opts.sessionPresent ? protocol.SESSIONPRESENT_HEADER : zeroBuf)
+  // length
+  writeVarByteInt(stream, length)
+  stream.write(settings.sessionPresent ? protocol.SESSIONPRESENT_HEADER : zeroBuf)
 
-  return stream.write(Buffer.from([rc]))
+  stream.write(Buffer.from([rc]))
+  if (propertiesData != null) {
+    propertiesData.write()
+  }
+  return true
 }
 
-function publish (opts, stream) {
-  var settings = opts || {}
+function publish (packet, stream, opts) {
+  var version = opts ? opts.protocolVersion : 4
+  var settings = packet || {}
   var qos = settings.qos || 0
   var retain = settings.retain ? protocol.RETAIN_MASK : 0
   var topic = settings.topic
   var payload = settings.payload || empty
   var id = settings.messageId
+  var properties = settings.properties
 
   var length = 0
 
@@ -281,11 +328,18 @@ function publish (opts, stream) {
     return false
   } else if (qos) length += 2
 
+  // mqtt5 properties
+  var propertiesData = null
+  if (version === 5) {
+    propertiesData = getProperties(stream, properties)
+    length += propertiesData.length
+  }
+
   // Header
-  stream.write(protocol.PUBLISH_HEADER[qos][opts.dup ? 1 : 0][retain ? 1 : 0])
+  stream.write(protocol.PUBLISH_HEADER[qos][settings.dup ? 1 : 0][retain ? 1 : 0])
 
   // Remaining length
-  writeLength(stream, length)
+  writeVarByteInt(stream, length)
 
   // Topic
   writeNumber(stream, byteLength(topic))
@@ -294,17 +348,26 @@ function publish (opts, stream) {
   // Message ID
   if (qos > 0) writeNumber(stream, id)
 
+  // Properties
+  if (propertiesData != null) {
+    propertiesData.write()
+  }
+
   // Payload
   return stream.write(payload)
 }
 
 /* Puback, pubrec, pubrel and pubcomp */
-function confirmation (opts, stream) {
-  var settings = opts || {}
+function confirmation (packet, stream, opts) {
+  var version = opts ? opts.protocolVersion : 4
+  var settings = packet || {}
   var type = settings.cmd || 'puback'
   var id = settings.messageId
   var dup = (settings.dup && type === 'pubrel') ? protocol.DUP_MASK : 0
   var qos = 0
+  var reasonCode = settings.reasonCode
+  var properties = settings.properties
+  var length = version === 5 ? 3 : 2
 
   if (type === 'pubrel') qos = 1
 
@@ -314,21 +377,42 @@ function confirmation (opts, stream) {
     return false
   }
 
+  // properies mqtt 5
+  var propertiesData = null
+  if (version === 5) {
+    propertiesData = getPropertiesByMaximumPacketSize(stream, properties, opts, length)
+    if (!propertiesData) { return false }
+    length += propertiesData.length
+  }
+
   // Header
   stream.write(protocol.ACKS[type][qos][dup][0])
 
   // Length
-  writeLength(stream, 2)
+  writeVarByteInt(stream, length)
 
   // Message ID
-  return writeNumber(stream, id)
+  writeNumber(stream, id)
+
+  // reason code in header
+  if (version === 5) {
+    stream.write(Buffer.from([reasonCode]))
+  }
+
+  // properies mqtt 5
+  if (propertiesData !== null) {
+    propertiesData.write()
+  }
+  return true
 }
 
-function subscribe (opts, stream) {
-  var settings = opts || {}
+function subscribe (packet, stream, opts) {
+  var version = opts ? opts.protocolVersion : 4
+  var settings = packet || {}
   var dup = settings.dup ? protocol.DUP_MASK : 0
   var id = settings.messageId
   var subs = settings.subscriptions
+  var properties = settings.properties
 
   var length = 0
 
@@ -337,6 +421,13 @@ function subscribe (opts, stream) {
     stream.emit('error', new Error('Invalid messageId'))
     return false
   } else length += 2
+
+  // properies mqtt 5
+  var propertiesData = null
+  if (version === 5) {
+    propertiesData = getProperties(stream, properties)
+    length += propertiesData.length
+  }
 
   // Check subscriptions
   if (typeof subs === 'object' && subs.length) {
@@ -353,6 +444,24 @@ function subscribe (opts, stream) {
         return false
       }
 
+      if (version === 5) {
+        var nl = subs[i].nl || false
+        if (typeof nl !== 'boolean') {
+          stream.emit('error', new Error('Invalid subscriptions - invalid No Local'))
+          return false
+        }
+        var rap = subs[i].rap || false
+        if (typeof rap !== 'boolean') {
+          stream.emit('error', new Error('Invalid subscriptions - invalid Retain as Published'))
+          return false
+        }
+        var rh = subs[i].rh || 0
+        if (typeof rh !== 'number' || rh > 2) {
+          stream.emit('error', new Error('Invalid subscriptions - invalid Retain Handling'))
+          return false
+        }
+      }
+
       length += Buffer.byteLength(itopic) + 2 + 1
     }
   } else {
@@ -364,10 +473,15 @@ function subscribe (opts, stream) {
   stream.write(protocol.SUBSCRIBE_HEADER[1][dup ? 1 : 0][0])
 
   // Generate length
-  writeLength(stream, length)
+  writeVarByteInt(stream, length)
 
   // Generate message ID
   writeNumber(stream, id)
+
+  // properies mqtt 5
+  if (propertiesData !== null) {
+    propertiesData.write()
+  }
 
   var result = true
 
@@ -376,22 +490,34 @@ function subscribe (opts, stream) {
     var sub = subs[j]
     var jtopic = sub.topic
     var jqos = sub.qos
+    var jnl = +sub.nl
+    var jrap = +sub.rap
+    var jrh = sub.rh
+    var joptions
 
     // Write topic string
     writeString(stream, jtopic)
 
-    // Write qos
-    result = stream.write(protocol.QOS[jqos])
+    // options process
+    joptions = protocol.SUBSCRIBE_OPTIONS_QOS[jqos]
+    if (version === 5) {
+      joptions |= jnl ? protocol.SUBSCRIBE_OPTIONS_NL : 0
+      joptions |= jrap ? protocol.SUBSCRIBE_OPTIONS_RAP : 0
+      joptions |= jrh ? protocol.SUBSCRIBE_OPTIONS_RH[jrh] : 0
+    }
+    // Write options
+    result = stream.write(Buffer.from([joptions]))
   }
 
   return result
 }
 
-function suback (opts, stream) {
-  var settings = opts || {}
+function suback (packet, stream, opts) {
+  var version = opts ? opts.protocolVersion : 4
+  var settings = packet || {}
   var id = settings.messageId
   var granted = settings.granted
-
+  var properties = settings.properties
   var length = 0
 
   // Check message ID
@@ -414,23 +540,38 @@ function suback (opts, stream) {
     return false
   }
 
+  // properies mqtt 5
+  var propertiesData = null
+  if (version === 5) {
+    propertiesData = getPropertiesByMaximumPacketSize(stream, properties, opts, length)
+    if (!propertiesData) { return false }
+    length += propertiesData.length
+  }
+
   // header
   stream.write(protocol.SUBACK_HEADER)
 
   // Length
-  writeLength(stream, length)
+  writeVarByteInt(stream, length)
 
   // Message ID
   writeNumber(stream, id)
 
+  // properies mqtt 5
+  if (propertiesData !== null) {
+    propertiesData.write()
+  }
+
   return stream.write(Buffer.from(granted))
 }
 
-function unsubscribe (opts, stream) {
-  var settings = opts || {}
+function unsubscribe (packet, stream, opts) {
+  var version = opts ? opts.protocolVersion : 4
+  var settings = packet || {}
   var id = settings.messageId
   var dup = settings.dup ? protocol.DUP_MASK : 0
   var unsubs = settings.unsubscriptions
+  var properties = settings.properties
 
   var length = 0
 
@@ -454,15 +595,26 @@ function unsubscribe (opts, stream) {
     stream.emit('error', new Error('Invalid unsubscriptions'))
     return false
   }
+  // properies mqtt 5
+  var propertiesData = null
+  if (version === 5) {
+    propertiesData = getProperties(stream, properties)
+    length += propertiesData.length
+  }
 
   // Header
   stream.write(protocol.UNSUBSCRIBE_HEADER[1][dup ? 1 : 0][0])
 
   // Length
-  writeLength(stream, length)
+  writeVarByteInt(stream, length)
 
   // Message ID
   writeNumber(stream, id)
+
+  // properies mqtt 5
+  if (propertiesData !== null) {
+    propertiesData.write()
+  }
 
   // Unsubs
   var result = true
@@ -473,42 +625,139 @@ function unsubscribe (opts, stream) {
   return result
 }
 
-function emptyPacket (opts, stream) {
-  return stream.write(protocol.EMPTY[opts.cmd])
+function unsuback (packet, stream, opts) {
+  var version = opts ? opts.protocolVersion : 4
+  var settings = packet || {}
+  var id = settings.messageId
+  var dup = settings.dup ? protocol.DUP_MASK : 0
+  var granted = settings.granted
+  var properties = settings.properties
+  var type = settings.cmd
+  var qos = 0
+
+  var length = 2
+
+  // Check message ID
+  if (typeof id !== 'number') {
+    stream.emit('error', new Error('Invalid messageId'))
+    return false
+  }
+
+  // Check granted
+  if (version === 5) {
+    if (typeof granted === 'object' && granted.length) {
+      for (var i = 0; i < granted.length; i += 1) {
+        if (typeof granted[i] !== 'number') {
+          stream.emit('error', new Error('Invalid qos vector'))
+          return false
+        }
+        length += 1
+      }
+    } else {
+      stream.emit('error', new Error('Invalid qos vector'))
+      return false
+    }
+  }
+
+  // properies mqtt 5
+  var propertiesData = null
+  if (version === 5) {
+    propertiesData = getPropertiesByMaximumPacketSize(stream, properties, opts, length)
+    if (!propertiesData) { return false }
+    length += propertiesData.length
+  }
+
+  // Header
+  stream.write(protocol.ACKS[type][qos][dup][0])
+
+  // Length
+  writeVarByteInt(stream, length)
+
+  // Message ID
+  writeNumber(stream, id)
+
+  // properies mqtt 5
+  if (propertiesData !== null) {
+    propertiesData.write()
+  }
+
+  // payload
+  if (version === 5) {
+    stream.write(Buffer.from(granted))
+  }
+  return true
+}
+
+function emptyPacket (packet, stream, opts) {
+  return stream.write(protocol.EMPTY[packet.cmd])
+}
+
+function disconnect (packet, stream, opts) {
+  var version = opts ? opts.protocolVersion : 4
+  var settings = packet || {}
+  var reasonCode = settings.reasonCode
+  var properties = settings.properties
+  var length = version === 5 ? 1 : 0
+
+  // properies mqtt 5
+  var propertiesData = null
+  if (version === 5) {
+    propertiesData = getPropertiesByMaximumPacketSize(stream, properties, opts, length)
+    if (!propertiesData) { return false }
+    length += propertiesData.length
+  }
+
+  // Header
+  stream.write(Buffer.from([protocol.codes['disconnect'] << 4]))
+
+  // Length
+  writeVarByteInt(stream, length)
+
+  // reason code in header
+  if (version === 5) {
+    stream.write(Buffer.from([reasonCode]))
+  }
+
+  // properies mqtt 5
+  if (propertiesData !== null) {
+    propertiesData.write()
+  }
+
+  return true
+}
+
+function auth (packet, stream, opts) {
+  var version = opts ? opts.protocolVersion : 4
+  var settings = packet || {}
+  var reasonCode = settings.reasonCode
+  var properties = settings.properties
+  var length = version === 5 ? 1 : 0
+
+  if (version !== 5) stream.emit('error', new Error('Invalid mqtt version for auth packet'))
+
+  // properies mqtt 5
+  var propertiesData = getPropertiesByMaximumPacketSize(stream, properties, opts, length)
+  if (!propertiesData) { return false }
+  length += propertiesData.length
+
+  // Header
+  stream.write(Buffer.from([protocol.codes['auth'] << 4]))
+
+  // Length
+  writeVarByteInt(stream, length)
+
+  // reason code in header
+  stream.write(Buffer.from([reasonCode]))
+
+  // properies mqtt 5
+  if (propertiesData !== null) {
+    propertiesData.write()
+  }
+  return true
 }
 
 /**
- * calcLengthLength - calculate the length of the remaining
- * length field
- *
- * @api private
- */
-function calcLengthLength (length) {
-  if (length >= 0 && length < 128) return 1
-  else if (length >= 128 && length < 16384) return 2
-  else if (length >= 16384 && length < 2097152) return 3
-  else if (length >= 2097152 && length < 268435456) return 4
-  else return 0
-}
-
-function genBufLength (length) {
-  var digit = 0
-  var pos = 0
-  var buffer = Buffer.allocUnsafe(calcLengthLength(length))
-
-  do {
-    digit = length % 128 | 0
-    length = length / 128 | 0
-    if (length > 0) digit = digit | 0x80
-
-    buffer.writeUInt8(digit, pos++)
-  } while (length > 0)
-
-  return buffer
-}
-
-/**
- * writeLength - write an MQTT style length field to the buffer
+ * writeVarByteInt - write an MQTT style variable byte integer to the buffer
  *
  * @param <Buffer> buffer - destination
  * @param <Number> pos - offset
@@ -518,13 +767,13 @@ function genBufLength (length) {
  * @api private
  */
 
-var lengthCache = {}
-function writeLength (stream, length) {
-  var buffer = lengthCache[length]
+var varByteIntCache = {}
+function writeVarByteInt (stream, num) {
+  var buffer = varByteIntCache[num]
 
   if (!buffer) {
-    buffer = genBufLength(length)
-    if (length < 16384) lengthCache[length] = buffer
+    buffer = genBufVariableByteInt(num).data
+    if (num < 16384) varByteIntCache[num] = buffer
   }
 
   stream.write(buffer)
@@ -549,6 +798,21 @@ function writeString (stream, string) {
 }
 
 /**
+ * writeStringPair - write a utf8 string pairs to the buffer
+ *
+ * @param <Buffer> buffer - destination
+ * @param <String> name - string name to write
+ * @param <String> value - string value to write
+ * @return <Number> number of bytes written
+ *
+ * @api private
+ */
+function writeStringPair (stream, name, value) {
+  writeString(stream, name)
+  writeString(stream, value)
+}
+
+/**
  * writeNumber - write a two byte number to the buffer
  *
  * @param <Buffer> buffer - destination
@@ -564,7 +828,9 @@ function writeNumberCached (stream, number) {
 function writeNumberGenerated (stream, number) {
   return stream.write(generateNumber(number))
 }
-
+function write4ByteNumber (stream, number) {
+  return stream.write(generate4ByteBuffer(number))
+}
 /**
  * writeStringOrBuffer - write a String or Buffer with the its length prefix
  *
@@ -580,6 +846,191 @@ function writeStringOrBuffer (stream, toWrite) {
     writeNumber(stream, toWrite.length)
     stream.write(toWrite)
   } else writeNumber(stream, 0)
+}
+
+function getProperties (stream, properties) {
+  /* connect properties */
+  if (typeof properties !== 'object' || properties.length != null) {
+    return {
+      length: 1,
+      write: function () {
+        writeProperties(stream, {}, 0)
+      }
+    }
+  }
+  var propertiesLength = 0
+  function getLengthProperty (name) {
+    var type = protocol.propertiesTypes[name]
+    var value = properties[name]
+    var length = 0
+    switch (type) {
+      case 'byte': {
+        if (typeof value !== 'boolean') {
+          stream.emit('error', new Error('Invalid ' + name))
+          return false
+        }
+        length += 1 + 1
+        break
+      }
+      case 'int8': {
+        if (typeof value !== 'number') {
+          stream.emit('error', new Error('Invalid ' + name))
+          return false
+        }
+        length += 1 + 1
+        break
+      }
+      case 'binary': {
+        if (value && value === null) {
+          stream.emit('error', new Error('Invalid ' + name))
+          return false
+        }
+        length += 1 + Buffer.byteLength(value) + 2
+        break
+      }
+      case 'int16': {
+        if (typeof value !== 'number') {
+          stream.emit('error', new Error('Invalid ' + name))
+          return false
+        }
+        length += 1 + 2
+        break
+      }
+      case 'int32': {
+        if (typeof value !== 'number') {
+          stream.emit('error', new Error('Invalid ' + name))
+          return false
+        }
+        length += 1 + 4
+        break
+      }
+      case 'var': {
+        if (typeof value !== 'number') {
+          stream.emit('error', new Error('Invalid ' + name))
+          return false
+        }
+        length += 1 + genBufVariableByteInt(value).length
+        break
+      }
+      case 'string': {
+        if (typeof value !== 'string') {
+          stream.emit('error', new Error('Invalid ' + name))
+          return false
+        }
+        length += 1 + 2 + Buffer.byteLength(value.toString())
+        break
+      }
+      case 'pair': {
+        if (typeof value !== 'object') {
+          stream.emit('error', new Error('Invalid ' + name))
+          return false
+        }
+        length += Object.getOwnPropertyNames(value).reduce(function (result, name) {
+          result += 1 + 2 + Buffer.byteLength(name.toString()) + 2 + Buffer.byteLength(value[name].toString())
+          return result
+        }, 0)
+        break
+      }
+      default: {
+        stream.emit('error', new Error('Invalid property ' + name))
+        return false
+      }
+    }
+    return length
+  }
+  if (properties) {
+    for (var propName in properties) {
+      var propLength = getLengthProperty(propName)
+      if (!propLength) return false
+      propertiesLength += propLength
+    }
+  }
+  var propertiesLengthLength = genBufVariableByteInt(propertiesLength).length
+
+  return {
+    length: propertiesLengthLength + propertiesLength,
+    write: function () {
+      writeProperties(stream, properties, propertiesLength)
+    }
+  }
+}
+
+function getPropertiesByMaximumPacketSize (stream, properties, opts, length) {
+  var mayEmptyProps = ['reasonString', 'userProperties']
+  var maximumPacketSize = opts && opts.properties && opts.properties.maximumPacketSize ? opts.properties.maximumPacketSize : 0
+
+  var propertiesData = getProperties(stream, properties)
+  if (maximumPacketSize) {
+    while (length + propertiesData.length > maximumPacketSize) {
+      var currentMayEmptyProp = mayEmptyProps.shift()
+      if (currentMayEmptyProp && properties[currentMayEmptyProp]) {
+        delete properties[currentMayEmptyProp]
+        propertiesData = getProperties(stream, properties)
+      } else {
+        return false
+      }
+    }
+  }
+  return propertiesData
+}
+
+function writeProperties (stream, properties, propertiesLength) {
+  /* write properties to stream */
+  writeVarByteInt(stream, propertiesLength)
+  for (var propName in properties) {
+    if (properties.hasOwnProperty(propName) && properties[propName] !== null) {
+      var value = properties[propName]
+      var type = protocol.propertiesTypes[propName]
+      switch (type) {
+        case 'byte': {
+          stream.write(Buffer.from([protocol.properties[propName]]))
+          stream.write(Buffer.from([+value]))
+          break
+        }
+        case 'int8': {
+          stream.write(Buffer.from([protocol.properties[propName]]))
+          stream.write(Buffer.from([value]))
+          break
+        }
+        case 'binary': {
+          stream.write(Buffer.from([protocol.properties[propName]]))
+          writeStringOrBuffer(stream, value)
+          break
+        }
+        case 'int16': {
+          stream.write(Buffer.from([protocol.properties[propName]]))
+          writeNumber(stream, value)
+          break
+        }
+        case 'int32': {
+          stream.write(Buffer.from([protocol.properties[propName]]))
+          write4ByteNumber(stream, value)
+          break
+        }
+        case 'var': {
+          stream.write(Buffer.from([protocol.properties[propName]]))
+          writeVarByteInt(stream, value)
+          break
+        }
+        case 'string': {
+          stream.write(Buffer.from([protocol.properties[propName]]))
+          writeString(stream, value)
+          break
+        }
+        case 'pair': {
+          Object.getOwnPropertyNames(value).forEach(function (name) {
+            stream.write(Buffer.from([protocol.properties[propName]]))
+            writeStringPair(stream, name.toString(), value[name].toString())
+          })
+          break
+        }
+        default: {
+          stream.emit('error', new Error('Invalid property ' + propName))
+          return false
+        }
+      }
+    }
+  }
 }
 
 function byteLength (bufOrString) {

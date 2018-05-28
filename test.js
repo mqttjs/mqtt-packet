@@ -35,7 +35,7 @@ function testParseGenerate (name, object, buffer, opts) {
   })
 
   test(name + ' generate', function (t) {
-    t.equal(mqtt.generate(object).toString('hex'), buffer.toString('hex'))
+    t.equal(mqtt.generate(object, opts).toString('hex'), buffer.toString('hex'))
     t.end()
   })
 
@@ -44,7 +44,7 @@ function testParseGenerate (name, object, buffer, opts) {
 
     var parser = mqtt.parser(opts)
     var expected = object
-    var fixture = mqtt.generate(object)
+    var fixture = mqtt.generate(object, opts)
 
     parser.on('packet', function (packet) {
       if (packet.cmd !== 'publish') {
@@ -62,11 +62,11 @@ function testParseGenerate (name, object, buffer, opts) {
   })
 }
 
-function testParseError (expected, fixture) {
+function testParseError (expected, fixture, opts) {
   test(expected, function (t) {
     t.plan(1)
 
-    var parser = mqtt.parser()
+    var parser = mqtt.parser(opts)
 
     parser.on('error', function (err) {
       t.equal(err.message, expected, 'expected error message')
@@ -80,12 +80,12 @@ function testParseError (expected, fixture) {
   })
 }
 
-function testGenerateError (expected, fixture) {
+function testGenerateError (expected, fixture, opts) {
   test(expected, function (t) {
     t.plan(1)
 
     try {
-      mqtt.generate(fixture)
+      mqtt.generate(fixture, opts)
     } catch (err) {
       t.equal(expected, err.message)
     }
@@ -184,6 +184,136 @@ testParseGenerate('minimal connect', {
   0, 30, // Keepalive
   0, 4, // Client ID length
   116, 101, 115, 116 // Client ID
+]))
+
+testParseGenerate('connect MQTT 5.0', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 125,
+  protocolId: 'MQTT',
+  protocolVersion: 5,
+  will: {
+    retain: true,
+    qos: 2,
+    properties: {
+      willDelayInterval: 1234,
+      payloadFormatIndicator: false,
+      messageExpiryInterval: 4321,
+      contentType: 'test',
+      responseTopic: 'topic',
+      correlationData: Buffer.from([1, 2, 3, 4]),
+      userProperties: {
+        'test': 'test'
+      }
+    },
+    topic: 'topic',
+    payload: Buffer.from([4, 3, 2, 1])
+  },
+  clean: true,
+  keepalive: 30,
+  properties: {
+    sessionExpiryInterval: 1234,
+    receiveMaximum: 432,
+    maximumPacketSize: 100,
+    topicAliasMaximum: 456,
+    requestResponseInformation: true,
+    requestProblemInformation: true,
+    userProperties: {
+      'test': 'test'
+    },
+    authenticationMethod: 'test',
+    authenticationData: Buffer.from([1, 2, 3, 4])
+  },
+  clientId: 'test'
+}, Buffer.from([
+  16, 125, // Header
+  0, 4, // Protocol ID length
+  77, 81, 84, 84, // Protocol ID
+  5, // Protocol version
+  54, // Connect flags
+  0, 30, // Keepalive
+  47, // properties length
+  17, 0, 0, 4, 210, // sessionExpiryInterval
+  33, 1, 176, // receiveMaximum
+  39, 0, 0, 0, 100, // maximumPacketSize
+  34, 1, 200,  // topicAliasMaximum
+  25, 1, // requestResponseInformation
+  23, 1, // requestProblemInformation,
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties,
+  21, 0, 4, 116, 101, 115, 116, // authenticationMethod
+  22, 0, 4, 1, 2, 3, 4, // authenticationData
+  0, 4, // Client ID length
+  116, 101, 115, 116, // Client ID
+  47, // will properties
+  24, 0, 0, 4, 210, // will delay interval
+  1, 0, // payload format indicator
+  2, 0, 0, 16, 225, // message expiry interval
+  3, 0, 4, 116, 101, 115, 116, // content type
+  8, 0, 5, 116, 111, 112, 105, 99, // response topic
+  9, 0, 4, 1, 2, 3, 4, // corelation data
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // user properties
+  0, 5, // Will topic length
+  116, 111, 112, 105, 99, // Will topic
+  0, 4, // Will payload length
+  4, 3, 2, 1// Will payload
+]))
+
+testParseGenerate('connect MQTT 5.0 w/o will properties', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 78,
+  protocolId: 'MQTT',
+  protocolVersion: 5,
+  will: {
+    retain: true,
+    qos: 2,
+    topic: 'topic',
+    payload: Buffer.from([4, 3, 2, 1])
+  },
+  clean: true,
+  keepalive: 30,
+  properties: {
+    sessionExpiryInterval: 1234,
+    receiveMaximum: 432,
+    maximumPacketSize: 100,
+    topicAliasMaximum: 456,
+    requestResponseInformation: true,
+    requestProblemInformation: true,
+    userProperties: {
+      'test': 'test'
+    },
+    authenticationMethod: 'test',
+    authenticationData: Buffer.from([1, 2, 3, 4])
+  },
+  clientId: 'test'
+}, Buffer.from([
+  16, 78, // Header
+  0, 4, // Protocol ID length
+  77, 81, 84, 84, // Protocol ID
+  5, // Protocol version
+  54, // Connect flags
+  0, 30, // Keepalive
+  47, // properties length
+  17, 0, 0, 4, 210, // sessionExpiryInterval
+  33, 1, 176, // receiveMaximum
+  39, 0, 0, 0, 100, // maximumPacketSize
+  34, 1, 200,  // topicAliasMaximum
+  25, 1, // requestResponseInformation
+  23, 1, // requestProblemInformation,
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties,
+  21, 0, 4, 116, 101, 115, 116, // authenticationMethod
+  22, 0, 4, 1, 2, 3, 4, // authenticationData
+  0, 4, // Client ID length
+  116, 101, 115, 116, // Client ID
+  0, // will properties
+  0, 5, // Will topic length
+  116, 111, 112, 105, 99, // Will topic
+  0, 4, // Will payload length
+  4, 3, 2, 1// Will payload
 ]))
 
 testParseGenerate('no clientId with 3.1.1', {
@@ -526,6 +656,57 @@ testParseGenerate('connack with return code 0', {
   32, 2, 0, 0
 ]))
 
+testParseGenerate('connack MQTT5 with properties', {
+  cmd: 'connack',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 89,
+  sessionPresent: false,
+  reasonCode: 0,
+  properties: {
+    sessionExpiryInterval: 1234,
+    receiveMaximum: 432,
+    maximumQoS: 2,
+    retainAvailable: true,
+    maximumPacketSize: 100,
+    assignedClientIdentifier: 'test',
+    topicAliasMaximum: 456,
+    reasonString: 'test',
+    userProperties: {
+      'test': 'test'
+    },
+    wildcardSubscriptionAvailable: true,
+    subscriptionIdentifiersAvailable: true,
+    sharedSubscriptionAvailable: false,
+    serverKeepAlive: 1234,
+    responseInformation: 'test',
+    serverReference: 'test',
+    authenticationMethod: 'test',
+    authenticationData: Buffer.from([1, 2, 3, 4])
+  }
+}, Buffer.from([
+  32, 89, 0, 0,
+  86, // properties length
+  17, 0, 0, 4, 210, // sessionExpiryInterval
+  33, 1, 176, // receiveMaximum
+  36, 2, // Maximum qos
+  37, 1, // retainAvailable
+  39, 0, 0, 0, 100, // maximumPacketSize
+  18, 0, 4, 116, 101, 115, 116, // assignedClientIdentifier
+  34, 1, 200, // topicAliasMaximum
+  31, 0, 4, 116, 101, 115, 116, // reasonString
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
+  40, 1, // wildcardSubscriptionAvailable
+  41, 1, // subscriptionIdentifiersAvailable
+  42, 0, // sharedSubscriptionAvailable
+  19, 0, 0, 4, 210, // serverKeepAlive
+  26, 0, 4, 116, 101, 115, 116, // responseInformation
+  28, 0, 4, 116, 101, 115, 116, // serverReference
+  21, 0, 4, 116, 101, 115, 116, // authenticationMethod
+  22, 0, 4, 1, 2, 3, 4 // authenticationData
+]), { protocolVersion: 5 })
+
 testParseGenerate('connack with return code 0 session present bit set', {
   cmd: 'connack',
   retain: false,
@@ -564,6 +745,44 @@ testParseGenerate('minimal publish', {
   116, 101, 115, 116, // Topic (test)
   116, 101, 115, 116 // Payload (test)
 ]))
+
+testParseGenerate('publish MQTT5 properties', {
+  cmd: 'publish',
+  retain: true,
+  qos: 2,
+  dup: true,
+  length: 60,
+  topic: 'test',
+  payload: new Buffer('test'),
+  messageId: 10,
+  properties: {
+    payloadFormatIndicator: true,
+    messageExpiryInterval: 4321,
+    topicAlias: 100,
+    responseTopic: 'topic',
+    correlationData: Buffer.from([1, 2, 3, 4]),
+    userProperties: {
+      'test': 'test'
+    },
+    subscriptionIdentifier: 120,
+    contentType: 'test'
+  }
+}, Buffer.from([
+  61, 60, // Header
+  0, 4, // Topic length
+  116, 101, 115, 116, // Topic (test)
+  0, 10, // Message ID
+  47, // properties length
+  1, 1, // payloadFormatIndicator
+  2, 0, 0, 16, 225, // message expiry interval
+  35, 0, 100, // topicAlias
+  8, 0, 5, 116, 111, 112, 105, 99, // response topic
+  9, 0, 4, 1, 2, 3, 4, // correlationData
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
+  11, 120, // subscriptionIdentifier
+  3, 0, 4, 116, 101, 115, 116, // content type
+  116, 101, 115, 116 // Payload (test)
+]), { protocolVersion: 5 })
 
 ;(function () {
   var buffer = new Buffer(2048)
@@ -695,6 +914,29 @@ testParseGenerate('puback', {
   0, 2 // Message ID
 ]))
 
+testParseGenerate('puback MQTT5 properties', {
+  cmd: 'puback',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 24,
+  messageId: 2,
+  reasonCode: 16,
+  properties: {
+    reasonString: 'test',
+    userProperties: {
+      'test': 'test'
+    }
+  }
+}, Buffer.from([
+  64, 24, // Header
+  0, 2, // Message ID
+  16, // reason code
+  20, // properties length
+  31, 0, 4, 116, 101, 115, 116, // reasonString
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
+]), {protocolVersion: 5})
+
 testParseGenerate('pubrec', {
   cmd: 'pubrec',
   retain: false,
@@ -706,6 +948,29 @@ testParseGenerate('pubrec', {
   80, 2, // Header
   0, 2 // Message ID
 ]))
+
+testParseGenerate('pubrec MQTT5 properties', {
+  cmd: 'pubrec',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 24,
+  messageId: 2,
+  reasonCode: 16,
+  properties: {
+    reasonString: 'test',
+    userProperties: {
+      'test': 'test'
+    }
+  }
+}, Buffer.from([
+  80, 24, // Header
+  0, 2, // Message ID
+  16, // reason code
+  20, // properties length
+  31, 0, 4, 116, 101, 115, 116, // reasonString
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
+]), {protocolVersion: 5})
 
 testParseGenerate('pubrel', {
   cmd: 'pubrel',
@@ -719,6 +984,29 @@ testParseGenerate('pubrel', {
   0, 2 // Message ID
 ]))
 
+testParseGenerate('pubrel MQTT5 properties', {
+  cmd: 'pubrel',
+  retain: false,
+  qos: 1,
+  dup: false,
+  length: 24,
+  messageId: 2,
+  reasonCode: 16,
+  properties: {
+    reasonString: 'test',
+    userProperties: {
+      'test': 'test'
+    }
+  }
+}, Buffer.from([
+  98, 24, // Header
+  0, 2, // Message ID
+  16, // reason code
+  20, // properties length
+  31, 0, 4, 116, 101, 115, 116, // reasonString
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
+]), {protocolVersion: 5})
+
 testParseGenerate('pubcomp', {
   cmd: 'pubcomp',
   retain: false,
@@ -730,6 +1018,29 @@ testParseGenerate('pubcomp', {
   112, 2, // Header
   0, 2 // Message ID
 ]))
+
+testParseGenerate('pubcomp MQTT5 properties', {
+  cmd: 'pubcomp',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 24,
+  messageId: 2,
+  reasonCode: 16,
+  properties: {
+    reasonString: 'test',
+    userProperties: {
+      'test': 'test'
+    }
+  }
+}, Buffer.from([
+  112, 24, // Header
+  0, 2, // Message ID
+  16, // reason code
+  20, // properties length
+  31, 0, 4, 116, 101, 115, 116, // reasonString
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
+]), {protocolVersion: 5})
 
 testParseError('Wrong subscribe header', Buffer.from([
   128, 9, // Header (subscribeqos=0length=9)
@@ -759,6 +1070,39 @@ testParseGenerate('subscribe to one topic', {
   116, 101, 115, 116, // Topic (test)
   0 // Qos (0)
 ]))
+
+testParseGenerate('subscribe to one topic by MQTT 5', {
+  cmd: 'subscribe',
+  retain: false,
+  qos: 1,
+  dup: false,
+  length: 26,
+  subscriptions: [
+    {
+      topic: 'test',
+      qos: 0,
+      nl: false,
+      rap: true,
+      rh: 1
+    }
+  ],
+  messageId: 6,
+  properties: {
+    subscriptionIdentifier: 145,
+    userProperties: {
+      test: 'test'
+    }
+  }
+}, Buffer.from([
+  130, 26, // Header (subscribeqos=1length=9)
+  0, 6, // Message ID (6)
+  16, // properties length
+  11, 145, 1, // subscriptionIdentifier
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
+  0, 4, // Topic length,
+  116, 101, 115, 116, // Topic (test)
+  24 // settings(qos: 0, noLocal: false, Retain as Published: true, retain handling: 1)
+]), {protocolVersion: 5})
 
 testParseGenerate('subscribe to three topics', {
   cmd: 'subscribe',
@@ -793,6 +1137,58 @@ testParseGenerate('subscribe to three topics', {
   2 // Qos (2)
 ]))
 
+testParseGenerate('subscribe to 3 topics by MQTT 5', {
+  cmd: 'subscribe',
+  retain: false,
+  qos: 1,
+  dup: false,
+  length: 40,
+  subscriptions: [
+    {
+      topic: 'test',
+      qos: 0,
+      nl: false,
+      rap: true,
+      rh: 1
+    },
+    {
+      topic: 'uest',
+      qos: 1,
+      nl: false,
+      rap: false,
+      rh: 0
+    }, {
+      topic: 'tfst',
+      qos: 2,
+      nl: true,
+      rap: false,
+      rh: 0
+    }
+  ],
+  messageId: 6,
+  properties: {
+    subscriptionIdentifier: 145,
+    userProperties: {
+      test: 'test'
+    }
+  }
+}, Buffer.from([
+  130, 40, // Header (subscribeqos=1length=9)
+  0, 6, // Message ID (6)
+  16, // properties length
+  11, 145, 1, // subscriptionIdentifier
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
+  0, 4, // Topic length,
+  116, 101, 115, 116, // Topic (test)
+  24, // settings(qos: 0, noLocal: false, Retain as Published: true, retain handling: 1)
+  0, 4, // Topic length
+  117, 101, 115, 116, // Topic (uest)
+  1, // Qos (1)
+  0, 4, // Topic length
+  116, 102, 115, 116, // Topic (tfst)
+  6 // Qos (2), No Local: true
+]), {protocolVersion: 5})
+
 testParseGenerate('suback', {
   cmd: 'suback',
   retain: false,
@@ -806,6 +1202,29 @@ testParseGenerate('suback', {
   0, 6, // Message ID
   0, 1, 2, 128 // Granted qos (0, 1, 2) and a rejected being 0x80
 ]))
+
+testParseGenerate('suback MQTT5', {
+  cmd: 'suback',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 27,
+  granted: [0, 1, 2, 128],
+  messageId: 6,
+  properties: {
+    reasonString: 'test',
+    userProperties: {
+      'test': 'test'
+    }
+  }
+}, Buffer.from([
+  144, 27, // Header
+  0, 6, // Message ID
+  20, // properties length
+  31, 0, 4, 116, 101, 115, 116, // reasonString
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
+  0, 1, 2, 128 // Granted qos (0, 1, 2) and a rejected being 0x80
+]), {protocolVersion: 5})
 
 testParseGenerate('unsubscribe', {
   cmd: 'unsubscribe',
@@ -827,6 +1246,33 @@ testParseGenerate('unsubscribe', {
   116, 101, 115, 116 // Topic (test)
 ]))
 
+testParseGenerate('unsubscribe MQTT 5', {
+  cmd: 'unsubscribe',
+  retain: false,
+  qos: 1,
+  dup: false,
+  length: 28,
+  unsubscriptions: [
+    'tfst',
+    'test'
+  ],
+  messageId: 7,
+  properties: {
+    userProperties: {
+      'test': 'test'
+    }
+  }
+}, Buffer.from([
+  162, 28,
+  0, 7, // Message ID (7)
+  13, // properties length
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
+  0, 4, // Topic length
+  116, 102, 115, 116, // Topic (tfst)
+  0, 4, // Topic length,
+  116, 101, 115, 116 // Topic (test)
+]), {protocolVersion: 5})
+
 testParseGenerate('unsuback', {
   cmd: 'unsuback',
   retain: false,
@@ -838,6 +1284,29 @@ testParseGenerate('unsuback', {
   176, 2, // Header
   0, 8 // Message ID
 ]))
+
+testParseGenerate('unsuback MQTT 5', {
+  cmd: 'unsuback',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 25,
+  messageId: 8,
+  properties: {
+    reasonString: 'test',
+    userProperties: {
+      'test': 'test'
+    }
+  },
+  granted: [0, 128]
+}, Buffer.from([
+  176, 25, // Header
+  0, 8, // Message ID
+  20, // properties length
+  31, 0, 4, 116, 101, 115, 116, // reasonString
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
+  0, 128 // success and error
+]), {protocolVersion: 5})
 
 testParseGenerate('pingreq', {
   cmd: 'pingreq',
@@ -868,6 +1337,56 @@ testParseGenerate('disconnect', {
 }, Buffer.from([
   224, 0 // Header
 ]))
+
+testParseGenerate('disconnect MQTT 5', {
+  cmd: 'disconnect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 34,
+  reasonCode: 0,
+  properties: {
+    sessionExpiryInterval: 145,
+    reasonString: 'test',
+    userProperties: {
+      'test': 'test'
+    },
+    serverReference: 'test'
+  }
+}, Buffer.from([
+  224, 34, // Header
+  0, // reason code
+  32, // properties length
+  17, 0, 0, 0, 145, // sessionExpiryInterval
+  31, 0, 4, 116, 101, 115, 116, // reasonString
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
+  28, 0, 4, 116, 101, 115, 116// serverReference
+]), {protocolVersion: 5})
+
+testParseGenerate('auth MQTT 5', {
+  cmd: 'auth',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 36,
+  reasonCode: 0,
+  properties: {
+    authenticationMethod: 'test',
+    authenticationData: Buffer.from([0, 1, 2, 3]),
+    reasonString: 'test',
+    userProperties: {
+      'test': 'test'
+    }
+  }
+}, Buffer.from([
+  240, 36, // Header
+  0, // reason code
+  34, // properties length
+  21, 0, 4, 116, 101, 115, 116, // auth method
+  22, 0, 4, 0, 1, 2, 3, // auth data
+  31, 0, 4, 116, 101, 115, 116, // reasonString
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
+]), {protocolVersion: 5})
 
 testGenerateError('Unknown command', {})
 
@@ -1166,6 +1685,33 @@ testParseError('Cannot parse protocolId', Buffer.from([
   77, 81, 73, 115, 100, 112,
   77, 81, 73, 115, 100, 112,
   77, 81, 73, 115, 100, 112
+]))
+
+testParseError('Unknown property', Buffer.from([
+  61, 60, // Header
+  0, 4, // Topic length
+  116, 101, 115, 116, // Topic (test)
+  0, 10, // Message ID
+  47, // properties length
+  126, 1, // unknown property
+  2, 0, 0, 16, 225, // message expiry interval
+  35, 0, 100, // topicAlias
+  8, 0, 5, 116, 111, 112, 105, 99, // response topic
+  9, 0, 4, 1, 2, 3, 4, // correlationData
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
+  11, 120, // subscriptionIdentifier
+  3, 0, 4, 116, 101, 115, 116, // content type
+  116, 101, 115, 116 // Payload (test)
+]), { protocolVersion: 5 })
+
+testParseError('Not supported auth packet for this version MQTT', Buffer.from([
+  240, 36, // Header
+  0, // reason code
+  34, // properties length
+  21, 0, 4, 116, 101, 115, 116, // auth method
+  22, 0, 4, 0, 1, 2, 3, // auth data
+  31, 0, 4, 116, 101, 115, 116, // reasonString
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
 ]))
 
 test('stops parsing after first error', function (t) {

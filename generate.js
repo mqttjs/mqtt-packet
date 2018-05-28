@@ -5,9 +5,9 @@ var writeToStream = require('./writeToStream')
 var EE = require('events').EventEmitter
 var inherits = require('inherits')
 
-function generate (packet) {
+function generate (packet, opts) {
   var stream = new Accumulator()
-  writeToStream(packet, stream)
+  writeToStream(packet, stream, opts)
   return stream.concat()
 }
 
