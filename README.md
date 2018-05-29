@@ -1,7 +1,7 @@
 mqtt-packet&nbsp;&nbsp;&nbsp;[![Build Status](https://travis-ci.org/mqttjs/mqtt-packet.png)](https://travis-ci.org/mqttjs/mqtt-packet)
 ===========
 
-Encode and Decode MQTT 3.1.1 packets the node way.
+Encode and Decode MQTT 3.1.1, 5.0 packets the node way.
 
 [![JavaScript Style Guide](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
 
@@ -38,6 +38,7 @@ var object = {
   topic: 'test',
   payload: 'test' // Can also be a Buffer
 }
+var opts = { protocolVersion: 4 } // default is 4. Usually, opts is a connect packet
 
 console.log(mqtt.generate(object))
 // Prints:
@@ -58,7 +59,8 @@ console.log(mqtt.generate(object))
 
 ```js
 var mqtt = require('mqtt-packet')
-var parser = mqtt.parser()
+var opts = { protocolVersion: 4 } // default is 4. Usually, opts is a connect packet
+var parser = mqtt.parser(opts)
 
 // Synchronously emits all the parsed packets
 parser.on('packet', function(packet) {
@@ -94,7 +96,7 @@ API
 
 <a name="generate">
 
-### mqtt.generate(object)
+### mqtt.generate(object, [opts])
 
 Generates a `Buffer` containing an MQTT packet.
 The object must be one of the ones specified by the [packets](#packets)
@@ -102,7 +104,7 @@ section. Throws an `Error` if a packet cannot be generated.
 
 <a name="writeToStream">
 
-### mqtt.writeToStream(object, stream)
+### mqtt.writeToStream(object, stream, [opts])
 
 Writes the mqtt packet defined by `object` to the given stream.
 The object must be one of the ones specified by the [packets](#packets)
@@ -115,7 +117,7 @@ Should be set before any `writeToStream` calls.
 
 <a name="parser">
 
-### mqtt.parser()
+### mqtt.parser([opts])
 
 Returns a new `Parser` object. `Parser` inherits from `EventEmitter` and
 will emit:
@@ -146,8 +148,8 @@ and that you can input to `generate`.
 ```js
 {
   cmd: 'connect',
-  protocolId: 'MQTT', // Or 'MQIsdp' in MQTT 3.1
-  protocolVersion: 4, // Or 3 in MQTT 3.1
+  protocolId: 'MQTT', // Or 'MQIsdp' in MQTT 3.1 and 5.0
+  protocolVersion: 4, // Or 3 in MQTT 3.1, or 5 in MQTT 5.0
   clean: true, // Can also be false
   clientId: 'my-device',
   keepalive: 0, // Seconds which can be any positive number, with 0 as the default setting
@@ -156,6 +158,30 @@ and that you can input to `generate`.
   will: {
     topic: 'mydevice/status',
     payload: new Buffer('dead') // Payloads are buffers
+    properties: { // MQTT 5.0
+      willDelayInterval: 1234,
+      payloadFormatIndicator: false,
+      messageExpiryInterval: 4321,
+      contentType: 'test',
+      responseTopic: 'topic',
+      correlationData: Buffer.from([1, 2, 3, 4]),
+      userProperties: {
+        'test': 'test'
+      }
+    }
+  },
+  properties: { // MQTT 5.0 properties
+      sessionExpiryInterval: 1234,
+      receiveMaximum: 432,
+      maximumPacketSize: 100,
+      topicAliasMaximum: 456,
+      requestResponseInformation: true,
+      requestProblemInformation: true,
+      userProperties: {
+        'test': 'test'
+      },
+      authenticationMethod: 'test',
+      authenticationData: Buffer.from([1, 2, 3, 4])
   }
 }
 ```
@@ -171,8 +197,30 @@ automatically be converted into a `Buffer`.
 ```js
 {
   cmd: 'connack',
-  returnCode: 0, // Or whatever else you see fit
-  sessionPresent: false // Can also be true.
+  returnCode: 0, // Or whatever else you see fit MQTT < 5.0
+  sessionPresent: false, // Can also be true.
+  reasonCode: 0, // reason code MQTT 5.0
+  properties: { // MQTT 5.0 properties
+      sessionExpiryInterval: 1234,
+      receiveMaximum: 432,
+      maximumQoS: 2,
+      retainAvailable: true,
+      maximumPacketSize: 100,
+      assignedClientIdentifier: 'test',
+      topicAliasMaximum: 456,
+      reasonString: 'test',
+      userProperties: {
+        'test': 'test'
+      },
+      wildcardSubscriptionAvailable: true,
+      subscriptionIdentifiersAvailable: true,
+      sharedSubscriptionAvailable: false,
+      serverKeepAlive: 1234,
+      responseInformation: 'test',
+      serverReference: 'test',
+      authenticationMethod: 'test',
+      authenticationData: Buffer.from([1, 2, 3, 4])
+  }
 }
 ```
 
@@ -185,9 +233,18 @@ missing.
 {
   cmd: 'subscribe',
   messageId: 42,
+  properties: { // MQTT 5.0 properties
+    subscriptionIdentifier: 145,
+    userProperties: {
+      test: 'test'
+    }
+  }
   subscriptions: [{
     topic: 'test',
-    qos: 0
+    qos: 0,
+    nl: false, // no Local MQTT 5.0 flag
+    rap: true, // Retain as Published MQTT 5.0 flag
+    rh: 1 // Retain Handling MQTT 5.0
   }]
 }
 ```
@@ -200,6 +257,12 @@ All properties are mandatory.
 {
   cmd: 'suback',
   messageId: 42,
+  properties: { // MQTT 5.0 properties
+    reasonString: 'test',
+    userProperties: {
+      'test': 'test'
+    }
+  }
   granted: [0, 1, 2, 128]
 }
 ```
@@ -213,6 +276,11 @@ All properties are mandatory.
 {
   cmd: 'unsubscribe',
   messageId: 42,
+  properties: { // MQTT 5.0 properties
+    userProperties: {
+      'test': 'test'
+    }
+  }
   unsubscriptions: [
     'test',
     'a/topic'
@@ -227,7 +295,13 @@ All properties are mandatory.
 ```js
 {
   cmd: 'unsuback',
-  messageId: 42
+  messageId: 42,
+  properties: { // MQTT 5.0 properties
+    reasonString: 'test',
+    userProperties: {
+      'test': 'test'
+    }
+  }
 }
 ```
 
@@ -243,7 +317,19 @@ All properties are mandatory.
   dup: false,
   topic: 'test',
   payload: new Buffer('test'),
-  retain: false
+  retain: false,
+  properties: { // optional properties MQTT 5.0
+      payloadFormatIndicator: true,
+      messageExpiryInterval: 4321,
+      topicAlias: 100,
+      responseTopic: 'topic',
+      correlationData: Buffer.from([1, 2, 3, 4]),
+      userProperties: {
+        'test': 'test'
+      },
+      subscriptionIdentifier: 120,
+      contentType: 'test'
+   }
 }
 ```
 
@@ -256,7 +342,14 @@ Both `topic` and `payload` can be `Buffer` objects instead of strings.
 ```js
 {
   cmd: 'puback',
-  messageId: 42
+  messageId: 42,
+  reasonCode: 16, // only for MQTT 5.0
+  properties: { // MQTT 5.0 properties
+      reasonString: 'test',
+      userProperties: {
+        'test': 'test'
+      }
+  }
 }
 ```
 
@@ -267,8 +360,15 @@ missing.
 
 ```js
 {
-  cmd: 'pubcomp',
-  messageId: 42
+  cmd: 'pubrec',
+  messageId: 42,
+  reasonCode: 16, // only for MQTT 5.0
+  properties: { // properties MQTT 5.0
+    reasonString: 'test',
+    userProperties: {
+      'test': 'test'
+    }
+  }
 }
 ```
 
@@ -280,7 +380,14 @@ missing.
 ```js
 {
   cmd: 'pubrel',
-  messageId: 42
+  messageId: 42,
+  reasonCode: 16, // only for MQTT 5.0
+  properties: { // properties MQTT 5.0
+     reasonString: 'test',
+     userProperties: {
+       'test': 'test'
+     }
+  }
 }
 ```
 
@@ -292,7 +399,14 @@ missing.
 ```js
 {
   cmd: 'pubcomp',
-  messageId: 42
+  messageId: 42,
+  reasonCode: 16, // only for MQTT 5.0
+  properties: { // properties MQTT 5.0
+    reasonString: 'test',
+    userProperties: {
+       'test': 'test'
+    }
+  }
 }
 ```
 
@@ -319,7 +433,33 @@ missing.
 
 ```js
 {
-  cmd: 'disconnect'
+  cmd: 'disconnect',
+  reasonCode: 0, // MQTT 5.0 code
+  properties: { // properties MQTT 5.0
+     sessionExpiryInterval: 145,
+     reasonString: 'test',
+     userProperties: {
+       'test': 'test'
+     },
+     serverReference: 'test'
+  }
+}
+```
+
+### Auth
+
+```js
+{
+  cmd: 'auth',
+  reasonCode: 0, // MQTT 5.0 code
+  properties: { // properties MQTT 5.0
+     authenticationMethod: 'test',
+     authenticationData: Buffer.from([0, 1, 2, 3]),
+     reasonString: 'test',
+     userProperties: {
+       'test': 'test'
+     }
+  }
 }
 ```
 
