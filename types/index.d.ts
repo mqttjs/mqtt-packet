@@ -27,7 +27,7 @@ export interface IPacket {
 export interface IConnectPacket extends IPacket {
   cmd: 'connect'
   clientId: string
-  protocolVersion?: 4 | 3
+  protocolVersion?: 4 | 5 | 3
   protocolId?: 'MQTT' | 'MQIsdp'
   clean?: boolean
   keepalive?: number
@@ -38,6 +38,26 @@ export interface IConnectPacket extends IPacket {
     payload: Buffer
     qos?: QoS
     retain?: boolean
+    properties?: {
+      willDelayInterval?: number,
+      payloadFormatIndicator?: number,
+      messageExpiryInterval?: number,
+      contentType?: string,
+      responseTopic?: string,
+      correlationData?: Buffer,
+      userProperties?: Object
+    }
+  }
+  properties?: {
+    sessionExpiryInterval?: number,
+    receiveMaximum?: number,
+    maximumPacketSize?: number,
+    topicAliasMaximum?: number,
+    requestResponseInformation?: boolean,
+    requestProblemInformation?: boolean,
+    userProperties?: Object,
+    authenticationMethod?: string,
+    authenticationData?: Buffer
   }
 }
 
@@ -48,52 +68,116 @@ export interface IPublishPacket extends IPacket {
   retain: boolean
   topic: string
   payload: string | Buffer
+  properties?: {
+    payloadFormatIndicator?: boolean,
+    messageExpiryInterval?: number,
+    topicAlias?: number,
+    responseTopic?: string,
+    correlationData?: Buffer,
+    userProperties?: Object,
+    subscriptionIdentifier?: number,
+    contentType?: string
+  }
 }
 
 export interface IConnackPacket extends IPacket {
   cmd: 'connack'
   returnCode: number
   sessionPresent: boolean
+  properties?: {
+    sessionExpiryInterval?: number,
+    receiveMaximum?: number,
+    maximumQoS?: number,
+    retainAvailable?: boolean,
+    maximumPacketSize?: number,
+    assignedClientIdentifier?: string,
+    topicAliasMaximum?: number,
+    reasonString?: string,
+    userProperties?: Object,
+    wildcardSubscriptionAvailable?: boolean,
+    subscriptionIdentifiersAvailable?: boolean,
+    sharedSubscriptionAvailable?: boolean,
+    serverKeepAlive?: number,
+    responseInformation?: string,
+    serverReference?: string,
+    authenticationMethod?: string,
+    authenticationData?: Buffer
+  }
 }
 
 export interface ISubscription {
   topic: string
-  qos: QoS
+  qos: QoS,
+  nl?: boolean,
+  rap?: boolean,
+  rh?: number
 }
 
 export interface ISubscribePacket extends IPacket {
   cmd: 'subscribe'
-  subscriptions: ISubscription[]
+  subscriptions: ISubscription[],
+  properties?: {
+    reasonString?: string,
+    userProperties?: Object
+  }
 }
 
 export interface ISubackPacket extends IPacket {
-  cmd: 'suback'
-  granted: number[]
+  cmd: 'suback',
+  properties?: {
+    reasonString?: string,
+    userProperties?: Object
+  },
+  granted: number[] | Object[]
 }
 
 export interface IUnsubscribePacket extends IPacket {
-  cmd: 'unsubscribe'
+  cmd: 'unsubscribe',
+  properties?: {
+    reasonString?: string,
+    userProperties?: Object
+  },
   unsubscriptions: string[]
 }
 
 export interface IUnsubackPacket extends IPacket {
-  cmd: 'unsuback'
+  cmd: 'unsuback',
+  properties?: {
+    reasonString?: string,
+    userProperties?: Object
+  }
 }
 
 export interface IPubackPacket extends IPacket {
-  cmd: 'puback'
+  cmd: 'puback',
+  properties?: {
+    reasonString?: string,
+    userProperties?: Object
+  }
 }
 
 export interface IPubcompPacket extends IPacket {
-  cmd: 'pubcomp'
+  cmd: 'pubcomp',
+  properties?: {
+    reasonString?: string,
+    userProperties?: Object
+  }
 }
 
 export interface IPubrelPacket extends IPacket {
-  cmd: 'pubrel'
+  cmd: 'pubrel',
+  properties?: {
+    reasonString?: string,
+    userProperties?: Object
+  }
 }
 
 export interface IPubrecPacket extends IPacket {
-  cmd: 'pubrec'
+  cmd: 'pubrec',
+  properties?: {
+    reasonString?: string,
+    userProperties?: Object
+  }
 }
 
 export interface IPingreqPacket extends IPacket {
@@ -105,7 +189,13 @@ export interface IPingrespPacket extends IPacket {
 }
 
 export interface IDisconnectPacket extends IPacket {
-  cmd: 'disconnect'
+  cmd: 'disconnect',
+    properties?: {
+      sessionExpiryInterval?: number,
+      reasonString?: string,
+      userProperties?: Object,
+      serverReference?: string
+    }
 }
 
 export declare type Packet = IConnectPacket |
@@ -128,14 +218,14 @@ export interface Parser extends EventEmitter {
 
   on(event: 'error', callback: (error: any) => void): this
 
-  parse(buffer: Buffer): number
+  parse(buffer: Buffer, opts?: Object): number
 }
 
-export declare function parser(): Parser
+export declare function parser(opts?: Object): Parser
 
-export declare function generate(packet: Packet): Buffer
+export declare function generate(packet: Packet, opts?: Object): Buffer
 
-export declare function writeToStream(object: Packet, stream: WritableStream): void
+export declare function writeToStream(object: Packet, stream: WritableStream, opts?: Object): void
 
 export declare namespace writeToStream {
   let cacheNumbers: boolean

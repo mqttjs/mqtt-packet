@@ -22,7 +22,7 @@ protocol.types = {
   12: 'pingreq',
   13: 'pingresp',
   14: 'disconnect',
-  15: 'reserved'
+  15: 'auth'
 }
 
 /* Mnemonic => Command code */
@@ -59,6 +59,71 @@ protocol.WILL_FLAG_MASK = 0x04
 protocol.CLEAN_SESSION_MASK = 0x02
 protocol.CONNECT_HEADER = Buffer.from([protocol.codes['connect'] << protocol.CMD_SHIFT])
 
+/* Properties */
+protocol.properties = {
+  sessionExpiryInterval: 17,
+  willDelayInterval: 24,
+  receiveMaximum: 33,
+  maximumPacketSize: 39,
+  topicAliasMaximum: 34,
+  requestResponseInformation: 25,
+  requestProblemInformation: 23,
+  userProperties: 38,
+  authenticationMethod: 21,
+  authenticationData: 22,
+  payloadFormatIndicator: 1,
+  messageExpiryInterval: 2,
+  contentType: 3,
+  responseTopic: 8,
+  correlationData: 9,
+  maximumQoS: 36,
+  retainAvailable: 37,
+  assignedClientIdentifier: 18,
+  reasonString: 31,
+  wildcardSubscriptionAvailable: 40,
+  subscriptionIdentifiersAvailable: 41,
+  sharedSubscriptionAvailable: 42,
+  serverKeepAlive: 19,
+  responseInformation: 26,
+  serverReference: 28,
+  topicAlias: 35,
+  subscriptionIdentifier: 11
+}
+protocol.propertiesCodes = {}
+for (var prop in protocol.properties) {
+  var id = protocol.properties[prop]
+  protocol.propertiesCodes[id] = prop
+}
+protocol.propertiesTypes = {
+  sessionExpiryInterval: 'int32',
+  willDelayInterval: 'int32',
+  receiveMaximum: 'int16',
+  maximumPacketSize: 'int32',
+  topicAliasMaximum: 'int16',
+  requestResponseInformation: 'byte',
+  requestProblemInformation: 'byte',
+  userProperties: 'pair',
+  authenticationMethod: 'string',
+  authenticationData: 'binary',
+  payloadFormatIndicator: 'byte',
+  messageExpiryInterval: 'int32',
+  contentType: 'string',
+  responseTopic: 'string',
+  correlationData: 'binary',
+  maximumQoS: 'int8',
+  retainAvailable: 'byte',
+  assignedClientIdentifier: 'string',
+  reasonString: 'string',
+  wildcardSubscriptionAvailable: 'byte',
+  subscriptionIdentifiersAvailable: 'byte',
+  sharedSubscriptionAvailable: 'byte',
+  serverKeepAlive: 'int32',
+  responseInformation: 'string',
+  serverReference: 'string',
+  topicAlias: 'int16',
+  subscriptionIdentifier: 'var'
+}
+
 function genHeader (type) {
   return [0, 1, 2].map(function (qos) {
     return [0, 1].map(function (dup) {
@@ -79,6 +144,17 @@ protocol.PUBLISH_HEADER = genHeader('publish')
 
 /* Subscribe */
 protocol.SUBSCRIBE_HEADER = genHeader('subscribe')
+protocol.SUBSCRIBE_OPTIONS_QOS_MASK = 0x03
+protocol.SUBSCRIBE_OPTIONS_NL_MASK = 0x01
+protocol.SUBSCRIBE_OPTIONS_NL_SHIFT = 2
+protocol.SUBSCRIBE_OPTIONS_RAP_MASK = 0x01
+protocol.SUBSCRIBE_OPTIONS_RAP_SHIFT = 3
+protocol.SUBSCRIBE_OPTIONS_RH_MASK = 0x03
+protocol.SUBSCRIBE_OPTIONS_RH_SHIFT = 4
+protocol.SUBSCRIBE_OPTIONS_RH = [0x00, 0x10, 0x20]
+protocol.SUBSCRIBE_OPTIONS_NL = 0x04
+protocol.SUBSCRIBE_OPTIONS_RAP = 0x08
+protocol.SUBSCRIBE_OPTIONS_QOS = [0x00, 0x01, 0x02]
 
 /* Unsubscribe */
 protocol.UNSUBSCRIBE_HEADER = genHeader('unsubscribe')
@@ -97,6 +173,7 @@ protocol.SUBACK_HEADER = Buffer.from([protocol.codes['suback'] << protocol.CMD_S
 /* Protocol versions */
 protocol.VERSION3 = Buffer.from([3])
 protocol.VERSION4 = Buffer.from([4])
+protocol.VERSION5 = Buffer.from([5])
 
 /* QoS */
 protocol.QOS = [0, 1, 2].map(function (qos) {

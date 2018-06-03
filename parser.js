@@ -6,8 +6,10 @@ var EE = require('events').EventEmitter
 var Packet = require('./packet')
 var constants = require('./constants')
 
-function Parser () {
-  if (!(this instanceof Parser)) return new Parser()
+function Parser (opt) {
+  if (!(this instanceof Parser)) return new Parser(opt)
+
+  this.settings = opt || {}
 
   this._states = [
     '_parseHeader',
@@ -34,8 +36,8 @@ Parser.prototype.parse = function (buf) {
   this._list.append(buf)
 
   while ((this.packet.length !== -1 || this._list.length > 0) &&
-         this[this._states[this._stateCounter]]() &&
-         !this.error) {
+  this[this._states[this._stateCounter]]() &&
+  !this.error) {
     this._stateCounter++
 
     if (this._stateCounter >= this._states.length) this._stateCounter = 0
@@ -59,30 +61,14 @@ Parser.prototype._parseHeader = function () {
 
 Parser.prototype._parseLength = function () {
   // There is at least one byte in the list
-  var bytes = 0
-  var mul = 1
-  var length = 0
-  var result = true
-  var current
-
-  while (bytes < 5) {
-    current = this._list.readUInt8(bytes++)
-    length += mul * (current & constants.LENGTH_MASK)
-    mul *= 0x80
-
-    if ((current & constants.LENGTH_FIN_MASK) === 0) break
-    if (this._list.length <= bytes) {
-      result = false
-      break
-    }
-  }
+  var result = this._parseVarByteNum(true)
 
   if (result) {
-    this.packet.length = length
-    this._list.consume(bytes)
+    this.packet.length = result.value
+    this._list.consume(result.bytes)
   }
 
-  return result
+  return !!result
 }
 
 Parser.prototype._parsePayload = function () {
@@ -107,7 +93,7 @@ Parser.prototype._parsePayload = function () {
       case 'pubrec':
       case 'pubrel':
       case 'pubcomp':
-        this._parseMessageId()
+        this._parseConfirmation()
         break
       case 'subscribe':
         this._parseSubscribe()
@@ -123,8 +109,13 @@ Parser.prototype._parsePayload = function () {
         break
       case 'pingreq':
       case 'pingresp':
-      case 'disconnect':
         // These are empty, nothing to do
+        break
+      case 'disconnect':
+        this._parseDisconnect()
+        break
+      case 'auth':
+        this._parseAuth()
         break
       default:
         this._emitError(new Error('Not supported'))
@@ -161,7 +152,7 @@ Parser.prototype._parseConnect = function () {
 
   packet.protocolVersion = this._list.readUInt8(this._pos)
 
-  if (packet.protocolVersion !== 3 && packet.protocolVersion !== 4) {
+  if (packet.protocolVersion !== 3 && packet.protocolVersion !== 4 && packet.protocolVersion !== 5) {
     return this._emitError(new Error('Invalid protocol version'))
   }
 
@@ -190,12 +181,25 @@ Parser.prototype._parseConnect = function () {
   packet.keepalive = this._parseNum()
   if (packet.keepalive === -1) return this._emitError(new Error('Packet too short'))
 
+  // parse properties
+  if (packet.protocolVersion === 5) {
+    var properties = this._parseProperties()
+    if (Object.getOwnPropertyNames(properties).length) {
+      packet.properties = properties
+    }
+  }
   // Parse clientId
   clientId = this._parseString()
   if (clientId === null) return this._emitError(new Error('Packet too short'))
   packet.clientId = clientId
 
   if (flags.will) {
+    if (packet.protocolVersion === 5) {
+      var willProperties = this._parseProperties()
+      if (Object.getOwnPropertyNames(willProperties).length) {
+        packet.will.properties = willProperties
+      }
+    }
     // Parse will topic
     topic = this._parseString()
     if (topic === null) return this._emitError(new Error('Cannot parse will topic'))
@@ -220,6 +224,8 @@ Parser.prototype._parseConnect = function () {
     if (password === null) return this._emitError(new Error('Cannot parse password'))
     packet.password = password
   }
+  // need for right parse auth packet and self set up
+  this.settings = packet
 
   return packet
 }
@@ -230,9 +236,20 @@ Parser.prototype._parseConnack = function () {
   if (this._list.length < 2) return null
 
   packet.sessionPresent = !!(this._list.readUInt8(this._pos++) & constants.SESSIONPRESENT_MASK)
-  packet.returnCode = this._list.readUInt8(this._pos)
+  if (this.settings.protocolVersion === 5) {
+    packet.reasonCode = this._list.readUInt8(this._pos++)
+  } else {
+    packet.returnCode = this._list.readUInt8(this._pos++)
+  }
 
-  if (packet.returnCode === -1) return this._emitError(new Error('Cannot parse return code'))
+  if (packet.returnCode === -1 || packet.reasonCode === -1) return this._emitError(new Error('Cannot parse return code'))
+  // mqtt 5 properties
+  if (this.settings.protocolVersion === 5) {
+    var properties = this._parseProperties()
+    if (Object.getOwnPropertyNames(properties).length) {
+      packet.properties = properties
+    }
+  }
 }
 
 Parser.prototype._parsePublish = function () {
@@ -244,13 +261,26 @@ Parser.prototype._parsePublish = function () {
   // Parse messageId
   if (packet.qos > 0) if (!this._parseMessageId()) { return }
 
+  // Properties mqtt 5
+  if (this.settings.protocolVersion === 5) {
+    var properties = this._parseProperties()
+    if (Object.getOwnPropertyNames(properties).length) {
+      packet.properties = properties
+    }
+  }
+
   packet.payload = this._list.slice(this._pos, packet.length)
 }
 
 Parser.prototype._parseSubscribe = function () {
   var packet = this.packet
   var topic
+  var options
   var qos
+  var rh
+  var rap
+  var nl
+  var subscription
 
   if (packet.qos !== 1) {
     return this._emitError(new Error('Wrong subscribe header'))
@@ -260,22 +290,52 @@ Parser.prototype._parseSubscribe = function () {
 
   if (!this._parseMessageId()) { return }
 
+  // Properties mqtt 5
+  if (this.settings.protocolVersion === 5) {
+    var properties = this._parseProperties()
+    if (Object.getOwnPropertyNames(properties).length) {
+      packet.properties = properties
+    }
+  }
+
   while (this._pos < packet.length) {
     // Parse topic
     topic = this._parseString()
     if (topic === null) return this._emitError(new Error('Cannot parse topic'))
 
-    qos = this._list.readUInt8(this._pos++)
+    options = this._parseByte()
+    qos = options & constants.SUBSCRIBE_OPTIONS_QOS_MASK
+    nl = ((options >> constants.SUBSCRIBE_OPTIONS_NL_SHIFT) & constants.SUBSCRIBE_OPTIONS_NL_MASK) !== 0
+    rap = ((options >> constants.SUBSCRIBE_OPTIONS_RAP_SHIFT) & constants.SUBSCRIBE_OPTIONS_RAP_MASK) !== 0
+    rh = (options >> constants.SUBSCRIBE_OPTIONS_RH_SHIFT) & constants.SUBSCRIBE_OPTIONS_RH_MASK
+
+    subscription = { topic: topic, qos: qos }
+
+    // mqtt 5 options
+    if (this.settings.protocolVersion === 5) {
+      subscription.nl = nl
+      subscription.rap = rap
+      subscription.rh = rh
+    }
 
     // Push pair to subscriptions
-    packet.subscriptions.push({ topic: topic, qos: qos })
+    packet.subscriptions.push(subscription)
   }
 }
 
 Parser.prototype._parseSuback = function () {
+  var packet = this.packet
   this.packet.granted = []
 
   if (!this._parseMessageId()) { return }
+
+  // Properties mqtt 5
+  if (this.settings.protocolVersion === 5) {
+    var properties = this._parseProperties()
+    if (Object.getOwnPropertyNames(properties).length) {
+      packet.properties = properties
+    }
+  }
 
   // Parse granted QoSes
   while (this._pos < this.packet.length) {
@@ -291,6 +351,14 @@ Parser.prototype._parseUnsubscribe = function () {
   // Parse messageId
   if (!this._parseMessageId()) { return }
 
+  // Properties mqtt 5
+  if (this.settings.protocolVersion === 5) {
+    var properties = this._parseProperties()
+    if (Object.getOwnPropertyNames(properties).length) {
+      packet.properties = properties
+    }
+  }
+
   while (this._pos < packet.length) {
     var topic
 
@@ -304,7 +372,77 @@ Parser.prototype._parseUnsubscribe = function () {
 }
 
 Parser.prototype._parseUnsuback = function () {
+  var packet = this.packet
   if (!this._parseMessageId()) return this._emitError(new Error('Cannot parse messageId'))
+  // Properties mqtt 5
+  if (this.settings.protocolVersion === 5) {
+    var properties = this._parseProperties()
+    if (Object.getOwnPropertyNames(properties).length) {
+      packet.properties = properties
+    }
+    // Parse granted QoSes
+    packet.granted = []
+    while (this._pos < this.packet.length) {
+      this.packet.granted.push(this._list.readUInt8(this._pos++))
+    }
+  }
+}
+
+// parse packets like puback, pubrec, pubrel, pubcomp
+Parser.prototype._parseConfirmation = function () {
+  var packet = this.packet
+
+  this._parseMessageId()
+
+  if (this.settings.protocolVersion === 5) {
+    if (packet.length > 2) {
+      // response code
+      packet.reasonCode = this._parseByte()
+      // properies mqtt 5
+      var properties = this._parseProperties()
+      if (Object.getOwnPropertyNames(properties).length) {
+        packet.properties = properties
+      }
+    }
+  }
+
+  return true
+}
+
+// parse disconnect packet
+Parser.prototype._parseDisconnect = function () {
+  var packet = this.packet
+
+  if (this.settings.protocolVersion === 5) {
+    // response code
+    packet.reasonCode = this._parseByte()
+    // properies mqtt 5
+    var properties = this._parseProperties()
+    if (Object.getOwnPropertyNames(properties).length) {
+      packet.properties = properties
+    }
+  }
+
+  return true
+}
+
+// parse auth packet
+Parser.prototype._parseAuth = function () {
+  var packet = this.packet
+
+  if (this.settings.protocolVersion !== 5) {
+    return this._emitError(new Error('Not supported auth packet for this version MQTT'))
+  }
+
+  // response code
+  packet.reasonCode = this._parseByte()
+  // properies mqtt 5
+  var properties = this._parseProperties()
+  if (Object.getOwnPropertyNames(properties).length) {
+    packet.properties = properties
+  }
+
+  return true
 }
 
 Parser.prototype._parseMessageId = function () {
@@ -333,6 +471,13 @@ Parser.prototype._parseString = function (maybeBuffer) {
   return result
 }
 
+Parser.prototype._parseStringPair = function () {
+  return {
+    name: this._parseString(),
+    value: this._parseString()
+  }
+}
+
 Parser.prototype._parseBuffer = function () {
   var length = this._parseNum()
   var result
@@ -356,6 +501,110 @@ Parser.prototype._parseNum = function () {
   return result
 }
 
+Parser.prototype._parse4ByteNum = function () {
+  if (this._list.length - this._pos < 4) return -1
+
+  var result = this._list.readUInt32BE(this._pos)
+  this._pos += 4
+
+  return result
+}
+
+Parser.prototype._parseVarByteNum = function (fullInfoFlag) {
+  var bytes = 0
+  var mul = 1
+  var length = 0
+  var result = true
+  var current
+  var padding = this._pos ? this._pos : 0
+
+  while (bytes < 5) {
+    current = this._list.readUInt8(padding + bytes++)
+    length += mul * (current & constants.LENGTH_MASK)
+    mul *= 0x80
+
+    if ((current & constants.LENGTH_FIN_MASK) === 0) break
+    if (this._list.length <= bytes) {
+      result = false
+      break
+    }
+  }
+
+  if (padding) {
+    this._pos += bytes
+  }
+
+  result = result
+    ? fullInfoFlag ? {
+      bytes: bytes,
+      value: length
+    } : length
+    : false
+
+  return result
+}
+
+Parser.prototype._parseByte = function () {
+  var result = this._list.readUInt8(this._pos)
+  this._pos++
+  return result
+}
+
+Parser.prototype._parseByType = function (type) {
+  switch (type) {
+    case 'byte': {
+      return this._parseByte() !== 0
+    }
+    case 'int8': {
+      return this._parseByte()
+    }
+    case 'int16': {
+      return this._parseNum()
+    }
+    case 'int32': {
+      return this._parse4ByteNum()
+    }
+    case 'var': {
+      return this._parseVarByteNum()
+    }
+    case 'string': {
+      return this._parseString()
+    }
+    case 'pair': {
+      return this._parseStringPair()
+    }
+    case 'binary': {
+      return this._parseBuffer()
+    }
+  }
+}
+
+Parser.prototype._parseProperties = function () {
+  var length = this._parseVarByteNum()
+  var start = this._pos
+  var end = start + length
+  var result = {}
+  while (this._pos < end) {
+    var type = this._parseByte()
+    var name = constants.propertiesCodes[type]
+    if (!name) {
+      this._emitError(new Error('Unknown property'))
+      return false
+    }
+    // user properties process
+    if (name === 'userProperties') {
+      if (!result[name]) {
+        result[name] = {}
+      }
+      var currentUserProperty = this._parseByType(constants.propertiesTypes[name])
+      result[name][currentUserProperty.name] = currentUserProperty.value
+      continue
+    }
+    result[name] = this._parseByType(constants.propertiesTypes[name])
+  }
+  return result
+}
+
 Parser.prototype._newPacket = function () {
   if (this.packet) {
     this._list.consume(this.packet.length)
@@ -363,6 +612,8 @@ Parser.prototype._newPacket = function () {
   }
 
   this.packet = new Packet()
+
+  this._pos = 0
 
   return true
 }
