@@ -157,7 +157,7 @@ and that you can input to `generate`.
   password: new Buffer('collina'), // Passwords are buffers
   will: {
     topic: 'mydevice/status',
-    payload: new Buffer('dead') // Payloads are buffers
+    payload: new Buffer('dead'), // Payloads are buffers
     properties: { // MQTT 5.0
       willDelayInterval: 1234,
       payloadFormatIndicator: false,
