@@ -171,13 +171,12 @@ function connect (packet, stream, opts) {
         stream.emit('error', new Error('Invalid will payload'))
         return false
       }
-
-      // will properties
-      var willProperties = {}
-      if (protocolVersion === 5) {
-        willProperties = getProperties(stream, will.properties)
-        length += willProperties.length
-      }
+    }
+    // will properties
+    var willProperties = {}
+    if (protocolVersion === 5) {
+      willProperties = getProperties(stream, will.properties)
+      length += willProperties.length
     }
   }
 

@@ -482,6 +482,7 @@ mqtt-packet is only possible due to the excellent work of the following contribu
 <tr><th align="left">Matteo Collina</th><td><a href="https://github.com/mcollina">GitHub/mcollina</a></td><td><a href="http://twitter.com/matteocollina">Twitter/@matteocollina</a></td></tr>
 <tr><th align="left">Adam Rudd</th><td><a href="https://github.com/adamvr">GitHub/adamvr</a></td><td><a href="http://twitter.com/adam_vr">Twitter/@adam_vr</a></td></tr>
 <tr><th align="left">Peter Sorowka</th><td><a href="https://github.com/psorowka">GitHub/psorowka</a></td><td><a href="http://twitter.com/psorowka">Twitter/@psorowka</a></td></tr>
+<tr><th align="left">Siarhei Buntsevich</th><td><a href="https://github.com/scarry1992">GitHub/scarry1992</a></td></tr>
 </tbody></table>
 
 License
