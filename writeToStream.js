@@ -160,12 +160,13 @@ function connect (packet, stream, opts) {
     }
 
     // Payload
+    length += 2 // payload length
     if (will.payload) {
       if (will.payload.length >= 0) {
         if (typeof will.payload === 'string') {
-          length += Buffer.byteLength(will.payload) + 2
+          length += Buffer.byteLength(will.payload)
         } else {
-          length += will.payload.length + 2
+          length += will.payload.length
         }
       } else {
         stream.emit('error', new Error('Invalid will payload'))

@@ -260,6 +260,79 @@ testParseGenerate('connect MQTT 5.0', {
   4, 3, 2, 1// Will payload
 ]))
 
+testParseGenerate('connect MQTT 5.0 with will properties but w/o will payload', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 121,
+  protocolId: 'MQTT',
+  protocolVersion: 5,
+  will: {
+    retain: true,
+    qos: 2,
+    properties: {
+      willDelayInterval: 1234,
+      payloadFormatIndicator: false,
+      messageExpiryInterval: 4321,
+      contentType: 'test',
+      responseTopic: 'topic',
+      correlationData: Buffer.from([1, 2, 3, 4]),
+      userProperties: {
+        'test': 'test'
+      }
+    },
+    topic: 'topic',
+    payload: Buffer.from([])
+  },
+  clean: true,
+  keepalive: 30,
+  properties: {
+    sessionExpiryInterval: 1234,
+    receiveMaximum: 432,
+    maximumPacketSize: 100,
+    topicAliasMaximum: 456,
+    requestResponseInformation: true,
+    requestProblemInformation: true,
+    userProperties: {
+      'test': 'test'
+    },
+    authenticationMethod: 'test',
+    authenticationData: Buffer.from([1, 2, 3, 4])
+  },
+  clientId: 'test'
+}, Buffer.from([
+  16, 121, // Header
+  0, 4, // Protocol ID length
+  77, 81, 84, 84, // Protocol ID
+  5, // Protocol version
+  54, // Connect flags
+  0, 30, // Keepalive
+  47, // properties length
+  17, 0, 0, 4, 210, // sessionExpiryInterval
+  33, 1, 176, // receiveMaximum
+  39, 0, 0, 0, 100, // maximumPacketSize
+  34, 1, 200,  // topicAliasMaximum
+  25, 1, // requestResponseInformation
+  23, 1, // requestProblemInformation,
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties,
+  21, 0, 4, 116, 101, 115, 116, // authenticationMethod
+  22, 0, 4, 1, 2, 3, 4, // authenticationData
+  0, 4, // Client ID length
+  116, 101, 115, 116, // Client ID
+  47, // will properties
+  24, 0, 0, 4, 210, // will delay interval
+  1, 0, // payload format indicator
+  2, 0, 0, 16, 225, // message expiry interval
+  3, 0, 4, 116, 101, 115, 116, // content type
+  8, 0, 5, 116, 111, 112, 105, 99, // response topic
+  9, 0, 4, 1, 2, 3, 4, // corelation data
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // user properties
+  0, 5, // Will topic length
+  116, 111, 112, 105, 99, // Will topic
+  0, 0 // Will payload length
+]))
+
 testParseGenerate('connect MQTT 5.0 w/o will properties', {
   cmd: 'connect',
   retain: false,
