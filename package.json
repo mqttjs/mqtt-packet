@@ -8,7 +8,8 @@
     "Matteo Collina <matteo.collina@gmail.com> (https://github.com/mcollina)",
     "Adam Rudd <damvrr@gmail.com>",
     "Peter Sorowka (https://github.com/psorowka)",
-    "Wouter Klijn <contact@wuhkuh.com> (https://github.com/wuhkuh)"
+    "Wouter Klijn <contact@wuhkuh.com> (https://github.com/wuhkuh)",
+    "Siarhei Buntsevich (https://github.com/scarry1992)"
   ],
   "scripts": {
     "test": "tape test.js | tap-spec && standard",
