@@ -1,3 +1,5 @@
+'use strict'
+
 const mqtt = require('../')
 
 const max = 100000

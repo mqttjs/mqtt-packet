@@ -1,3 +1,5 @@
+'use strict'
+
 const { Buffer } = require('safe-buffer')
 
 const max = 65536

@@ -1,3 +1,5 @@
+'use strict'
+
 const { Buffer } = require('safe-buffer')
 /* Protocol - protocol constants */
 const protocol = module.exports

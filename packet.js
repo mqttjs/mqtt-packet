@@ -1,3 +1,5 @@
+'use strict'
+
 class Packet {
   constructor () {
     this.cmd = null

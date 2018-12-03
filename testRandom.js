@@ -1,3 +1,5 @@
+'use strict'
+
 const mqtt = require('./')
 const crypto = require('crypto')
 const max = 1E5

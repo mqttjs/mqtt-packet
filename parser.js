@@ -1,3 +1,5 @@
+'use strict'
+
 const bl = require('bl')
 const { EventEmitter } = require('events')
 const Packet = require('./packet')

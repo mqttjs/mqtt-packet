@@ -1,3 +1,5 @@
+'use strict'
+
 const test = require('tape')
 const { Buffer } = require('safe-buffer')
 const { Writable } = require('readable-stream')

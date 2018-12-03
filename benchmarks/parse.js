@@ -1,3 +1,5 @@
+'use strict'
+
 const mqtt = require('../')
 const parser = mqtt.parser()
 const max = 10000000
