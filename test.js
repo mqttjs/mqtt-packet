@@ -1,9 +1,8 @@
-'use strict'
+const test = require('tape')
+const { Buffer } = require('safe-buffer')
+const { Writable } = require('readable-stream')
 
-var test = require('tape')
-var mqtt = require('./')
-var Buffer = require('safe-buffer').Buffer
-var WS = require('readable-stream').Writable
+const mqtt = require('./')
 
 function normalExpectedObject (object) {
   if (object.username != null) object.username = object.username.toString()
@@ -12,14 +11,14 @@ function normalExpectedObject (object) {
 }
 
 function testParseGenerate (name, object, buffer, opts) {
-  test(name + ' parse', function (t) {
+  test(`${name} parse`, t => {
     t.plan(2)
 
-    var parser = mqtt.parser(opts)
-    var expected = object
-    var fixture = buffer
+    const parser = mqtt.parser(opts)
+    const expected = object
+    const fixture = buffer
 
-    parser.on('packet', function (packet) {
+    parser.on('packet', packet => {
       if (packet.cmd !== 'publish') {
         delete packet.topic
         delete packet.payload
@@ -27,26 +26,26 @@ function testParseGenerate (name, object, buffer, opts) {
       t.deepEqual(packet, normalExpectedObject(expected), 'expected packet')
     })
 
-    parser.on('error', function (err) {
+    parser.on('error', err => {
       t.fail(err)
     })
 
     t.equal(parser.parse(fixture), 0, 'remaining bytes')
   })
 
-  test(name + ' generate', function (t) {
+  test(`${name} generate`, t => {
     t.equal(mqtt.generate(object, opts).toString('hex'), buffer.toString('hex'))
     t.end()
   })
 
-  test(name + ' mirror', function (t) {
+  test(`${name} mirror`, t => {
     t.plan(2)
 
-    var parser = mqtt.parser(opts)
-    var expected = object
-    var fixture = mqtt.generate(object, opts)
+    const parser = mqtt.parser(opts)
+    const expected = object
+    const fixture = mqtt.generate(object, opts)
 
-    parser.on('packet', function (packet) {
+    parser.on('packet', packet => {
       if (packet.cmd !== 'publish') {
         delete packet.topic
         delete packet.payload
@@ -54,7 +53,7 @@ function testParseGenerate (name, object, buffer, opts) {
       t.deepEqual(packet, normalExpectedObject(expected), 'expected packet')
     })
 
-    parser.on('error', function (err) {
+    parser.on('error', err => {
       t.fail(err)
     })
 
@@ -63,16 +62,16 @@ function testParseGenerate (name, object, buffer, opts) {
 }
 
 function testParseError (expected, fixture, opts) {
-  test(expected, function (t) {
+  test(expected, t => {
     t.plan(1)
 
-    var parser = mqtt.parser(opts)
+    const parser = mqtt.parser(opts)
 
-    parser.on('error', function (err) {
-      t.equal(err.message, expected, 'expected error message')
+    parser.on('error', ({ message }) => {
+      t.equal(message, expected, 'expected error message')
     })
 
-    parser.on('packet', function () {
+    parser.on('packet', () => {
       t.fail('parse errors should not be followed by packet events')
     })
 
@@ -81,7 +80,7 @@ function testParseError (expected, fixture, opts) {
 }
 
 function testGenerateError (expected, fixture, opts) {
-  test(expected, function (t) {
+  test(expected, t => {
     t.plan(1)
 
     try {
@@ -93,46 +92,46 @@ function testGenerateError (expected, fixture, opts) {
 }
 
 function testParseGenerateDefaults (name, object, buffer, opts) {
-  test(name + ' parse', function (t) {
-    var parser = mqtt.parser(opts)
-    var expected = object
-    var fixture = buffer
+  test(`${name} parse`, t => {
+    const parser = mqtt.parser(opts)
+    const expected = object
+    const fixture = buffer
 
     t.plan(1 + Object.keys(expected).length)
 
-    parser.on('packet', function (packet) {
-      Object.keys(expected).forEach(function (key) {
-        t.deepEqual(packet[key], expected[key], 'expected packet property ' + key)
+    parser.on('packet', packet => {
+      Object.keys(expected).forEach(key => {
+        t.deepEqual(packet[key], expected[key], `expected packet property ${key}`)
       })
     })
 
     t.equal(parser.parse(fixture), 0, 'remaining bytes')
   })
 
-  test(name + ' generate', function (t) {
+  test(`${name} generate`, t => {
     t.equal(mqtt.generate(object).toString('hex'), buffer.toString('hex'))
     t.end()
   })
 }
 
 function testWriteToStreamError (expected, fixture) {
-  test('writeToStream ' + expected + ' error', function (t) {
+  test(`writeToStream ${expected} error`, t => {
     t.plan(2)
 
-    var stream = WS()
+    const stream = Writable()
 
     stream.write = () => t.fail('should not have called write')
     stream.on('error', () => t.pass('error emitted'))
 
-    var result = mqtt.writeToStream(fixture, stream)
+    const result = mqtt.writeToStream(fixture, stream)
 
     t.false(result, 'result should be false')
   })
 }
 
-test('disabled numbers cache', function (t) {
-  var stream = WS()
-  var message = {
+test('disabled numbers cache', t => {
+  const stream = Writable()
+  const message = {
     cmd: 'publish',
     retain: false,
     qos: 0,
@@ -141,13 +140,13 @@ test('disabled numbers cache', function (t) {
     topic: Buffer.from('test'),
     payload: Buffer.from('test')
   }
-  var expected = Buffer.from([
+  const expected = Buffer.from([
     48, 10, // Header
     0, 4, // Topic length
     116, 101, 115, 116, // Topic (test)
     116, 101, 115, 116 // Payload (test)
   ])
-  var written = Buffer.alloc(0)
+  let written = Buffer.alloc(0)
 
   stream.write = (chunk) => {
     written = Buffer.concat([written, chunk])
@@ -238,7 +237,7 @@ testParseGenerate('connect MQTT 5.0', {
   17, 0, 0, 4, 210, // sessionExpiryInterval
   33, 1, 176, // receiveMaximum
   39, 0, 0, 0, 100, // maximumPacketSize
-  34, 1, 200,  // topicAliasMaximum
+  34, 1, 200, // topicAliasMaximum
   25, 1, // requestResponseInformation
   23, 1, // requestProblemInformation,
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties,
@@ -312,7 +311,7 @@ testParseGenerate('connect MQTT 5.0 with will properties but w/o will payload', 
   17, 0, 0, 4, 210, // sessionExpiryInterval
   33, 1, 176, // receiveMaximum
   39, 0, 0, 0, 100, // maximumPacketSize
-  34, 1, 200,  // topicAliasMaximum
+  34, 1, 200, // topicAliasMaximum
   25, 1, // requestResponseInformation
   23, 1, // requestProblemInformation,
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties,
@@ -374,7 +373,7 @@ testParseGenerate('connect MQTT 5.0 w/o will properties', {
   17, 0, 0, 4, 210, // sessionExpiryInterval
   33, 1, 176, // receiveMaximum
   39, 0, 0, 0, 100, // maximumPacketSize
-  34, 1, 200,  // topicAliasMaximum
+  34, 1, 200, // topicAliasMaximum
   25, 1, // requestResponseInformation
   23, 1, // requestProblemInformation,
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties,
@@ -431,13 +430,13 @@ testParseGenerate('empty will payload', {
     retain: true,
     qos: 2,
     topic: 'topic',
-    payload: new Buffer(0)
+    payload: Buffer.allocUnsafe(0)
   },
   clean: true,
   keepalive: 30,
   clientId: 'test',
   username: 'username',
-  password: new Buffer('password')
+  password: Buffer.from('password')
 }, Buffer.from([
   16, 47, // Header
   0, 6, // Protocol ID length
@@ -468,7 +467,7 @@ testParseGenerate('empty buffer username payload', {
   clean: true,
   keepalive: 30,
   clientId: 'test',
-  username: new Buffer('')
+  username: Buffer.from('')
 }, Buffer.from([
   16, 20, // Header
   0, 6, // Protocol ID length
@@ -519,7 +518,7 @@ testParseGenerate('empty buffer password payload', {
   keepalive: 30,
   clientId: 'test',
   username: 'username',
-  password: new Buffer('')
+  password: Buffer.from('')
 }, Buffer.from([
   16, 30, // Header
   0, 6, // Protocol ID length
@@ -575,7 +574,7 @@ testParseGenerate('empty string username and password payload', {
   keepalive: 30,
   clientId: 'test',
   username: '',
-  password: new Buffer('')
+  password: Buffer.from('')
 }, Buffer.from([
   16, 22, // Header
   0, 6, // Protocol ID length
@@ -603,13 +602,13 @@ testParseGenerate('maximal connect', {
     retain: true,
     qos: 2,
     topic: 'topic',
-    payload: new Buffer('payload')
+    payload: Buffer.from('payload')
   },
   clean: true,
   keepalive: 30,
   clientId: 'test',
   username: 'username',
-  password: new Buffer('password')
+  password: Buffer.from('password')
 }, Buffer.from([
   16, 54, // Header
   0, 6, // Protocol ID length
@@ -641,13 +640,13 @@ testParseGenerate('max connect with special chars', {
     retain: true,
     qos: 2,
     topic: 'tòpic',
-    payload: new Buffer('pay£oad')
+    payload: Buffer.from('pay£oad')
   },
   clean: true,
   keepalive: 30,
   clientId: 'te$t',
   username: 'u$ern4me',
-  password: new Buffer('p4$$w0£d')
+  password: Buffer.from('p4$$w0£d')
 }, Buffer.from([
   16, 57, // Header
   0, 6, // Protocol ID length
@@ -667,8 +666,8 @@ testParseGenerate('max connect with special chars', {
   112, 52, 36, 36, 119, 48, 194, 163, 100 // Password
 ]))
 
-test('connect all strings generate', function (t) {
-  var message = {
+test('connect all strings generate', t => {
+  const message = {
     cmd: 'connect',
     retain: false,
     qos: 0,
@@ -688,7 +687,7 @@ test('connect all strings generate', function (t) {
     username: 'username',
     password: 'password'
   }
-  var expected = Buffer.from([
+  const expected = Buffer.from([
     16, 54, // Header
     0, 6, // Protocol ID length
     77, 81, 73, 115, 100, 112, // Protocol ID
@@ -811,7 +810,7 @@ testParseGenerate('minimal publish', {
   dup: false,
   length: 10,
   topic: 'test',
-  payload: new Buffer('test')
+  payload: Buffer.from('test')
 }, Buffer.from([
   48, 10, // Header
   0, 4, // Topic length
@@ -826,7 +825,7 @@ testParseGenerate('publish MQTT5 properties', {
   dup: true,
   length: 60,
   topic: 'test',
-  payload: new Buffer('test'),
+  payload: Buffer.from('test'),
   messageId: 10,
   properties: {
     payloadFormatIndicator: true,
@@ -857,8 +856,8 @@ testParseGenerate('publish MQTT5 properties', {
   116, 101, 115, 116 // Payload (test)
 ]), { protocolVersion: 5 })
 
-;(function () {
-  var buffer = new Buffer(2048)
+;((() => {
+  const buffer = Buffer.allocUnsafe(2048)
   testParseGenerate('2KB publish packet', {
     cmd: 'publish',
     retain: false,
@@ -872,10 +871,10 @@ testParseGenerate('publish MQTT5 properties', {
     0, 4, // Topic length
     116, 101, 115, 116 // Topic (test)
   ]), buffer]))
-})()
+}))()
 
-;(function () {
-  var buffer = new Buffer(2 * 1024 * 1024)
+;((() => {
+  const buffer = Buffer.allocUnsafe(2 * 1024 * 1024)
   testParseGenerate('2MB publish packet', {
     cmd: 'publish',
     retain: false,
@@ -889,7 +888,7 @@ testParseGenerate('publish MQTT5 properties', {
     0, 4, // Topic length
     116, 101, 115, 116 // Topic (test)
   ]), buffer]))
-})()
+}))()
 
 testParseGenerate('maximal publish', {
   cmd: 'publish',
@@ -899,7 +898,7 @@ testParseGenerate('maximal publish', {
   dup: true,
   topic: 'test',
   messageId: 10,
-  payload: new Buffer('test')
+  payload: Buffer.from('test')
 }, Buffer.from([
   61, 12, // Header
   0, 4, // Topic length
@@ -908,8 +907,8 @@ testParseGenerate('maximal publish', {
   116, 101, 115, 116 // Payload
 ]))
 
-test('publish all strings generate', function (t) {
-  var message = {
+test('publish all strings generate', t => {
+  const message = {
     cmd: 'publish',
     retain: true,
     qos: 2,
@@ -917,9 +916,9 @@ test('publish all strings generate', function (t) {
     dup: true,
     topic: 'test',
     messageId: 10,
-    payload: new Buffer('test')
+    payload: Buffer.from('test')
   }
-  var expected = Buffer.from([
+  const expected = Buffer.from([
     61, 12, // Header
     0, 4, // Topic length
     116, 101, 115, 116, // Topic
@@ -938,7 +937,7 @@ testParseGenerate('empty publish', {
   dup: false,
   length: 6,
   topic: 'test',
-  payload: new Buffer(0)
+  payload: Buffer.allocUnsafe(0)
 }, Buffer.from([
   48, 6, // Header
   0, 4, // Topic length
@@ -946,21 +945,21 @@ testParseGenerate('empty publish', {
   // Empty payload
 ]))
 
-test('splitted publish parse', function (t) {
+test('splitted publish parse', t => {
   t.plan(3)
 
-  var parser = mqtt.parser()
-  var expected = {
+  const parser = mqtt.parser()
+  const expected = {
     cmd: 'publish',
     retain: false,
     qos: 0,
     dup: false,
     length: 10,
     topic: 'test',
-    payload: new Buffer('test')
+    payload: Buffer.from('test')
   }
 
-  parser.on('packet', function (packet) {
+  parser.on('packet', packet => {
     t.deepEqual(packet, expected, 'expected packet')
   })
 
@@ -1008,7 +1007,7 @@ testParseGenerate('puback MQTT5 properties', {
   20, // properties length
   31, 0, 4, 116, 101, 115, 116, // reasonString
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
-]), {protocolVersion: 5})
+]), { protocolVersion: 5 })
 
 testParseGenerate('pubrec', {
   cmd: 'pubrec',
@@ -1043,7 +1042,7 @@ testParseGenerate('pubrec MQTT5 properties', {
   20, // properties length
   31, 0, 4, 116, 101, 115, 116, // reasonString
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
-]), {protocolVersion: 5})
+]), { protocolVersion: 5 })
 
 testParseGenerate('pubrel', {
   cmd: 'pubrel',
@@ -1078,7 +1077,7 @@ testParseGenerate('pubrel MQTT5 properties', {
   20, // properties length
   31, 0, 4, 116, 101, 115, 116, // reasonString
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
-]), {protocolVersion: 5})
+]), { protocolVersion: 5 })
 
 testParseGenerate('pubcomp', {
   cmd: 'pubcomp',
@@ -1113,7 +1112,7 @@ testParseGenerate('pubcomp MQTT5 properties', {
   20, // properties length
   31, 0, 4, 116, 101, 115, 116, // reasonString
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
-]), {protocolVersion: 5})
+]), { protocolVersion: 5 })
 
 testParseError('Wrong subscribe header', Buffer.from([
   128, 9, // Header (subscribeqos=0length=9)
@@ -1175,7 +1174,7 @@ testParseGenerate('subscribe to one topic by MQTT 5', {
   0, 4, // Topic length,
   116, 101, 115, 116, // Topic (test)
   24 // settings(qos: 0, noLocal: false, Retain as Published: true, retain handling: 1)
-]), {protocolVersion: 5})
+]), { protocolVersion: 5 })
 
 testParseGenerate('subscribe to three topics', {
   cmd: 'subscribe',
@@ -1260,7 +1259,7 @@ testParseGenerate('subscribe to 3 topics by MQTT 5', {
   0, 4, // Topic length
   116, 102, 115, 116, // Topic (tfst)
   6 // Qos (2), No Local: true
-]), {protocolVersion: 5})
+]), { protocolVersion: 5 })
 
 testParseGenerate('suback', {
   cmd: 'suback',
@@ -1297,7 +1296,7 @@ testParseGenerate('suback MQTT5', {
   31, 0, 4, 116, 101, 115, 116, // reasonString
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
   0, 1, 2, 128 // Granted qos (0, 1, 2) and a rejected being 0x80
-]), {protocolVersion: 5})
+]), { protocolVersion: 5 })
 
 testParseGenerate('unsubscribe', {
   cmd: 'unsubscribe',
@@ -1344,7 +1343,7 @@ testParseGenerate('unsubscribe MQTT 5', {
   116, 102, 115, 116, // Topic (tfst)
   0, 4, // Topic length,
   116, 101, 115, 116 // Topic (test)
-]), {protocolVersion: 5})
+]), { protocolVersion: 5 })
 
 testParseGenerate('unsuback', {
   cmd: 'unsuback',
@@ -1379,7 +1378,7 @@ testParseGenerate('unsuback MQTT 5', {
   31, 0, 4, 116, 101, 115, 116, // reasonString
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
   0, 128 // success and error
-]), {protocolVersion: 5})
+]), { protocolVersion: 5 })
 
 testParseGenerate('pingreq', {
   cmd: 'pingreq',
@@ -1434,7 +1433,7 @@ testParseGenerate('disconnect MQTT 5', {
   31, 0, 4, 116, 101, 115, 116, // reasonString
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
   28, 0, 4, 116, 101, 115, 116// serverReference
-]), {protocolVersion: 5})
+]), { protocolVersion: 5 })
 
 testParseGenerate('auth MQTT 5', {
   cmd: 'auth',
@@ -1459,7 +1458,7 @@ testParseGenerate('auth MQTT 5', {
   22, 0, 4, 0, 1, 2, 3, // auth data
   31, 0, 4, 116, 101, 115, 116, // reasonString
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
-]), {protocolVersion: 5})
+]), { protocolVersion: 5 })
 
 testGenerateError('Unknown command', {})
 
@@ -1669,12 +1668,12 @@ testGenerateError('Username is required to use password', {
   password: 'password'
 })
 
-test('support cork', function (t) {
+test('support cork', t => {
   t.plan(9)
 
-  var dest = WS()
+  const dest = Writable()
 
-  dest._write = function (chunk, enc, cb) {
+  dest._write = (chunk, enc, cb) => {
     t.pass('_write called')
     cb()
   }
@@ -1787,22 +1786,22 @@ testParseError('Not supported auth packet for this version MQTT', Buffer.from([
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
 ]))
 
-test('stops parsing after first error', function (t) {
+test('stops parsing after first error', t => {
   t.plan(4)
 
-  var parser = mqtt.parser()
+  const parser = mqtt.parser()
 
-  var packetCount = 0
-  var errorCount = 0
-  var expectedPackets = 1
-  var expectedErrors = 1
+  let packetCount = 0
+  let errorCount = 0
+  let expectedPackets = 1
+  let expectedErrors = 1
 
-  parser.on('packet', function (packet) {
-    t.ok(++packetCount <= expectedPackets, 'expected <= ' + expectedPackets + ' packets')
+  parser.on('packet', packet => {
+    t.ok(++packetCount <= expectedPackets, `expected <= ${expectedPackets} packets`)
   })
 
-  parser.on('error', function (erroneous) {
-    t.ok(++errorCount <= expectedErrors, 'expected <= ' + expectedErrors + ' errors')
+  parser.on('error', erroneous => {
+    t.ok(++errorCount <= expectedErrors, `expected <= ${expectedErrors} errors`)
   })
 
   parser.parse(Buffer.from([

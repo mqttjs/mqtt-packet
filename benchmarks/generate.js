@@ -1,25 +1,24 @@
-'use strict'
+const mqtt = require('../')
 
-var mqtt = require('../')
-var max = 100000
-var i
-var buf = Buffer.from('test')
+const max = 100000
+let i
+const payload = Buffer.from('test')
 
 // initialize it
 mqtt.generate({
   cmd: 'publish',
   topic: 'test',
-  payload: buf
+  payload
 })
 
-var start = Date.now()
-var time
+const start = Date.now()
+let time
 
 for (i = 0; i < max; i++) {
   mqtt.generate({
     cmd: 'publish',
     topic: 'test',
-    payload: buf
+    payload
   })
 }
 

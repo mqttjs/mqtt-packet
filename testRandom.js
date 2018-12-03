@@ -1,15 +1,13 @@
-'use strict'
-
-var mqtt = require('./')
-var crypto = require('crypto')
-var max = 1E5
-var i
-var start = Date.now() / 1000
-var time
-var errors = 0
-var packets = 0
-var randomPacket
-var firstBytes = [
+const mqtt = require('./')
+const crypto = require('crypto')
+const max = 1E5
+let i
+const start = Date.now() / 1000
+let time
+let errors = 0
+let packets = 0
+let randomPacket
+const firstBytes = [
   16 * 1, // CONNECT
   16 * 2, // CONNACK
   16 * 3, // PUBLISH, QoS: 0, No Retain, No Dup
@@ -35,11 +33,11 @@ var firstBytes = [
   16 * 12, // PINGREQ
   16 * 13, // PINGRESP
   16 * 14, // DISCONNECT
-  16 * 15  // RESERVED
+  16 * 15 // RESERVED
 ]
 
 function doParse () {
-  var parser = mqtt.parser()
+  const parser = mqtt.parser()
 
   parser.on('error', onError)
   parser.on('packet', onPacket)
@@ -71,7 +69,7 @@ function onPacket () {
   packets++
 }
 
-var delta = Math.abs(max - packets - errors)
+const delta = Math.abs(max - packets - errors)
 time = Date.now() / 1000 - start
 console.log('Benchmark complete')
 console.log('==========================')
@@ -86,5 +84,5 @@ else console.log('Missing packets:', delta, '\r\n')
 
 console.log('Total packets:', packets + errors)
 console.log('Total errors:', errors + delta)
-console.log('Error rate:', ((errors + delta) / max * 100).toFixed(2) + '%')
+console.log('Error rate:', `${((errors + delta) / max * 100).toFixed(2)}%`)
 console.log('==========================')

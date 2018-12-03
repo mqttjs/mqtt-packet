@@ -28,8 +28,8 @@ Examples
 ### Generating
 
 ```js
-var mqtt = require('mqtt-packet')
-var object = {
+const mqtt = require('mqtt-packet');
+const object = {
   cmd: 'publish',
   retain: false,
   qos: 0,
@@ -37,8 +37,8 @@ var object = {
   length: 10,
   topic: 'test',
   payload: 'test' // Can also be a Buffer
-}
-var opts = { protocolVersion: 4 } // default is 4. Usually, opts is a connect packet
+};
+const opts = { protocolVersion: 4 }; // default is 4. Usually, opts is a connect packet
 
 console.log(mqtt.generate(object))
 // Prints:
@@ -58,12 +58,12 @@ console.log(mqtt.generate(object))
 ### Parsing
 
 ```js
-var mqtt = require('mqtt-packet')
-var opts = { protocolVersion: 4 } // default is 4. Usually, opts is a connect packet
-var parser = mqtt.parser(opts)
+const mqtt = require('mqtt-packet');
+const opts = { protocolVersion: 4 }; // default is 4. Usually, opts is a connect packet
+const parser = mqtt.parser(opts);
 
 // Synchronously emits all the parsed packets
-parser.on('packet', function(packet) {
+parser.on('packet', packet => {
   console.log(packet)
   // Prints:
   //
@@ -83,7 +83,7 @@ parser.parse(new Buffer([
   0, 4, // Topic length
   116, 101, 115, 116, // Topic (test)
   116, 101, 115, 116 // Payload (test)
-])
+]))
 // Returns the number of bytes left in the parser
 ```
 

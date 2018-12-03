@@ -36,15 +36,15 @@
   "devDependencies": {
     "dev-null": "^0.1.1",
     "pre-commit": "^1.2.2",
-    "readable-stream": "^2.3.0",
-    "standard": "^10.0.2",
-    "tap-spec": "^4.1.1",
-    "tape": "^4.6.3"
+    "readable-stream": "^3.0.6",
+    "standard": "^12.0.1",
+    "tap-spec": "^5.0.0",
+    "tape": "^4.9.1"
   },
   "dependencies": {
-    "bl": "^1.2.1",
+    "bl": "^2.1.2",
     "inherits": "^2.0.3",
     "process-nextick-args": "^2.0.0",
-    "safe-buffer": "^5.1.0"
+    "safe-buffer": "^5.1.2"
   }
 }

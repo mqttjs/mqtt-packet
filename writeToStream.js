@@ -1,19 +1,20 @@
-'use strict'
+const { Buffer } = require('safe-buffer')
+const { nextTick } = require('process-nextick-args')
 
-var protocol = require('./constants')
-var Buffer = require('safe-buffer').Buffer
-var empty = Buffer.allocUnsafe(0)
-var zeroBuf = Buffer.from([0])
-var numbers = require('./numbers')
-var nextTick = require('process-nextick-args').nextTick
+const protocol = require('./constants')
+const numbers = require('./numbers')
 
-var numCache = numbers.cache
-var generateNumber = numbers.generateNumber
-var generateCache = numbers.generateCache
-var genBufVariableByteInt = numbers.genBufVariableByteInt
-var generate4ByteBuffer = numbers.generate4ByteBuffer
-var writeNumber = writeNumberCached
-var toGenerate = true
+const empty = Buffer.allocUnsafe(0)
+const zeroBuf = Buffer.from([0])
+
+const numCache = numbers.cache
+const generateNumber = numbers.generateNumber
+const generateCache = numbers.generateCache
+const genBufVariableByteInt = numbers.genBufVariableByteInt
+const generate4ByteBuffer = numbers.generate4ByteBuffer
+
+let writeNumber = writeNumberCached
+let toGenerate = true
 
 function generate (packet, stream, opts) {
   if (stream.cork) {
@@ -63,10 +64,10 @@ function generate (packet, stream, opts) {
  * Set to "false" to allocate buffers on-the-flight instead of pre-generated cache
  */
 Object.defineProperty(generate, 'cacheNumbers', {
-  get: function () {
+  get () {
     return writeNumber === writeNumberCached
   },
-  set: function (value) {
+  set (value) {
     if (value) {
       if (!numCache || Object.keys(numCache).length === 0) toGenerate = true
       writeNumber = writeNumberCached
@@ -82,38 +83,44 @@ function uncork (stream) {
 }
 
 function connect (packet, stream, opts) {
-  var settings = packet || {}
-  var protocolId = settings.protocolId || 'MQTT'
-  var protocolVersion = settings.protocolVersion || 4
-  var will = settings.will
-  var clean = settings.clean
-  var keepalive = settings.keepalive || 0
-  var clientId = settings.clientId || ''
-  var username = settings.username
-  var password = settings.password
+  const settings = packet || {}
+  const protocolId = settings.protocolId || 'MQTT'
+  const protocolVersion = settings.protocolVersion || 4
+  const will = settings.will
+  let clean = settings.clean
+  const keepalive = settings.keepalive || 0
+  const clientId = settings.clientId || ''
+  const username = settings.username
+  const password = settings.password
   /* mqtt5 new oprions */
-  var properties = settings.properties
+  const properties = settings.properties
 
   if (clean === undefined) clean = true
 
-  var length = 0
+  let length = 0
 
   // Must be a string and non-falsy
-  if (!protocolId ||
-     (typeof protocolId !== 'string' && !Buffer.isBuffer(protocolId))) {
+  if (
+    !protocolId ||
+    (typeof protocolId !== 'string' && !Buffer.isBuffer(protocolId))
+  ) {
     stream.emit('error', new Error('Invalid protocolId'))
     return false
-  } else length += protocolId.length + 2
+  } else {
+    length += protocolId.length + 2
+  }
 
   // Must be 3 or 4 or 5
   if (protocolVersion !== 3 && protocolVersion !== 4 && protocolVersion !== 5) {
     stream.emit('error', new Error('Invalid protocol version'))
     return false
-  } else length += 1
+  } else {
+    length += 1
+  }
 
   // ClientId might be omitted in 3.1.1, but only if cleanSession is set to 1
   if ((typeof clientId === 'string' || Buffer.isBuffer(clientId)) &&
-     (clientId || protocolVersion === 4) && (clientId || clean)) {
+    (clientId || protocolVersion === 4) && (clientId || clean)) {
     length += clientId.length + 2
   } else {
     if (protocolVersion < 4) {
@@ -128,12 +135,14 @@ function connect (packet, stream, opts) {
 
   // Must be a two byte number
   if (typeof keepalive !== 'number' ||
-      keepalive < 0 ||
-      keepalive > 65535 ||
-      keepalive % 1 !== 0) {
+    keepalive < 0 ||
+    keepalive > 65535 ||
+    keepalive % 1 !== 0) {
     stream.emit('error', new Error('Invalid keepalive'))
     return false
-  } else length += 2
+  } else {
+    length += 2
+  }
 
   // Connect flags
   length += 1
@@ -161,6 +170,7 @@ function connect (packet, stream, opts) {
 
     // Payload
     length += 2 // payload length
+
     if (will.payload) {
       if (will.payload.length >= 0) {
         if (typeof will.payload === 'string') {
@@ -182,7 +192,7 @@ function connect (packet, stream, opts) {
   }
 
   // Username
-  var providedUsername = false
+  let providedUsername = false
   if (username != null) {
     if (isStringOrBuffer(username)) {
       providedUsername = true
@@ -225,7 +235,7 @@ function connect (packet, stream, opts) {
   )
 
   // Connect flags
-  var flags = 0
+  let flags = 0
   flags |= (username != null) ? protocol.USERNAME_MASK : 0
   flags |= (password != null) ? protocol.PASSWORD_MASK : 0
   flags |= (will && will.retain) ? protocol.WILL_RETAIN_MASK : 0
@@ -268,11 +278,11 @@ function connect (packet, stream, opts) {
 }
 
 function connack (packet, stream, opts) {
-  var version = opts ? opts.protocolVersion : 4
-  var settings = packet || {}
-  var rc = version === 5 ? settings.reasonCode : settings.returnCode
-  var properties = settings.properties
-  var length = 2 // length of rc and sessionHeader
+  const version = opts ? opts.protocolVersion : 4
+  const settings = packet || {}
+  const rc = version === 5 ? settings.reasonCode : settings.returnCode
+  const properties = settings.properties
+  let length = 2 // length of rc and sessionHeader
 
   // Check return code
   if (typeof rc !== 'number') {
@@ -280,7 +290,7 @@ function connack (packet, stream, opts) {
     return false
   }
   // mqtt5 properties
-  var propertiesData = null
+  let propertiesData = null
   if (version === 5) {
     propertiesData = getProperties(stream, properties)
     length += propertiesData.length
@@ -299,21 +309,23 @@ function connack (packet, stream, opts) {
 }
 
 function publish (packet, stream, opts) {
-  var version = opts ? opts.protocolVersion : 4
-  var settings = packet || {}
-  var qos = settings.qos || 0
-  var retain = settings.retain ? protocol.RETAIN_MASK : 0
-  var topic = settings.topic
-  var payload = settings.payload || empty
-  var id = settings.messageId
-  var properties = settings.properties
+  const version = opts ? opts.protocolVersion : 4
+  const settings = packet || {}
+  const qos = settings.qos || 0
+  const retain = settings.retain ? protocol.RETAIN_MASK : 0
+  const topic = settings.topic
+  const payload = settings.payload || empty
+  const id = settings.messageId
+  const properties = settings.properties
 
-  var length = 0
+  let length = 0
 
   // Topic must be a non-empty string or Buffer
-  if (typeof topic === 'string') length += Buffer.byteLength(topic) + 2
-  else if (Buffer.isBuffer(topic)) length += topic.length + 2
-  else {
+  if (typeof topic === 'string') {
+    length += Buffer.byteLength(topic) + 2
+  } else if (Buffer.isBuffer(topic)) {
+    length += topic.length + 2
+  } else {
     stream.emit('error', new Error('Invalid topic'))
     return false
   }
@@ -329,7 +341,7 @@ function publish (packet, stream, opts) {
   } else if (qos) length += 2
 
   // mqtt5 properties
-  var propertiesData = null
+  let propertiesData = null
   if (version === 5) {
     propertiesData = getProperties(stream, properties)
     length += propertiesData.length
@@ -359,15 +371,15 @@ function publish (packet, stream, opts) {
 
 /* Puback, pubrec, pubrel and pubcomp */
 function confirmation (packet, stream, opts) {
-  var version = opts ? opts.protocolVersion : 4
-  var settings = packet || {}
-  var type = settings.cmd || 'puback'
-  var id = settings.messageId
-  var dup = (settings.dup && type === 'pubrel') ? protocol.DUP_MASK : 0
-  var qos = 0
-  var reasonCode = settings.reasonCode
-  var properties = settings.properties
-  var length = version === 5 ? 3 : 2
+  const version = opts ? opts.protocolVersion : 4
+  const settings = packet || {}
+  const type = settings.cmd || 'puback'
+  const id = settings.messageId
+  const dup = (settings.dup && type === 'pubrel') ? protocol.DUP_MASK : 0
+  let qos = 0
+  const reasonCode = settings.reasonCode
+  const properties = settings.properties
+  let length = version === 5 ? 3 : 2
 
   if (type === 'pubrel') qos = 1
 
@@ -378,10 +390,12 @@ function confirmation (packet, stream, opts) {
   }
 
   // properies mqtt 5
-  var propertiesData = null
+  let propertiesData = null
   if (version === 5) {
     propertiesData = getPropertiesByMaximumPacketSize(stream, properties, opts, length)
-    if (!propertiesData) { return false }
+    if (!propertiesData) {
+      return false
+    }
     length += propertiesData.length
   }
 
@@ -407,14 +421,14 @@ function confirmation (packet, stream, opts) {
 }
 
 function subscribe (packet, stream, opts) {
-  var version = opts ? opts.protocolVersion : 4
-  var settings = packet || {}
-  var dup = settings.dup ? protocol.DUP_MASK : 0
-  var id = settings.messageId
-  var subs = settings.subscriptions
-  var properties = settings.properties
+  const version = opts ? opts.protocolVersion : 4
+  const settings = packet || {}
+  const dup = settings.dup ? protocol.DUP_MASK : 0
+  const id = settings.messageId
+  const subs = settings.subscriptions
+  const properties = settings.properties
 
-  var length = 0
+  let length = 0
 
   // Check message ID
   if (typeof id !== 'number') {
@@ -423,7 +437,7 @@ function subscribe (packet, stream, opts) {
   } else length += 2
 
   // properies mqtt 5
-  var propertiesData = null
+  let propertiesData = null
   if (version === 5) {
     propertiesData = getProperties(stream, properties)
     length += propertiesData.length
@@ -431,31 +445,32 @@ function subscribe (packet, stream, opts) {
 
   // Check subscriptions
   if (typeof subs === 'object' && subs.length) {
-    for (var i = 0; i < subs.length; i += 1) {
-      var itopic = subs[i].topic
-      var iqos = subs[i].qos
+    for (let i = 0; i < subs.length; i += 1) {
+      const itopic = subs[i].topic
+      const iqos = subs[i].qos
 
       if (typeof itopic !== 'string') {
         stream.emit('error', new Error('Invalid subscriptions - invalid topic'))
         return false
       }
+
       if (typeof iqos !== 'number') {
         stream.emit('error', new Error('Invalid subscriptions - invalid qos'))
         return false
       }
 
       if (version === 5) {
-        var nl = subs[i].nl || false
+        const nl = subs[i].nl || false
         if (typeof nl !== 'boolean') {
           stream.emit('error', new Error('Invalid subscriptions - invalid No Local'))
           return false
         }
-        var rap = subs[i].rap || false
+        const rap = subs[i].rap || false
         if (typeof rap !== 'boolean') {
           stream.emit('error', new Error('Invalid subscriptions - invalid Retain as Published'))
           return false
         }
-        var rh = subs[i].rh || 0
+        const rh = subs[i].rh || 0
         if (typeof rh !== 'number' || rh > 2) {
           stream.emit('error', new Error('Invalid subscriptions - invalid Retain Handling'))
           return false
@@ -483,17 +498,16 @@ function subscribe (packet, stream, opts) {
     propertiesData.write()
   }
 
-  var result = true
+  let result = true
 
   // Generate subs
-  for (var j = 0; j < subs.length; j++) {
-    var sub = subs[j]
-    var jtopic = sub.topic
-    var jqos = sub.qos
-    var jnl = +sub.nl
-    var jrap = +sub.rap
-    var jrh = sub.rh
-    var joptions
+  for (const sub of subs) {
+    const jtopic = sub.topic
+    const jqos = sub.qos
+    const jnl = +sub.nl
+    const jrap = +sub.rap
+    const jrh = sub.rh
+    let joptions
 
     // Write topic string
     writeString(stream, jtopic)
@@ -513,12 +527,12 @@ function subscribe (packet, stream, opts) {
 }
 
 function suback (packet, stream, opts) {
-  var version = opts ? opts.protocolVersion : 4
-  var settings = packet || {}
-  var id = settings.messageId
-  var granted = settings.granted
-  var properties = settings.properties
-  var length = 0
+  const version = opts ? opts.protocolVersion : 4
+  const settings = packet || {}
+  const id = settings.messageId
+  const granted = settings.granted
+  const properties = settings.properties
+  let length = 0
 
   // Check message ID
   if (typeof id !== 'number') {
@@ -528,7 +542,7 @@ function suback (packet, stream, opts) {
 
   // Check granted qos vector
   if (typeof granted === 'object' && granted.length) {
-    for (var i = 0; i < granted.length; i += 1) {
+    for (let i = 0; i < granted.length; i += 1) {
       if (typeof granted[i] !== 'number') {
         stream.emit('error', new Error('Invalid qos vector'))
         return false
@@ -541,10 +555,12 @@ function suback (packet, stream, opts) {
   }
 
   // properies mqtt 5
-  var propertiesData = null
+  let propertiesData = null
   if (version === 5) {
     propertiesData = getPropertiesByMaximumPacketSize(stream, properties, opts, length)
-    if (!propertiesData) { return false }
+    if (!propertiesData) {
+      return false
+    }
     length += propertiesData.length
   }
 
@@ -566,14 +582,14 @@ function suback (packet, stream, opts) {
 }
 
 function unsubscribe (packet, stream, opts) {
-  var version = opts ? opts.protocolVersion : 4
-  var settings = packet || {}
-  var id = settings.messageId
-  var dup = settings.dup ? protocol.DUP_MASK : 0
-  var unsubs = settings.unsubscriptions
-  var properties = settings.properties
+  const version = opts ? opts.protocolVersion : 4
+  const settings = packet || {}
+  const id = settings.messageId
+  const dup = settings.dup ? protocol.DUP_MASK : 0
+  const unsubs = settings.unsubscriptions
+  const properties = settings.properties
 
-  var length = 0
+  let length = 0
 
   // Check message ID
   if (typeof id !== 'number') {
@@ -584,7 +600,7 @@ function unsubscribe (packet, stream, opts) {
   }
   // Check unsubs
   if (typeof unsubs === 'object' && unsubs.length) {
-    for (var i = 0; i < unsubs.length; i += 1) {
+    for (let i = 0; i < unsubs.length; i += 1) {
       if (typeof unsubs[i] !== 'string') {
         stream.emit('error', new Error('Invalid unsubscriptions'))
         return false
@@ -596,7 +612,7 @@ function unsubscribe (packet, stream, opts) {
     return false
   }
   // properies mqtt 5
-  var propertiesData = null
+  let propertiesData = null
   if (version === 5) {
     propertiesData = getProperties(stream, properties)
     length += propertiesData.length
@@ -617,8 +633,8 @@ function unsubscribe (packet, stream, opts) {
   }
 
   // Unsubs
-  var result = true
-  for (var j = 0; j < unsubs.length; j++) {
+  let result = true
+  for (let j = 0; j < unsubs.length; j++) {
     result = writeString(stream, unsubs[j])
   }
 
@@ -626,16 +642,16 @@ function unsubscribe (packet, stream, opts) {
 }
 
 function unsuback (packet, stream, opts) {
-  var version = opts ? opts.protocolVersion : 4
-  var settings = packet || {}
-  var id = settings.messageId
-  var dup = settings.dup ? protocol.DUP_MASK : 0
-  var granted = settings.granted
-  var properties = settings.properties
-  var type = settings.cmd
-  var qos = 0
+  const version = opts ? opts.protocolVersion : 4
+  const settings = packet || {}
+  const id = settings.messageId
+  const dup = settings.dup ? protocol.DUP_MASK : 0
+  const granted = settings.granted
+  const properties = settings.properties
+  const type = settings.cmd
+  const qos = 0
 
-  var length = 2
+  let length = 2
 
   // Check message ID
   if (typeof id !== 'number') {
@@ -646,7 +662,7 @@ function unsuback (packet, stream, opts) {
   // Check granted
   if (version === 5) {
     if (typeof granted === 'object' && granted.length) {
-      for (var i = 0; i < granted.length; i += 1) {
+      for (let i = 0; i < granted.length; i += 1) {
         if (typeof granted[i] !== 'number') {
           stream.emit('error', new Error('Invalid qos vector'))
           return false
@@ -660,10 +676,12 @@ function unsuback (packet, stream, opts) {
   }
 
   // properies mqtt 5
-  var propertiesData = null
+  let propertiesData = null
   if (version === 5) {
     propertiesData = getPropertiesByMaximumPacketSize(stream, properties, opts, length)
-    if (!propertiesData) { return false }
+    if (!propertiesData) {
+      return false
+    }
     length += propertiesData.length
   }
 
@@ -688,22 +706,26 @@ function unsuback (packet, stream, opts) {
   return true
 }
 
-function emptyPacket (packet, stream, opts) {
-  return stream.write(protocol.EMPTY[packet.cmd])
+function emptyPacket ({
+  cmd
+}, stream, opts) {
+  return stream.write(protocol.EMPTY[cmd])
 }
 
 function disconnect (packet, stream, opts) {
-  var version = opts ? opts.protocolVersion : 4
-  var settings = packet || {}
-  var reasonCode = settings.reasonCode
-  var properties = settings.properties
-  var length = version === 5 ? 1 : 0
+  const version = opts ? opts.protocolVersion : 4
+  const settings = packet || {}
+  const reasonCode = settings.reasonCode
+  const properties = settings.properties
+  let length = version === 5 ? 1 : 0
 
   // properies mqtt 5
-  var propertiesData = null
+  let propertiesData = null
   if (version === 5) {
     propertiesData = getPropertiesByMaximumPacketSize(stream, properties, opts, length)
-    if (!propertiesData) { return false }
+    if (!propertiesData) {
+      return false
+    }
     length += propertiesData.length
   }
 
@@ -727,17 +749,19 @@ function disconnect (packet, stream, opts) {
 }
 
 function auth (packet, stream, opts) {
-  var version = opts ? opts.protocolVersion : 4
-  var settings = packet || {}
-  var reasonCode = settings.reasonCode
-  var properties = settings.properties
-  var length = version === 5 ? 1 : 0
+  const version = opts ? opts.protocolVersion : 4
+  const settings = packet || {}
+  const reasonCode = settings.reasonCode
+  const properties = settings.properties
+  let length = version === 5 ? 1 : 0
 
   if (version !== 5) stream.emit('error', new Error('Invalid mqtt version for auth packet'))
 
   // properies mqtt 5
-  var propertiesData = getPropertiesByMaximumPacketSize(stream, properties, opts, length)
-  if (!propertiesData) { return false }
+  const propertiesData = getPropertiesByMaximumPacketSize(stream, properties, opts, length)
+  if (!propertiesData) {
+    return false
+  }
   length += propertiesData.length
 
   // Header
@@ -767,9 +791,10 @@ function auth (packet, stream, opts) {
  * @api private
  */
 
-var varByteIntCache = {}
+const varByteIntCache = {}
+
 function writeVarByteInt (stream, num) {
-  var buffer = varByteIntCache[num]
+  let buffer = varByteIntCache[num]
 
   if (!buffer) {
     buffer = genBufVariableByteInt(num).data
@@ -791,7 +816,7 @@ function writeVarByteInt (stream, num) {
  */
 
 function writeString (stream, string) {
-  var strlen = Buffer.byteLength(string)
+  const strlen = Buffer.byteLength(string)
   writeNumber(stream, strlen)
 
   stream.write(string, 'utf8')
@@ -825,9 +850,11 @@ function writeStringPair (stream, name, value) {
 function writeNumberCached (stream, number) {
   return stream.write(numCache[number])
 }
+
 function writeNumberGenerated (stream, number) {
   return stream.write(generateNumber(number))
 }
+
 function write4ByteNumber (stream, number) {
   return stream.write(generate4ByteBuffer(number))
 }
@@ -853,20 +880,22 @@ function getProperties (stream, properties) {
   if (typeof properties !== 'object' || properties.length != null) {
     return {
       length: 1,
-      write: function () {
+      write () {
         writeProperties(stream, {}, 0)
       }
     }
   }
-  var propertiesLength = 0
+  let propertiesLength = 0
+
   function getLengthProperty (name) {
-    var type = protocol.propertiesTypes[name]
-    var value = properties[name]
-    var length = 0
+    const type = protocol.propertiesTypes[name]
+    const value = properties[name]
+    let length = 0
+
     switch (type) {
       case 'byte': {
         if (typeof value !== 'boolean') {
-          stream.emit('error', new Error('Invalid ' + name))
+          stream.emit('error', new Error(`Invalid ${name}`))
           return false
         }
         length += 1 + 1
@@ -874,7 +903,7 @@ function getProperties (stream, properties) {
       }
       case 'int8': {
         if (typeof value !== 'number') {
-          stream.emit('error', new Error('Invalid ' + name))
+          stream.emit('error', new Error(`Invalid ${name}`))
           return false
         }
         length += 1 + 1
@@ -882,7 +911,7 @@ function getProperties (stream, properties) {
       }
       case 'binary': {
         if (value && value === null) {
-          stream.emit('error', new Error('Invalid ' + name))
+          stream.emit('error', new Error(`Invalid ${name}`))
           return false
         }
         length += 1 + Buffer.byteLength(value) + 2
@@ -890,7 +919,7 @@ function getProperties (stream, properties) {
       }
       case 'int16': {
         if (typeof value !== 'number') {
-          stream.emit('error', new Error('Invalid ' + name))
+          stream.emit('error', new Error(`Invalid ${name}`))
           return false
         }
         length += 1 + 2
@@ -898,7 +927,7 @@ function getProperties (stream, properties) {
       }
       case 'int32': {
         if (typeof value !== 'number') {
-          stream.emit('error', new Error('Invalid ' + name))
+          stream.emit('error', new Error(`Invalid ${name}`))
           return false
         }
         length += 1 + 4
@@ -906,7 +935,7 @@ function getProperties (stream, properties) {
       }
       case 'var': {
         if (typeof value !== 'number') {
-          stream.emit('error', new Error('Invalid ' + name))
+          stream.emit('error', new Error(`Invalid ${name}`))
           return false
         }
         length += 1 + genBufVariableByteInt(value).length
@@ -914,7 +943,7 @@ function getProperties (stream, properties) {
       }
       case 'string': {
         if (typeof value !== 'string') {
-          stream.emit('error', new Error('Invalid ' + name))
+          stream.emit('error', new Error(`Invalid ${name}`))
           return false
         }
         length += 1 + 2 + Buffer.byteLength(value.toString())
@@ -922,47 +951,47 @@ function getProperties (stream, properties) {
       }
       case 'pair': {
         if (typeof value !== 'object') {
-          stream.emit('error', new Error('Invalid ' + name))
+          stream.emit('error', new Error(`Invalid ${name}`))
           return false
         }
-        length += Object.getOwnPropertyNames(value).reduce(function (result, name) {
+        length += Object.getOwnPropertyNames(value).reduce((result, name) => {
           result += 1 + 2 + Buffer.byteLength(name.toString()) + 2 + Buffer.byteLength(value[name].toString())
           return result
         }, 0)
         break
       }
       default: {
-        stream.emit('error', new Error('Invalid property ' + name))
+        stream.emit('error', new Error(`Invalid property ${name}`))
         return false
       }
     }
     return length
   }
   if (properties) {
-    for (var propName in properties) {
-      var propLength = getLengthProperty(propName)
+    for (const propName in properties) {
+      const propLength = getLengthProperty(propName)
       if (!propLength) return false
       propertiesLength += propLength
     }
   }
-  var propertiesLengthLength = genBufVariableByteInt(propertiesLength).length
+  const propertiesLengthLength = genBufVariableByteInt(propertiesLength).length
 
   return {
     length: propertiesLengthLength + propertiesLength,
-    write: function () {
+    write () {
       writeProperties(stream, properties, propertiesLength)
     }
   }
 }
 
 function getPropertiesByMaximumPacketSize (stream, properties, opts, length) {
-  var mayEmptyProps = ['reasonString', 'userProperties']
-  var maximumPacketSize = opts && opts.properties && opts.properties.maximumPacketSize ? opts.properties.maximumPacketSize : 0
+  const mayEmptyProps = ['reasonString', 'userProperties']
+  const maximumPacketSize = opts && opts.properties && opts.properties.maximumPacketSize ? opts.properties.maximumPacketSize : 0
 
-  var propertiesData = getProperties(stream, properties)
+  let propertiesData = getProperties(stream, properties)
   if (maximumPacketSize) {
     while (length + propertiesData.length > maximumPacketSize) {
-      var currentMayEmptyProp = mayEmptyProps.shift()
+      const currentMayEmptyProp = mayEmptyProps.shift()
       if (currentMayEmptyProp && properties[currentMayEmptyProp]) {
         delete properties[currentMayEmptyProp]
         propertiesData = getProperties(stream, properties)
@@ -977,10 +1006,11 @@ function getPropertiesByMaximumPacketSize (stream, properties, opts, length) {
 function writeProperties (stream, properties, propertiesLength) {
   /* write properties to stream */
   writeVarByteInt(stream, propertiesLength)
-  for (var propName in properties) {
+  for (const propName in properties) {
     if (properties.hasOwnProperty(propName) && properties[propName] !== null) {
-      var value = properties[propName]
-      var type = protocol.propertiesTypes[propName]
+      const value = properties[propName]
+      const type = protocol.propertiesTypes[propName]
+
       switch (type) {
         case 'byte': {
           stream.write(Buffer.from([protocol.properties[propName]]))
@@ -1018,14 +1048,14 @@ function writeProperties (stream, properties, propertiesLength) {
           break
         }
         case 'pair': {
-          Object.getOwnPropertyNames(value).forEach(function (name) {
+          Object.getOwnPropertyNames(value).forEach(name => {
             stream.write(Buffer.from([protocol.properties[propName]]))
             writeStringPair(stream, name.toString(), value[name].toString())
           })
           break
         }
         default: {
-          stream.emit('error', new Error('Invalid property ' + propName))
+          stream.emit('error', new Error(`Invalid property ${propName}`))
           return false
         }
       }
@@ -1034,9 +1064,13 @@ function writeProperties (stream, properties, propertiesLength) {
 }
 
 function byteLength (bufOrString) {
-  if (!bufOrString) return 0
-  else if (bufOrString instanceof Buffer) return bufOrString.length
-  else return Buffer.byteLength(bufOrString)
+  if (!bufOrString) {
+    return 0
+  } else if (bufOrString instanceof Buffer) {
+    return bufOrString.length
+  } else {
+    return Buffer.byteLength(bufOrString)
+  }
 }
 
 function isStringOrBuffer (field) {
