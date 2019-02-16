@@ -117,7 +117,7 @@ protocol.propertiesTypes = {
   wildcardSubscriptionAvailable: 'byte',
   subscriptionIdentifiersAvailable: 'byte',
   sharedSubscriptionAvailable: 'byte',
-  serverKeepAlive: 'int32',
+  serverKeepAlive: 'int16',
   responseInformation: 'string',
   serverReference: 'string',
   topicAlias: 'int16',
