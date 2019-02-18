@@ -734,7 +734,7 @@ testParseGenerate('connack MQTT5 with properties', {
   retain: false,
   qos: 0,
   dup: false,
-  length: 89,
+  length: 87,
   sessionPresent: false,
   reasonCode: 0,
   properties: {
@@ -759,8 +759,8 @@ testParseGenerate('connack MQTT5 with properties', {
     authenticationData: Buffer.from([1, 2, 3, 4])
   }
 }, Buffer.from([
-  32, 89, 0, 0,
-  86, // properties length
+  32, 87, 0, 0,
+  84, // properties length
   17, 0, 0, 4, 210, // sessionExpiryInterval
   33, 1, 176, // receiveMaximum
   36, 2, // Maximum qos
@@ -773,7 +773,7 @@ testParseGenerate('connack MQTT5 with properties', {
   40, 1, // wildcardSubscriptionAvailable
   41, 1, // subscriptionIdentifiersAvailable
   42, 0, // sharedSubscriptionAvailable
-  19, 0, 0, 4, 210, // serverKeepAlive
+  19, 4, 210, // serverKeepAlive
   26, 0, 4, 116, 101, 115, 116, // responseInformation
   28, 0, 4, 116, 101, 115, 116, // serverReference
   21, 0, 4, 116, 101, 115, 116, // authenticationMethod
