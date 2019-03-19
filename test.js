@@ -780,6 +780,58 @@ testParseGenerate('connack MQTT5 with properties', {
   22, 0, 4, 1, 2, 3, 4 // authenticationData
 ]), { protocolVersion: 5 })
 
+testParseGenerate('connack MQTT5 with properties and doubled user properties', {
+  cmd: 'connack',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 100,
+  sessionPresent: false,
+  reasonCode: 0,
+  properties: {
+    sessionExpiryInterval: 1234,
+    receiveMaximum: 432,
+    maximumQoS: 2,
+    retainAvailable: true,
+    maximumPacketSize: 100,
+    assignedClientIdentifier: 'test',
+    topicAliasMaximum: 456,
+    reasonString: 'test',
+    userProperties: {
+      'test': ['test', 'test']
+    },
+    wildcardSubscriptionAvailable: true,
+    subscriptionIdentifiersAvailable: true,
+    sharedSubscriptionAvailable: false,
+    serverKeepAlive: 1234,
+    responseInformation: 'test',
+    serverReference: 'test',
+    authenticationMethod: 'test',
+    authenticationData: Buffer.from([1, 2, 3, 4])
+  }
+}, Buffer.from([
+  32, 100, 0, 0,
+  97, // properties length
+  17, 0, 0, 4, 210, // sessionExpiryInterval
+  33, 1, 176, // receiveMaximum
+  36, 2, // Maximum qos
+  37, 1, // retainAvailable
+  39, 0, 0, 0, 100, // maximumPacketSize
+  18, 0, 4, 116, 101, 115, 116, // assignedClientIdentifier
+  34, 1, 200, // topicAliasMaximum
+  31, 0, 4, 116, 101, 115, 116, // reasonString
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116,
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
+  40, 1, // wildcardSubscriptionAvailable
+  41, 1, // subscriptionIdentifiersAvailable
+  42, 0, // sharedSubscriptionAvailable
+  19, 4, 210, // serverKeepAlive
+  26, 0, 4, 116, 101, 115, 116, // responseInformation
+  28, 0, 4, 116, 101, 115, 116, // serverReference
+  21, 0, 4, 116, 101, 115, 116, // authenticationMethod
+  22, 0, 4, 1, 2, 3, 4 // authenticationData
+]), { protocolVersion: 5 })
+
 testParseGenerate('connack with return code 0 session present bit set', {
   cmd: 'connack',
   retain: false,
