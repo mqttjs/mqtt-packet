@@ -1,6 +1,6 @@
 {
   "name": "mqtt-packet",
-  "version": "6.0.0",
+  "version": "6.1.0",
   "description": "Parse and generate MQTT packets like a breeze",
   "main": "mqtt.js",
   "types": "types/index.d.ts",
@@ -36,15 +36,15 @@
   "devDependencies": {
     "dev-null": "^0.1.1",
     "pre-commit": "^1.2.2",
-    "readable-stream": "^2.3.0",
+    "readable-stream": "^2.3.6",
     "standard": "^10.0.2",
-    "tap-spec": "^4.1.1",
-    "tape": "^4.6.3"
+    "tap-spec": "^4.1.2",
+    "tape": "^4.10.1"
   },
   "dependencies": {
-    "bl": "^1.2.1",
+    "bl": "^1.2.2",
     "inherits": "^2.0.3",
     "process-nextick-args": "^2.0.0",
-    "safe-buffer": "^5.1.0"
+    "safe-buffer": "^5.1.2"
   }
 }
