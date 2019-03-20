@@ -597,7 +597,17 @@ Parser.prototype._parseProperties = function () {
         result[name] = {}
       }
       var currentUserProperty = this._parseByType(constants.propertiesTypes[name])
-      result[name][currentUserProperty.name] = currentUserProperty.value
+      if (result[name][currentUserProperty.name]) {
+        if (Array.isArray(result[name][currentUserProperty.name])) {
+          result[name][currentUserProperty.name].push(currentUserProperty.value)
+        } else {
+          var currentValue = result[name][currentUserProperty.name]
+          result[name][currentUserProperty.name] = [currentValue]
+          result[name][currentUserProperty.name].push(currentUserProperty.value)
+        }
+      } else {
+        result[name][currentUserProperty.name] = currentUserProperty.value
+      }
       continue
     }
     result[name] = this._parseByType(constants.propertiesTypes[name])

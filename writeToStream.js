@@ -926,7 +926,15 @@ function getProperties (stream, properties) {
           return false
         }
         length += Object.getOwnPropertyNames(value).reduce(function (result, name) {
-          result += 1 + 2 + Buffer.byteLength(name.toString()) + 2 + Buffer.byteLength(value[name].toString())
+          var currentValue = value[name]
+          if (Array.isArray(currentValue)) {
+            result += currentValue.reduce((currentLength, value) => {
+              currentLength += 1 + 2 + Buffer.byteLength(name.toString()) + 2 + Buffer.byteLength(value.toString())
+              return currentLength
+            }, 0)
+          } else {
+            result += 1 + 2 + Buffer.byteLength(name.toString()) + 2 + Buffer.byteLength(value[name].toString())
+          }
           return result
         }, 0)
         break
@@ -1019,8 +1027,16 @@ function writeProperties (stream, properties, propertiesLength) {
         }
         case 'pair': {
           Object.getOwnPropertyNames(value).forEach(function (name) {
-            stream.write(Buffer.from([protocol.properties[propName]]))
-            writeStringPair(stream, name.toString(), value[name].toString())
+            var currentValue = value[name]
+            if (Array.isArray(currentValue)) {
+              currentValue.forEach(function (value) {
+                stream.write(Buffer.from([protocol.properties[propName]]))
+                writeStringPair(stream, name.toString(), value.toString())
+              })
+            } else {
+              stream.write(Buffer.from([protocol.properties[propName]]))
+              writeStringPair(stream, name.toString(), currentValue.toString())
+            }
           })
           break
         }
