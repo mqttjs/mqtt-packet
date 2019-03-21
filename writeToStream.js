@@ -928,7 +928,7 @@ function getProperties (stream, properties) {
         length += Object.getOwnPropertyNames(value).reduce(function (result, name) {
           var currentValue = value[name]
           if (Array.isArray(currentValue)) {
-            result += currentValue.reduce((currentLength, value) => {
+            result += currentValue.reduce(function (currentLength, value) {
               currentLength += 1 + 2 + Buffer.byteLength(name.toString()) + 2 + Buffer.byteLength(value.toString())
               return currentLength
             }, 0)
