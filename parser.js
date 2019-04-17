@@ -265,6 +265,7 @@ Parser.prototype._parseSubscribe = function () {
     topic = this._parseString()
     if (topic === null) return this._emitError(new Error('Cannot parse topic'))
 
+    if (this._pos >= packet.length) return this._emitError(new Error('Malformed Subscribe Payload'))
     qos = this._list.readUInt8(this._pos++)
 
     // Push pair to subscriptions
