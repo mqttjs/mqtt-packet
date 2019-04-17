@@ -1839,6 +1839,17 @@ testParseError('Not supported auth packet for this version MQTT', Buffer.from([
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
 ]))
 
+// When a Subscribe packet contains a topic_filter and the given
+// length is topic_filter.length + 1 then the last byte (requested QoS) is interpreted as topic_filter
+// reading the requested_qos at the end causes 'Index out of range' read
+testParseError('Malformed Subscribe Payload', Buffer.from([
+  130, 14, // subscribe header and remaining length
+  0, 123,  // packet ID
+  0, 10,   // topic filter length
+  104, 105, 106, 107, 108, 47, 109, 110, 111,  // topic filter with length of 9 bytes
+  0       // requested QoS
+]))
+
 test('stops parsing after first error', function (t) {
   t.plan(4)
 
