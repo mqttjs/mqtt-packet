@@ -302,6 +302,7 @@ Parser.prototype._parseSubscribe = function () {
     // Parse topic
     topic = this._parseString()
     if (topic === null) return this._emitError(new Error('Cannot parse topic'))
+    if (this._pos >= packet.length) return this._emitError(new Error('Malformed Subscribe Payload'))
 
     options = this._parseByte()
     qos = options & constants.SUBSCRIBE_OPTIONS_QOS_MASK
