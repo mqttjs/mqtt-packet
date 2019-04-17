@@ -953,7 +953,7 @@ testParseError('cannot parse protocol id', new Buffer([
 // When a Subscribe packet contains a topic_filter and the given
 // length is topic_filter.length + 1 then the last byte (requested QoS) is interpreted as topic_filter
 // reading the requested_qos at the end causes 'Index out of range' read
-testParseError('Malformed Subscribe Payload', Buffer.from([
+testParseError('Malformed Subscribe Payload', new Buffer([
   130, 14, // subscribe header and remaining length
   0, 123,  // packet ID
   0, 10,   // topic filter length
