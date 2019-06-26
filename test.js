@@ -909,6 +909,45 @@ testParseGenerate('publish MQTT5 properties', {
   116, 101, 115, 116 // Payload (test)
 ]), { protocolVersion: 5 })
 
+testParseGenerate('publish MQTT5 with multiple same properties', {
+  cmd: 'publish',
+  retain: true,
+  qos: 2,
+  dup: true,
+  length: 62,
+  topic: 'test',
+  payload: new Buffer('test'),
+  messageId: 10,
+  properties: {
+    payloadFormatIndicator: true,
+    messageExpiryInterval: 4321,
+    topicAlias: 100,
+    responseTopic: 'topic',
+    correlationData: Buffer.from([1, 2, 3, 4]),
+    userProperties: {
+      'test': 'test'
+    },
+    subscriptionIdentifier: [120, 121],
+    contentType: 'test'
+  }
+}, Buffer.from([
+  61, 62, // Header
+  0, 4, // Topic length
+  116, 101, 115, 116, // Topic (test)
+  0, 10, // Message ID
+  49, // properties length
+  1, 1, // payloadFormatIndicator
+  2, 0, 0, 16, 225, // message expiry interval
+  35, 0, 100, // topicAlias
+  8, 0, 5, 116, 111, 112, 105, 99, // response topic
+  9, 0, 4, 1, 2, 3, 4, // correlationData
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
+  11, 120, // subscriptionIdentifier
+  11, 121, // subscriptionIdentifier
+  3, 0, 4, 116, 101, 115, 116, // content type
+  116, 101, 115, 116 // Payload (test)
+]), { protocolVersion: 5 })
+
 ;(function () {
   var buffer = new Buffer(2048)
   testParseGenerate('2KB publish packet', {

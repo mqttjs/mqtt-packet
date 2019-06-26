@@ -859,9 +859,8 @@ function getProperties (stream, properties) {
     }
   }
   var propertiesLength = 0
-  function getLengthProperty (name) {
+  function getLengthProperty (name, value) {
     var type = protocol.propertiesTypes[name]
-    var value = properties[name]
     var length = 0
     switch (type) {
       case 'byte': {
@@ -948,7 +947,15 @@ function getProperties (stream, properties) {
   }
   if (properties) {
     for (var propName in properties) {
-      var propLength = getLengthProperty(propName)
+      var propLength = 0
+      var propValue = properties[propName]
+      if (Array.isArray(propValue)) {
+        for (var valueIndex = 0; valueIndex < propValue.length; valueIndex++) {
+          propLength += getLengthProperty(propName, propValue[valueIndex])
+        }
+      } else {
+        propLength = getLengthProperty(propName, propValue)
+      }
       if (!propLength) return false
       propertiesLength += propLength
     }
@@ -982,68 +989,78 @@ function getPropertiesByMaximumPacketSize (stream, properties, opts, length) {
   return propertiesData
 }
 
+function writeProperty (stream, propName, value) {
+  var type = protocol.propertiesTypes[propName]
+  switch (type) {
+    case 'byte': {
+      stream.write(Buffer.from([protocol.properties[propName]]))
+      stream.write(Buffer.from([+value]))
+      break
+    }
+    case 'int8': {
+      stream.write(Buffer.from([protocol.properties[propName]]))
+      stream.write(Buffer.from([value]))
+      break
+    }
+    case 'binary': {
+      stream.write(Buffer.from([protocol.properties[propName]]))
+      writeStringOrBuffer(stream, value)
+      break
+    }
+    case 'int16': {
+      stream.write(Buffer.from([protocol.properties[propName]]))
+      writeNumber(stream, value)
+      break
+    }
+    case 'int32': {
+      stream.write(Buffer.from([protocol.properties[propName]]))
+      write4ByteNumber(stream, value)
+      break
+    }
+    case 'var': {
+      stream.write(Buffer.from([protocol.properties[propName]]))
+      writeVarByteInt(stream, value)
+      break
+    }
+    case 'string': {
+      stream.write(Buffer.from([protocol.properties[propName]]))
+      writeString(stream, value)
+      break
+    }
+    case 'pair': {
+      Object.getOwnPropertyNames(value).forEach(function (name) {
+        var currentValue = value[name]
+        if (Array.isArray(currentValue)) {
+          currentValue.forEach(function (value) {
+            stream.write(Buffer.from([protocol.properties[propName]]))
+            writeStringPair(stream, name.toString(), value.toString())
+          })
+        } else {
+          stream.write(Buffer.from([protocol.properties[propName]]))
+          writeStringPair(stream, name.toString(), currentValue.toString())
+        }
+      })
+      break
+    }
+    default: {
+      stream.emit('error', new Error('Invalid property ' + propName + ' value: ' + value))
+      return false
+    }
+  }
+}
+
 function writeProperties (stream, properties, propertiesLength) {
   /* write properties to stream */
   writeVarByteInt(stream, propertiesLength)
   for (var propName in properties) {
     if (properties.hasOwnProperty(propName) && properties[propName] !== null) {
       var value = properties[propName]
-      var type = protocol.propertiesTypes[propName]
-      switch (type) {
-        case 'byte': {
-          stream.write(Buffer.from([protocol.properties[propName]]))
-          stream.write(Buffer.from([+value]))
-          break
+      if (Array.isArray(value)) {
+        for (var valueIndex = 0; valueIndex < value.length; valueIndex++) {
+          writeProperty(stream, propName, value[valueIndex])
         }
-        case 'int8': {
-          stream.write(Buffer.from([protocol.properties[propName]]))
-          stream.write(Buffer.from([value]))
-          break
-        }
-        case 'binary': {
-          stream.write(Buffer.from([protocol.properties[propName]]))
-          writeStringOrBuffer(stream, value)
-          break
-        }
-        case 'int16': {
-          stream.write(Buffer.from([protocol.properties[propName]]))
-          writeNumber(stream, value)
-          break
-        }
-        case 'int32': {
-          stream.write(Buffer.from([protocol.properties[propName]]))
-          write4ByteNumber(stream, value)
-          break
-        }
-        case 'var': {
-          stream.write(Buffer.from([protocol.properties[propName]]))
-          writeVarByteInt(stream, value)
-          break
-        }
-        case 'string': {
-          stream.write(Buffer.from([protocol.properties[propName]]))
-          writeString(stream, value)
-          break
-        }
-        case 'pair': {
-          Object.getOwnPropertyNames(value).forEach(function (name) {
-            var currentValue = value[name]
-            if (Array.isArray(currentValue)) {
-              currentValue.forEach(function (value) {
-                stream.write(Buffer.from([protocol.properties[propName]]))
-                writeStringPair(stream, name.toString(), value.toString())
-              })
-            } else {
-              stream.write(Buffer.from([protocol.properties[propName]]))
-              writeStringPair(stream, name.toString(), currentValue.toString())
-            }
-          })
-          break
-        }
-        default: {
-          stream.emit('error', new Error('Invalid property ' + propName))
-          return false
-        }
+      } else {
+        writeProperty(stream, propName, value)
       }
     }
   }
