@@ -327,7 +327,7 @@ All properties are mandatory.
       userProperties: {
         'test': 'test'
       },
-      subscriptionIdentifier: 120,
+      subscriptionIdentifier: 120, // can be an Array in message from broker, if message included in few another subscriptions
       contentType: 'test'
    }
 }
