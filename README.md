@@ -83,7 +83,7 @@ parser.parse(new Buffer([
   0, 4, // Topic length
   116, 101, 115, 116, // Topic (test)
   116, 101, 115, 116 // Payload (test)
-])
+]))
 // Returns the number of bytes left in the parser
 ```
 
