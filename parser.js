@@ -611,7 +611,16 @@ Parser.prototype._parseProperties = function () {
       }
       continue
     }
-    result[name] = this._parseByType(constants.propertiesTypes[name])
+    if (result[name]) {
+      if (Array.isArray(result[name])) {
+        result[name].push(this._parseByType(constants.propertiesTypes[name]))
+      } else {
+        result[name] = [result[name]]
+        result[name].push(this._parseByType(constants.propertiesTypes[name]))
+      }
+    } else {
+      result[name] = this._parseByType(constants.propertiesTypes[name])
+    }
   }
   return result
 }
