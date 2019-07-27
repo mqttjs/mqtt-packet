@@ -128,7 +128,7 @@ function genHeader (type) {
   return [0, 1, 2].map(function (qos) {
     return [0, 1].map(function (dup) {
       return [0, 1].map(function (retain) {
-        var buf = new Buffer(1)
+        var buf = Buffer.alloc(1)
         buf.writeUInt8(
           protocol.codes[type] << protocol.CMD_SHIFT |
           (dup ? protocol.DUP_MASK : 0) |
