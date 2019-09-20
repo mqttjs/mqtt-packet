@@ -319,6 +319,7 @@ function publish (packet, stream, opts) {
   }
 
   // Get the payload length
+  //case ArrayBuffer，payload.length is undefined and lenght will be NaN.
   if (!Buffer.isBuffer(payload)) length += Buffer.byteLength(payload)
   else length += payload.byteLength
   // Message ID must a number if qos > 0
