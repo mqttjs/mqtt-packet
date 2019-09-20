@@ -15,7 +15,7 @@ var generate4ByteBuffer = numbers.generate4ByteBuffer
 var writeNumber = writeNumberCached
 var toGenerate = true
 
-function generate (packet, stream, opts) {
+function generate(packet, stream, opts) {
   if (stream.cork) {
     stream.cork()
     nextTick(uncork, stream)
@@ -77,11 +77,11 @@ Object.defineProperty(generate, 'cacheNumbers', {
   }
 })
 
-function uncork (stream) {
+function uncork(stream) {
   stream.uncork()
 }
 
-function connect (packet, stream, opts) {
+function connect(packet, stream, opts) {
   var settings = packet || {}
   var protocolId = settings.protocolId || 'MQTT'
   var protocolVersion = settings.protocolVersion || 4
@@ -100,7 +100,7 @@ function connect (packet, stream, opts) {
 
   // Must be a string and non-falsy
   if (!protocolId ||
-     (typeof protocolId !== 'string' && !Buffer.isBuffer(protocolId))) {
+    (typeof protocolId !== 'string' && !Buffer.isBuffer(protocolId))) {
     stream.emit('error', new Error('Invalid protocolId'))
     return false
   } else length += protocolId.length + 2
@@ -113,7 +113,7 @@ function connect (packet, stream, opts) {
 
   // ClientId might be omitted in 3.1.1, but only if cleanSession is set to 1
   if ((typeof clientId === 'string' || Buffer.isBuffer(clientId)) &&
-     (clientId || protocolVersion === 4) && (clientId || clean)) {
+    (clientId || protocolVersion === 4) && (clientId || clean)) {
     length += clientId.length + 2
   } else {
     if (protocolVersion < 4) {
@@ -128,9 +128,9 @@ function connect (packet, stream, opts) {
 
   // Must be a two byte number
   if (typeof keepalive !== 'number' ||
-      keepalive < 0 ||
-      keepalive > 65535 ||
-      keepalive % 1 !== 0) {
+    keepalive < 0 ||
+    keepalive > 65535 ||
+    keepalive % 1 !== 0) {
     stream.emit('error', new Error('Invalid keepalive'))
     return false
   } else length += 2
@@ -267,7 +267,7 @@ function connect (packet, stream, opts) {
   return true
 }
 
-function connack (packet, stream, opts) {
+function connack(packet, stream, opts) {
   var version = opts ? opts.protocolVersion : 4
   var settings = packet || {}
   var rc = version === 5 ? settings.reasonCode : settings.returnCode
@@ -298,7 +298,7 @@ function connack (packet, stream, opts) {
   return true
 }
 
-function publish (packet, stream, opts) {
+function publish(packet, stream, opts) {
   var version = opts ? opts.protocolVersion : 4
   var settings = packet || {}
   var qos = settings.qos || 0
@@ -319,8 +319,11 @@ function publish (packet, stream, opts) {
   }
 
   // Get the payload length
+  // if (!Buffer.isBuffer(payload)) length += Buffer.byteLength(payload)
+  // else length += payload.length
+  //case ArrayBuffer，payload.length is undefined and lenght will be NaN.
   if (!Buffer.isBuffer(payload)) length += Buffer.byteLength(payload)
-  else length += payload.length
+  else length += payload.byteLength
 
   // Message ID must a number if qos > 0
   if (qos && typeof id !== 'number') {
@@ -358,7 +361,7 @@ function publish (packet, stream, opts) {
 }
 
 /* Puback, pubrec, pubrel and pubcomp */
-function confirmation (packet, stream, opts) {
+function confirmation(packet, stream, opts) {
   var version = opts ? opts.protocolVersion : 4
   var settings = packet || {}
   var type = settings.cmd || 'puback'
@@ -406,7 +409,7 @@ function confirmation (packet, stream, opts) {
   return true
 }
 
-function subscribe (packet, stream, opts) {
+function subscribe(packet, stream, opts) {
   var version = opts ? opts.protocolVersion : 4
   var settings = packet || {}
   var dup = settings.dup ? protocol.DUP_MASK : 0
@@ -512,7 +515,7 @@ function subscribe (packet, stream, opts) {
   return result
 }
 
-function suback (packet, stream, opts) {
+function suback(packet, stream, opts) {
   var version = opts ? opts.protocolVersion : 4
   var settings = packet || {}
   var id = settings.messageId
@@ -565,7 +568,7 @@ function suback (packet, stream, opts) {
   return stream.write(Buffer.from(granted))
 }
 
-function unsubscribe (packet, stream, opts) {
+function unsubscribe(packet, stream, opts) {
   var version = opts ? opts.protocolVersion : 4
   var settings = packet || {}
   var id = settings.messageId
@@ -625,7 +628,7 @@ function unsubscribe (packet, stream, opts) {
   return result
 }
 
-function unsuback (packet, stream, opts) {
+function unsuback(packet, stream, opts) {
   var version = opts ? opts.protocolVersion : 4
   var settings = packet || {}
   var id = settings.messageId
@@ -688,11 +691,11 @@ function unsuback (packet, stream, opts) {
   return true
 }
 
-function emptyPacket (packet, stream, opts) {
+function emptyPacket(packet, stream, opts) {
   return stream.write(protocol.EMPTY[packet.cmd])
 }
 
-function disconnect (packet, stream, opts) {
+function disconnect(packet, stream, opts) {
   var version = opts ? opts.protocolVersion : 4
   var settings = packet || {}
   var reasonCode = settings.reasonCode
@@ -726,7 +729,7 @@ function disconnect (packet, stream, opts) {
   return true
 }
 
-function auth (packet, stream, opts) {
+function auth(packet, stream, opts) {
   var version = opts ? opts.protocolVersion : 4
   var settings = packet || {}
   var reasonCode = settings.reasonCode
@@ -768,7 +771,7 @@ function auth (packet, stream, opts) {
  */
 
 var varByteIntCache = {}
-function writeVarByteInt (stream, num) {
+function writeVarByteInt(stream, num) {
   var buffer = varByteIntCache[num]
 
   if (!buffer) {
@@ -790,7 +793,7 @@ function writeVarByteInt (stream, num) {
  * @api private
  */
 
-function writeString (stream, string) {
+function writeString(stream, string) {
   var strlen = Buffer.byteLength(string)
   writeNumber(stream, strlen)
 
@@ -807,7 +810,7 @@ function writeString (stream, string) {
  *
  * @api private
  */
-function writeStringPair (stream, name, value) {
+function writeStringPair(stream, name, value) {
   writeString(stream, name)
   writeString(stream, value)
 }
@@ -822,13 +825,13 @@ function writeStringPair (stream, name, value) {
  *
  * @api private
  */
-function writeNumberCached (stream, number) {
+function writeNumberCached(stream, number) {
   return stream.write(numCache[number])
 }
-function writeNumberGenerated (stream, number) {
+function writeNumberGenerated(stream, number) {
   return stream.write(generateNumber(number))
 }
-function write4ByteNumber (stream, number) {
+function write4ByteNumber(stream, number) {
   return stream.write(generate4ByteBuffer(number))
 }
 /**
@@ -839,7 +842,7 @@ function write4ByteNumber (stream, number) {
  * @param <String> toWrite - String or Buffer
  * @return <Number> number of bytes written
  */
-function writeStringOrBuffer (stream, toWrite) {
+function writeStringOrBuffer(stream, toWrite) {
   if (typeof toWrite === 'string') {
     writeString(stream, toWrite)
   } else if (toWrite) {
@@ -848,7 +851,7 @@ function writeStringOrBuffer (stream, toWrite) {
   } else writeNumber(stream, 0)
 }
 
-function getProperties (stream, properties) {
+function getProperties(stream, properties) {
   /* connect properties */
   if (typeof properties !== 'object' || properties.length != null) {
     return {
@@ -859,7 +862,7 @@ function getProperties (stream, properties) {
     }
   }
   var propertiesLength = 0
-  function getLengthProperty (name, value) {
+  function getLengthProperty(name, value) {
     var type = protocol.propertiesTypes[name]
     var length = 0
     switch (type) {
@@ -970,7 +973,7 @@ function getProperties (stream, properties) {
   }
 }
 
-function getPropertiesByMaximumPacketSize (stream, properties, opts, length) {
+function getPropertiesByMaximumPacketSize(stream, properties, opts, length) {
   var mayEmptyProps = ['reasonString', 'userProperties']
   var maximumPacketSize = opts && opts.properties && opts.properties.maximumPacketSize ? opts.properties.maximumPacketSize : 0
 
@@ -989,7 +992,7 @@ function getPropertiesByMaximumPacketSize (stream, properties, opts, length) {
   return propertiesData
 }
 
-function writeProperty (stream, propName, value) {
+function writeProperty(stream, propName, value) {
   var type = protocol.propertiesTypes[propName]
   switch (type) {
     case 'byte': {
@@ -1049,7 +1052,7 @@ function writeProperty (stream, propName, value) {
   }
 }
 
-function writeProperties (stream, properties, propertiesLength) {
+function writeProperties(stream, properties, propertiesLength) {
   /* write properties to stream */
   writeVarByteInt(stream, propertiesLength)
   for (var propName in properties) {
@@ -1066,13 +1069,13 @@ function writeProperties (stream, properties, propertiesLength) {
   }
 }
 
-function byteLength (bufOrString) {
+function byteLength(bufOrString) {
   if (!bufOrString) return 0
   else if (bufOrString instanceof Buffer) return bufOrString.length
   else return Buffer.byteLength(bufOrString)
 }
 
-function isStringOrBuffer (field) {
+function isStringOrBuffer(field) {
   return typeof field === 'string' || field instanceof Buffer
 }
 
