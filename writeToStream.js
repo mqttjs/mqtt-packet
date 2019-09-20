@@ -320,8 +320,7 @@ function publish (packet, stream, opts) {
 
   // Get the payload length
   if (!Buffer.isBuffer(payload)) length += Buffer.byteLength(payload)
-  else length += payload.length
-
+  else length += payload.byteLength
   // Message ID must a number if qos > 0
   if (qos && typeof id !== 'number') {
     stream.emit('error', new Error('Invalid messageId'))
