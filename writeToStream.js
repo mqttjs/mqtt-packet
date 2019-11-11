@@ -617,11 +617,12 @@ function unsubscribe (packet, stream, opts) {
   }
 
   // Unsubs
+  var result = true
   for (var j = 0; j < unsubs.length; j++) {
-    writeString(stream, unsubs[j])
+    result = writeString(stream, unsubs[j])
   }
 
-  return true
+  return result
 }
 
 function unsuback (packet, stream, opts) {
