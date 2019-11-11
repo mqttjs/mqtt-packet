@@ -794,7 +794,7 @@ function writeString (stream, string) {
   var strlen = Buffer.byteLength(string)
   writeNumber(stream, strlen)
 
-  stream.write(string, 'utf8')
+  return stream.write(string, 'utf8')
 }
 
 /**
