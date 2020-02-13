@@ -57,8 +57,7 @@ Parser.prototype._parseHeader = function () {
   this.packet.qos = (zero >> constants.QOS_SHIFT) & constants.QOS_MASK
   this.packet.dup = (zero & constants.DUP_MASK) !== 0
   debug('_parseHeader: packet: %o', this.packet)
-  if (this.packet.cmd == "unsuback") {
-  }
+
   this._list.consume(1)
 
   return true
