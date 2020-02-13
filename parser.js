@@ -25,7 +25,7 @@ function Parser (opt) {
 inherits(Parser, EE)
 
 Parser.prototype._resetState = function () {
-  debug('_resetState: reset packet, error, _list, and _stateCounter')
+  debug('_resetState: resetting packet, error, _list, and _stateCounter')
   this.packet = new Packet()
   this.error = null
   this._list = bl()
@@ -36,16 +36,16 @@ Parser.prototype.parse = function (buf) {
   if (this.error) this._resetState()
 
   this._list.append(buf)
-  debug('parse: current state: ' + this._states[this._stateCounter])
+  debug('parse: current state: %s', this._states[this._stateCounter])
   while ((this.packet.length !== -1 || this._list.length > 0) &&
   this[this._states[this._stateCounter]]() &&
   !this.error) {
     this._stateCounter++
-    debug('parse: state complete. _stateCounter is now:' + this._stateCounter);
-    debug('parse: packet.length:' + this.packet.length + ', buffer list length:' + this._list.length)
+    debug('parse: state complete. _stateCounter is now: %d', this._stateCounter);
+    debug('parse: packet.length: %d, buffer list length: %d', this.packet.length, this._list.length)
     if (this._stateCounter >= this._states.length) this._stateCounter = 0
   }
-  debug('parse: exited while loop. packet.length:' + this.packet.length + ', buffer list length:' + this._list.length);
+  debug('parse: exited while loop. packet: %d, buffer list length: %d', this.packet.length, this._list.length);
   return this._list.length
 }
 
@@ -56,9 +56,8 @@ Parser.prototype._parseHeader = function () {
   this.packet.retain = (zero & constants.RETAIN_MASK) !== 0
   this.packet.qos = (zero >> constants.QOS_SHIFT) & constants.QOS_MASK
   this.packet.dup = (zero & constants.DUP_MASK) !== 0
-  debug('_parseHeader: packet.cmd:' + this.packet.cmd)
+  debug('_parseHeader: packet: %o', this.packet)
   if (this.packet.cmd == "unsuback") {
-    console.log("test")
   }
   this._list.consume(1)
 
@@ -73,12 +72,12 @@ Parser.prototype._parseLength = function () {
     this.packet.length = result.value
     this._list.consume(result.bytes)
   }
-  debug('_parseLength ' + result.value)
+  debug('_parseLength %d', result.value)
   return !!result
 }
 
 Parser.prototype._parsePayload = function () {
-  debug('_parsePayload: payload ' + this._list.toString())
+  debug('_parsePayload: payload %O', this._list)
   var result = false
 
   // Do we have a payload? Do we have enough data to complete the payload?
@@ -130,7 +129,7 @@ Parser.prototype._parsePayload = function () {
 
     result = true
   }
-  debug('_parsePayload complete result: ' + result)
+  debug('_parsePayload complete result: %s', result)
   return result
 }
 
@@ -200,7 +199,7 @@ Parser.prototype._parseConnect = function () {
   clientId = this._parseString()
   if (clientId === null) return this._emitError(new Error('Packet too short'))
   packet.clientId = clientId
-  debug('_parseConnect: packet.clientId: ' + packet.clientId)
+  debug('_parseConnect: packet.clientId: %s', packet.clientId)
 
   if (flags.will) {
     if (packet.protocolVersion === 5) {
@@ -213,13 +212,13 @@ Parser.prototype._parseConnect = function () {
     topic = this._parseString()
     if (topic === null) return this._emitError(new Error('Cannot parse will topic'))
     packet.will.topic = topic
-    debug('_parseConnect: packet.will.topic: ' + packet.will.topic)
+    debug('_parseConnect: packet.will.topic: %s', packet.will.topic)
 
     // Parse will payload
     payload = this._parseBuffer()
     if (payload === null) return this._emitError(new Error('Cannot parse will payload'))
     packet.will.payload = payload
-    debug('_parseConnect: packet.will.paylaod: ' + packet.will.payload)
+    debug('_parseConnect: packet.will.paylaod: %s', packet.will.payload)
   }
 
   // Parse username
@@ -227,7 +226,7 @@ Parser.prototype._parseConnect = function () {
     username = this._parseString()
     if (username === null) return this._emitError(new Error('Cannot parse username'))
     packet.username = username
-    debug('_parseConnect: packet.username: ' + packet.username)
+    debug('_parseConnect: packet.username: %s', packet.username)
   }
 
   // Parse password
@@ -263,7 +262,7 @@ Parser.prototype._parseConnack = function () {
       packet.properties = properties
     }
   }
-  debug('_parseConnack: ')
+  debug('_parseConnack: complete')
 }
 
 Parser.prototype._parsePublish = function () {
@@ -285,7 +284,7 @@ Parser.prototype._parsePublish = function () {
   }
 
   packet.payload = this._list.slice(this._pos, packet.length)
-  debug('_parsePublish: payload from buffer list: ' + packet.payload)
+  debug('_parsePublish: payload from buffer list: %o', packet.payload)
 }
 
 Parser.prototype._parseSubscribe = function () {
@@ -337,7 +336,7 @@ Parser.prototype._parseSubscribe = function () {
     }
 
     // Push pair to subscriptions
-    debug('_parseSubscribe: push subscription ' + subscription + ' to subscriptions')
+    debug('_parseSubscribe: push subscription `%s` to subscription', subscription)
     packet.subscriptions.push(subscription)
   }
 }
@@ -388,7 +387,7 @@ Parser.prototype._parseUnsubscribe = function () {
     if (topic === null) return this._emitError(new Error('Cannot parse topic'))
 
     // Push topic to unsubscriptions
-    debug('_parseUnsubscribe: push topic ' + topic + ' to unsubscriptions')
+    debug('_parseUnsubscribe: push topic `%s` to unsubscriptions', topic)
     packet.unsubscriptions.push(topic)
   }
 }
@@ -413,7 +412,7 @@ Parser.prototype._parseUnsuback = function () {
 
 // parse packets like puback, pubrec, pubrel, pubcomp
 Parser.prototype._parseConfirmation = function () {
-  debug('_parseConfirmation: packet.cmd: ' + this.packet.cmd)
+  debug('_parseConfirmation: packet.cmd: `%s`', this.packet.cmd)
   var packet = this.packet
 
   this._parseMessageId()
@@ -422,7 +421,7 @@ Parser.prototype._parseConfirmation = function () {
     if (packet.length > 2) {
       // response code
       packet.reasonCode = this._parseByte()
-      debug('_parseConfirmation: packet.reasonCode ' + packet.reasonCode)
+      debug('_parseConfirmation: packet.reasonCode `%d`', packet.reasonCode)
       // properies mqtt 5
       var properties = this._parseProperties()
       if (Object.getOwnPropertyNames(properties).length) {
@@ -484,7 +483,7 @@ Parser.prototype._parseMessageId = function () {
     return false
   }
 
-  debug('_parseMessageId: packet.messageId ' + packet.messageId)
+  debug('_parseMessageId: packet.messageId %d', packet.messageId)
   return true
 }
 
@@ -497,7 +496,7 @@ Parser.prototype._parseString = function (maybeBuffer) {
 
   result = this._list.toString('utf8', this._pos, end)
   this._pos += length
-  debug('_parseString: result: ' + result)
+  debug('_parseString: result: %s', result)
   return result
 }
 
@@ -519,7 +518,7 @@ Parser.prototype._parseBuffer = function () {
   result = this._list.slice(this._pos, end)
 
   this._pos += length
-  debug('_parseBuffer: result: ' + result)
+  debug('_parseBuffer: result: %o', result)
   return result
 }
 
@@ -528,7 +527,7 @@ Parser.prototype._parseNum = function () {
 
   var result = this._list.readUInt16BE(this._pos)
   this._pos += 2
-  debug('_parseNum: result:' + result)
+  debug('_parseNum: result: %s', result)
   return result
 }
 
@@ -537,7 +536,7 @@ Parser.prototype._parse4ByteNum = function () {
 
   var result = this._list.readUInt32BE(this._pos)
   this._pos += 4
-  debug('_parse4ByteNum: result: ' + result)
+  debug('_parse4ByteNum: result: %s', result)
   return result
 }
 
@@ -573,19 +572,19 @@ Parser.prototype._parseVarByteNum = function (fullInfoFlag) {
     } : length
     : false
 
-  debug('_parseVarByteNum: result: ' + result)
+  debug('_parseVarByteNum: result: %s', result)
   return result
 }
 
 Parser.prototype._parseByte = function () {
   var result = this._list.readUInt8(this._pos)
   this._pos++
-  debug('_parseByte: result: ' + result)
+  debug('_parseByte: result: %s', result)
   return result
 }
 
 Parser.prototype._parseByType = function (type) {
-  debug('_parseByType: type: ' + type)
+  debug('_parseByType: type: %s', type)
   switch (type) {
     case 'byte': {
       return this._parseByte() !== 0
@@ -664,7 +663,7 @@ Parser.prototype._newPacket = function () {
   debug('_newPacket')
   if (this.packet) {
     this._list.consume(this.packet.length)
-    debug('_newPacket: parser emit packet: packet.cmd: ' + this.packet.cmd + ', packet.payload: ' + this.packet.payload + ', packet.length: ' + this.packet.length)
+    debug('_newPacket: parser emit packet: packet.cmd: %s, packet.payload: %s, packet.length: %d', this.packet.cmd, this.packet.payload, this.packet.length)
     this.emit('packet', this.packet)
   }
   debug('_newPacket: new packet')
