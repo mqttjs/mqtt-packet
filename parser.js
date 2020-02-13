@@ -41,11 +41,11 @@ Parser.prototype.parse = function (buf) {
   this[this._states[this._stateCounter]]() &&
   !this.error) {
     this._stateCounter++
-    debug('parse: state complete. _stateCounter is now: %d', this._stateCounter);
+    debug('parse: state complete. _stateCounter is now: %d', this._stateCounter)
     debug('parse: packet.length: %d, buffer list length: %d', this.packet.length, this._list.length)
     if (this._stateCounter >= this._states.length) this._stateCounter = 0
   }
-  debug('parse: exited while loop. packet: %d, buffer list length: %d', this.packet.length, this._list.length);
+  debug('parse: exited while loop. packet: %d, buffer list length: %d', this.packet.length, this._list.length)
   return this._list.length
 }
 
