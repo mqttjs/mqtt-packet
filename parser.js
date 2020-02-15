@@ -571,14 +571,14 @@ Parser.prototype._parseVarByteNum = function (fullInfoFlag) {
     } : length
     : false
 
-  debug('_parseVarByteNum: result: %s', result)
+  debug('_parseVarByteNum: result: %o', result)
   return result
 }
 
 Parser.prototype._parseByte = function () {
   var result = this._list.readUInt8(this._pos)
   this._pos++
-  debug('_parseByte: result: %s', result)
+  debug('_parseByte: result: %o', result)
   return result
 }
 
