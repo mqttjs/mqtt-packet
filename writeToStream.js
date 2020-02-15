@@ -841,7 +841,7 @@ function writeNumberGenerated (stream, number) {
   return stream.write(generatedNumber)
 }
 function write4ByteNumber (stream, number) {
-  generated4ByteBuffer = generate4ByteBuffer(number)
+  var generated4ByteBuffer = generate4ByteBuffer(number)
   debug('write4ByteNumber: %o', generated4ByteBuffer)
   return stream.write(generated4ByteBuffer)
 }
