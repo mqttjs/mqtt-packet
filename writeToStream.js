@@ -311,7 +311,6 @@ function publish (packet, stream, opts) {
   var id = settings.messageId
   var properties = settings.properties
 
-  
   var length = 0
 
   // Topic must be a non-empty string or Buffer
