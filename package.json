@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "bl": "^1.2.2",
+    "debug": "^4.1.1",
     "inherits": "^2.0.3",
     "process-nextick-args": "^2.0.0",
     "safe-buffer": "^5.1.2"

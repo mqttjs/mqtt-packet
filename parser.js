@@ -5,6 +5,7 @@ var inherits = require('inherits')
 var EE = require('events').EventEmitter
 var Packet = require('./packet')
 var constants = require('./constants')
+var debug = require('debug')('mqtt-packet:parser')
 
 function Parser (opt) {
   if (!(this instanceof Parser)) return new Parser(opt)
@@ -24,6 +25,7 @@ function Parser (opt) {
 inherits(Parser, EE)
 
 Parser.prototype._resetState = function () {
+  debug('_resetState: resetting packet, error, _list, and _stateCounter')
   this.packet = new Packet()
   this.error = null
   this._list = bl()
@@ -34,15 +36,16 @@ Parser.prototype.parse = function (buf) {
   if (this.error) this._resetState()
 
   this._list.append(buf)
-
+  debug('parse: current state: %s', this._states[this._stateCounter])
   while ((this.packet.length !== -1 || this._list.length > 0) &&
   this[this._states[this._stateCounter]]() &&
   !this.error) {
     this._stateCounter++
-
+    debug('parse: state complete. _stateCounter is now: %d', this._stateCounter)
+    debug('parse: packet.length: %d, buffer list length: %d', this.packet.length, this._list.length)
     if (this._stateCounter >= this._states.length) this._stateCounter = 0
   }
-
+  debug('parse: exited while loop. packet: %d, buffer list length: %d', this.packet.length, this._list.length)
   return this._list.length
 }
 
@@ -53,6 +56,7 @@ Parser.prototype._parseHeader = function () {
   this.packet.retain = (zero & constants.RETAIN_MASK) !== 0
   this.packet.qos = (zero >> constants.QOS_SHIFT) & constants.QOS_MASK
   this.packet.dup = (zero & constants.DUP_MASK) !== 0
+  debug('_parseHeader: packet: %o', this.packet)
 
   this._list.consume(1)
 
@@ -67,11 +71,12 @@ Parser.prototype._parseLength = function () {
     this.packet.length = result.value
     this._list.consume(result.bytes)
   }
-
+  debug('_parseLength %d', result.value)
   return !!result
 }
 
 Parser.prototype._parsePayload = function () {
+  debug('_parsePayload: payload %O', this._list)
   var result = false
 
   // Do we have a payload? Do we have enough data to complete the payload?
@@ -123,11 +128,12 @@ Parser.prototype._parsePayload = function () {
 
     result = true
   }
-
+  debug('_parsePayload complete result: %s', result)
   return result
 }
 
 Parser.prototype._parseConnect = function () {
+  debug('_parseConnect')
   var protocolId // Protocol ID
   var clientId // Client ID
   var topic // Will topic
@@ -192,6 +198,7 @@ Parser.prototype._parseConnect = function () {
   clientId = this._parseString()
   if (clientId === null) return this._emitError(new Error('Packet too short'))
   packet.clientId = clientId
+  debug('_parseConnect: packet.clientId: %s', packet.clientId)
 
   if (flags.will) {
     if (packet.protocolVersion === 5) {
@@ -204,11 +211,13 @@ Parser.prototype._parseConnect = function () {
     topic = this._parseString()
     if (topic === null) return this._emitError(new Error('Cannot parse will topic'))
     packet.will.topic = topic
+    debug('_parseConnect: packet.will.topic: %s', packet.will.topic)
 
     // Parse will payload
     payload = this._parseBuffer()
     if (payload === null) return this._emitError(new Error('Cannot parse will payload'))
     packet.will.payload = payload
+    debug('_parseConnect: packet.will.paylaod: %s', packet.will.payload)
   }
 
   // Parse username
@@ -216,6 +225,7 @@ Parser.prototype._parseConnect = function () {
     username = this._parseString()
     if (username === null) return this._emitError(new Error('Cannot parse username'))
     packet.username = username
+    debug('_parseConnect: packet.username: %s', packet.username)
   }
 
   // Parse password
@@ -226,11 +236,12 @@ Parser.prototype._parseConnect = function () {
   }
   // need for right parse auth packet and self set up
   this.settings = packet
-
+  debug('_parseConnect: complete')
   return packet
 }
 
 Parser.prototype._parseConnack = function () {
+  debug('_parseConnack')
   var packet = this.packet
 
   if (this._list.length < 2) return null
@@ -250,9 +261,11 @@ Parser.prototype._parseConnack = function () {
       packet.properties = properties
     }
   }
+  debug('_parseConnack: complete')
 }
 
 Parser.prototype._parsePublish = function () {
+  debug('_parsePublish')
   var packet = this.packet
   packet.topic = this._parseString()
 
@@ -270,9 +283,11 @@ Parser.prototype._parsePublish = function () {
   }
 
   packet.payload = this._list.slice(this._pos, packet.length)
+  debug('_parsePublish: payload from buffer list: %o', packet.payload)
 }
 
 Parser.prototype._parseSubscribe = function () {
+  debug('_parseSubscribe')
   var packet = this.packet
   var topic
   var options
@@ -320,11 +335,13 @@ Parser.prototype._parseSubscribe = function () {
     }
 
     // Push pair to subscriptions
+    debug('_parseSubscribe: push subscription `%s` to subscription', subscription)
     packet.subscriptions.push(subscription)
   }
 }
 
 Parser.prototype._parseSuback = function () {
+  debug('_parseSuback')
   var packet = this.packet
   this.packet.granted = []
 
@@ -345,6 +362,7 @@ Parser.prototype._parseSuback = function () {
 }
 
 Parser.prototype._parseUnsubscribe = function () {
+  debug('_parseUnsubscribe')
   var packet = this.packet
 
   packet.unsubscriptions = []
@@ -368,11 +386,13 @@ Parser.prototype._parseUnsubscribe = function () {
     if (topic === null) return this._emitError(new Error('Cannot parse topic'))
 
     // Push topic to unsubscriptions
+    debug('_parseUnsubscribe: push topic `%s` to unsubscriptions', topic)
     packet.unsubscriptions.push(topic)
   }
 }
 
 Parser.prototype._parseUnsuback = function () {
+  debug('_parseUnsuback')
   var packet = this.packet
   if (!this._parseMessageId()) return this._emitError(new Error('Cannot parse messageId'))
   // Properties mqtt 5
@@ -391,6 +411,7 @@ Parser.prototype._parseUnsuback = function () {
 
 // parse packets like puback, pubrec, pubrel, pubcomp
 Parser.prototype._parseConfirmation = function () {
+  debug('_parseConfirmation: packet.cmd: `%s`', this.packet.cmd)
   var packet = this.packet
 
   this._parseMessageId()
@@ -399,6 +420,7 @@ Parser.prototype._parseConfirmation = function () {
     if (packet.length > 2) {
       // response code
       packet.reasonCode = this._parseByte()
+      debug('_parseConfirmation: packet.reasonCode `%d`', packet.reasonCode)
       // properies mqtt 5
       var properties = this._parseProperties()
       if (Object.getOwnPropertyNames(properties).length) {
@@ -413,6 +435,7 @@ Parser.prototype._parseConfirmation = function () {
 // parse disconnect packet
 Parser.prototype._parseDisconnect = function () {
   var packet = this.packet
+  debug('_parseDisconnect')
 
   if (this.settings.protocolVersion === 5) {
     // response code
@@ -424,11 +447,13 @@ Parser.prototype._parseDisconnect = function () {
     }
   }
 
+  debug('_parseDisconnect result: true')
   return true
 }
 
 // parse auth packet
 Parser.prototype._parseAuth = function () {
+  debug('_parseAuth')
   var packet = this.packet
 
   if (this.settings.protocolVersion !== 5) {
@@ -443,6 +468,7 @@ Parser.prototype._parseAuth = function () {
     packet.properties = properties
   }
 
+  debug('_parseAuth: result: true')
   return true
 }
 
@@ -456,6 +482,7 @@ Parser.prototype._parseMessageId = function () {
     return false
   }
 
+  debug('_parseMessageId: packet.messageId %d', packet.messageId)
   return true
 }
 
@@ -468,11 +495,12 @@ Parser.prototype._parseString = function (maybeBuffer) {
 
   result = this._list.toString('utf8', this._pos, end)
   this._pos += length
-
+  debug('_parseString: result: %s', result)
   return result
 }
 
 Parser.prototype._parseStringPair = function () {
+  debug('_parseStringPair')
   return {
     name: this._parseString(),
     value: this._parseString()
@@ -489,7 +517,7 @@ Parser.prototype._parseBuffer = function () {
   result = this._list.slice(this._pos, end)
 
   this._pos += length
-
+  debug('_parseBuffer: result: %o', result)
   return result
 }
 
@@ -498,7 +526,7 @@ Parser.prototype._parseNum = function () {
 
   var result = this._list.readUInt16BE(this._pos)
   this._pos += 2
-
+  debug('_parseNum: result: %s', result)
   return result
 }
 
@@ -507,11 +535,12 @@ Parser.prototype._parse4ByteNum = function () {
 
   var result = this._list.readUInt32BE(this._pos)
   this._pos += 4
-
+  debug('_parse4ByteNum: result: %s', result)
   return result
 }
 
 Parser.prototype._parseVarByteNum = function (fullInfoFlag) {
+  debug('_parseVarByteNum')
   var bytes = 0
   var mul = 1
   var length = 0
@@ -542,16 +571,19 @@ Parser.prototype._parseVarByteNum = function (fullInfoFlag) {
     } : length
     : false
 
+  debug('_parseVarByteNum: result: %o', result)
   return result
 }
 
 Parser.prototype._parseByte = function () {
   var result = this._list.readUInt8(this._pos)
   this._pos++
+  debug('_parseByte: result: %o', result)
   return result
 }
 
 Parser.prototype._parseByType = function (type) {
+  debug('_parseByType: type: %s', type)
   switch (type) {
     case 'byte': {
       return this._parseByte() !== 0
@@ -581,6 +613,7 @@ Parser.prototype._parseByType = function (type) {
 }
 
 Parser.prototype._parseProperties = function () {
+  debug('_parseProperties')
   var length = this._parseVarByteNum()
   var start = this._pos
   var end = start + length
@@ -626,11 +659,13 @@ Parser.prototype._parseProperties = function () {
 }
 
 Parser.prototype._newPacket = function () {
+  debug('_newPacket')
   if (this.packet) {
     this._list.consume(this.packet.length)
+    debug('_newPacket: parser emit packet: packet.cmd: %s, packet.payload: %s, packet.length: %d', this.packet.cmd, this.packet.payload, this.packet.length)
     this.emit('packet', this.packet)
   }
-
+  debug('_newPacket: new packet')
   this.packet = new Packet()
 
   this._pos = 0
@@ -639,6 +674,7 @@ Parser.prototype._newPacket = function () {
 }
 
 Parser.prototype._emitError = function (err) {
+  debug('_emitError')
   this.error = err
   this.emit('error', err)
 }
