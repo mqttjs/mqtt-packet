@@ -384,9 +384,12 @@ function confirmation (packet, stream, opts) {
   // properies mqtt 5
   var propertiesData = null
   if (version === 5) {
-    propertiesData = getPropertiesByMaximumPacketSize(stream, properties, opts, length)
-    if (!propertiesData) { return false }
-    length += propertiesData.length
+    // Confirm should not add empty property length with no properties (rfc 3.4.2.2.1)
+    if (typeof properties === 'object') {
+      propertiesData = getPropertiesByMaximumPacketSize(stream, properties, opts, length)
+      if (!propertiesData) { return false }
+      length += propertiesData.length
+    }
   }
 
   // Header

@@ -421,6 +421,9 @@ Parser.prototype._parseConfirmation = function () {
       // response code
       packet.reasonCode = this._parseByte()
       debug('_parseConfirmation: packet.reasonCode `%d`', packet.reasonCode)
+    }
+
+    if (packet.length > 3) {
       // properies mqtt 5
       var properties = this._parseProperties()
       if (Object.getOwnPropertyNames(properties).length) {

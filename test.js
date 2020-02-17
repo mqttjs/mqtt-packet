@@ -1088,6 +1088,20 @@ testParseGenerate('puback', {
   0, 2 // Message ID
 ]))
 
+testParseGenerate('puback with reason and no MQTT5 properties', {
+  cmd: 'puback',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 3,
+  messageId: 2,
+  reasonCode: 16
+}, Buffer.from([
+  64, 3, // Header
+  0, 2, // Message ID
+  16 // reason code
+]), {protocolVersion: 5})
+
 testParseGenerate('puback MQTT5 properties', {
   cmd: 'puback',
   retain: false,
