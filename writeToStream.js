@@ -6,6 +6,7 @@ var empty = Buffer.allocUnsafe(0)
 var zeroBuf = Buffer.from([0])
 var numbers = require('./numbers')
 var nextTick = require('process-nextick-args').nextTick
+var debug = require('debug')('mqtt-packet:writeToStream')
 
 var numCache = numbers.cache
 var generateNumber = numbers.generateNumber
@@ -16,6 +17,7 @@ var writeNumber = writeNumberCached
 var toGenerate = true
 
 function generate (packet, stream, opts) {
+  debug('generate called')
   if (stream.cork) {
     stream.cork()
     nextTick(uncork, stream)
@@ -25,7 +27,7 @@ function generate (packet, stream, opts) {
     toGenerate = false
     generateCache()
   }
-
+  debug('generate: packet.cmd: %s', packet.cmd)
   switch (packet.cmd) {
     case 'connect':
       return connect(packet, stream, opts)
@@ -299,6 +301,7 @@ function connack (packet, stream, opts) {
 }
 
 function publish (packet, stream, opts) {
+  debug('publish: packet: %o', packet)
   var version = opts ? opts.protocolVersion : 4
   var settings = packet || {}
   var qos = settings.qos || 0
@@ -354,6 +357,7 @@ function publish (packet, stream, opts) {
   }
 
   // Payload
+  debug('publish: payload: %o', payload)
   return stream.write(payload)
 }
 
@@ -410,6 +414,7 @@ function confirmation (packet, stream, opts) {
 }
 
 function subscribe (packet, stream, opts) {
+  debug('subscribe: packet: ')
   var version = opts ? opts.protocolVersion : 4
   var settings = packet || {}
   var dup = settings.dup ? protocol.DUP_MASK : 0
@@ -473,6 +478,7 @@ function subscribe (packet, stream, opts) {
   }
 
   // Generate header
+  debug('subscribe: writing to stream: %o', protocol.SUBSCRIBE_HEADER)
   stream.write(protocol.SUBSCRIBE_HEADER[1][dup ? 1 : 0][0])
 
   // Generate length
@@ -778,7 +784,7 @@ function writeVarByteInt (stream, num) {
     buffer = genBufVariableByteInt(num).data
     if (num < 16384) varByteIntCache[num] = buffer
   }
-
+  debug('writeVarByteInt: writing to stream: %o', buffer)
   stream.write(buffer)
 }
 
@@ -797,7 +803,8 @@ function writeString (stream, string) {
   var strlen = Buffer.byteLength(string)
   writeNumber(stream, strlen)
 
-  stream.write(string, 'utf8')
+  debug('writeString: %s', string)
+  return stream.write(string, 'utf8')
 }
 
 /**
@@ -826,13 +833,19 @@ function writeStringPair (stream, name, value) {
  * @api private
  */
 function writeNumberCached (stream, number) {
+  debug('writeNumberCached: number: %d', number)
+  debug('writeNumberCached: %o', numCache[number])
   return stream.write(numCache[number])
 }
 function writeNumberGenerated (stream, number) {
-  return stream.write(generateNumber(number))
+  var generatedNumber = generateNumber(number)
+  debug('writeNumberGenerated: %o', generatedNumber)
+  return stream.write(generatedNumber)
 }
 function write4ByteNumber (stream, number) {
-  return stream.write(generate4ByteBuffer(number))
+  var generated4ByteBuffer = generate4ByteBuffer(number)
+  debug('write4ByteNumber: %o', generated4ByteBuffer)
+  return stream.write(generated4ByteBuffer)
 }
 /**
  * writeStringOrBuffer - write a String or Buffer with the its length prefix

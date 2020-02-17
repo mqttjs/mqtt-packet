@@ -60,6 +60,16 @@ function testParseGenerate (name, object, buffer, opts) {
 
     t.equal(parser.parse(fixture), 0, 'remaining bytes')
   })
+
+  test(name + ' writeToStream', function (t) {
+    var stream = WS()
+    stream.write = () => true
+    stream.on('error', (err) => t.fail(err))
+
+    var result = mqtt.writeToStream(object, stream, opts)
+    t.equal(result, true, 'should return true')
+    t.end()
+  })
 }
 
 function testParseError (expected, fixture, opts) {
