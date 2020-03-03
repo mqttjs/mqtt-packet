@@ -1784,6 +1784,75 @@ testGenerateError('Username is required to use password', {
   password: 'password'
 })
 
+testGenerateError('Invalid messageExpiryInterval: -4321', {
+  cmd: 'publish',
+  retain: true,
+  qos: 2,
+  dup: true,
+  length: 60,
+  topic: 'test',
+  payload: new Buffer('test'),
+  messageId: 10,
+  properties: {
+    payloadFormatIndicator: true,
+    messageExpiryInterval: -4321,
+    topicAlias: 100,
+    responseTopic: 'topic',
+    correlationData: Buffer.from([1, 2, 3, 4]),
+    userProperties: {
+      'test': 'test'
+    },
+    subscriptionIdentifier: 120,
+    contentType: 'test'
+  }
+}, {protocolVersion: 5})
+
+testGenerateError('Invalid topicAlias: -100', {
+  cmd: 'publish',
+  retain: true,
+  qos: 2,
+  dup: true,
+  length: 60,
+  topic: 'test',
+  payload: new Buffer('test'),
+  messageId: 10,
+  properties: {
+    payloadFormatIndicator: true,
+    messageExpiryInterval: 4321,
+    topicAlias: -100,
+    responseTopic: 'topic',
+    correlationData: Buffer.from([1, 2, 3, 4]),
+    userProperties: {
+      'test': 'test'
+    },
+    subscriptionIdentifier: 120,
+    contentType: 'test'
+  }
+}, {protocolVersion: 5})
+
+testGenerateError('Invalid subscriptionIdentifier: -120', {
+  cmd: 'publish',
+  retain: true,
+  qos: 2,
+  dup: true,
+  length: 60,
+  topic: 'test',
+  payload: new Buffer('test'),
+  messageId: 10,
+  properties: {
+    payloadFormatIndicator: true,
+    messageExpiryInterval: 4321,
+    topicAlias: 100,
+    responseTopic: 'topic',
+    correlationData: Buffer.from([1, 2, 3, 4]),
+    userProperties: {
+      'test': 'test'
+    },
+    subscriptionIdentifier: -120,
+    contentType: 'test'
+  }
+}, {protocolVersion: 5})
+
 test('support cork', function (t) {
   t.plan(9)
 

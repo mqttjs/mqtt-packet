@@ -143,6 +143,7 @@ function connect (packet, stream, opts) {
   // Properties
   if (protocolVersion === 5) {
     var propertiesData = getProperties(stream, properties)
+    if (!propertiesData) { return false }
     length += propertiesData.length
   }
 
@@ -179,6 +180,7 @@ function connect (packet, stream, opts) {
     var willProperties = {}
     if (protocolVersion === 5) {
       willProperties = getProperties(stream, will.properties)
+      if (!willProperties) { return false }
       length += willProperties.length
     }
   }
@@ -285,6 +287,7 @@ function connack (packet, stream, opts) {
   var propertiesData = null
   if (version === 5) {
     propertiesData = getProperties(stream, properties)
+    if (!propertiesData) { return false }
     length += propertiesData.length
   }
 
@@ -335,6 +338,7 @@ function publish (packet, stream, opts) {
   var propertiesData = null
   if (version === 5) {
     propertiesData = getProperties(stream, properties)
+    if (!propertiesData) { return false }
     length += propertiesData.length
   }
 
@@ -434,6 +438,7 @@ function subscribe (packet, stream, opts) {
   var propertiesData = null
   if (version === 5) {
     propertiesData = getProperties(stream, properties)
+    if (!propertiesData) { return false }
     length += propertiesData.length
   }
 
@@ -608,6 +613,7 @@ function unsubscribe (packet, stream, opts) {
   var propertiesData = null
   if (version === 5) {
     propertiesData = getProperties(stream, properties)
+    if (!propertiesData) { return false }
     length += propertiesData.length
   }
 
@@ -881,15 +887,15 @@ function getProperties (stream, properties) {
     switch (type) {
       case 'byte': {
         if (typeof value !== 'boolean') {
-          stream.emit('error', new Error('Invalid ' + name))
+          stream.emit('error', new Error('Invalid ' + name + ': ' + value))
           return false
         }
         length += 1 + 1
         break
       }
       case 'int8': {
-        if (typeof value !== 'number') {
-          stream.emit('error', new Error('Invalid ' + name))
+        if (typeof value !== 'number' || value < 0 || value > 0xff) {
+          stream.emit('error', new Error('Invalid ' + name + ': ' + value))
           return false
         }
         length += 1 + 1
@@ -897,31 +903,31 @@ function getProperties (stream, properties) {
       }
       case 'binary': {
         if (value && value === null) {
-          stream.emit('error', new Error('Invalid ' + name))
+          stream.emit('error', new Error('Invalid ' + name + ': ' + value))
           return false
         }
         length += 1 + Buffer.byteLength(value) + 2
         break
       }
       case 'int16': {
-        if (typeof value !== 'number') {
-          stream.emit('error', new Error('Invalid ' + name))
+        if (typeof value !== 'number' || value < 0 || value > 0xffff) {
+          stream.emit('error', new Error('Invalid ' + name + ': ' + value))
           return false
         }
         length += 1 + 2
         break
       }
       case 'int32': {
-        if (typeof value !== 'number') {
-          stream.emit('error', new Error('Invalid ' + name))
+        if (typeof value !== 'number' || value < 0 || value > 0xffffffff) {
+          stream.emit('error', new Error('Invalid ' + name + ': ' + value))
           return false
         }
         length += 1 + 4
         break
       }
       case 'var': {
-        if (typeof value !== 'number') {
-          stream.emit('error', new Error('Invalid ' + name))
+        if (typeof value !== 'number' || value < 0 || value > 0xffffffff) {
+          stream.emit('error', new Error('Invalid ' + name + ': ' + value))
           return false
         }
         length += 1 + genBufVariableByteInt(value).length
@@ -929,7 +935,7 @@ function getProperties (stream, properties) {
       }
       case 'string': {
         if (typeof value !== 'string') {
-          stream.emit('error', new Error('Invalid ' + name))
+          stream.emit('error', new Error('Invalid ' + name + ': ' + value))
           return false
         }
         length += 1 + 2 + Buffer.byteLength(value.toString())
@@ -937,7 +943,7 @@ function getProperties (stream, properties) {
       }
       case 'pair': {
         if (typeof value !== 'object') {
-          stream.emit('error', new Error('Invalid ' + name))
+          stream.emit('error', new Error('Invalid ' + name + ': ' + value))
           return false
         }
         length += Object.getOwnPropertyNames(value).reduce(function (result, name) {
@@ -955,7 +961,7 @@ function getProperties (stream, properties) {
         break
       }
       default: {
-        stream.emit('error', new Error('Invalid property ' + name))
+        stream.emit('error', new Error('Invalid property ' + name + ': ' + value))
         return false
       }
     }
@@ -964,13 +970,18 @@ function getProperties (stream, properties) {
   if (properties) {
     for (var propName in properties) {
       var propLength = 0
+      var propValueLength = 0
       var propValue = properties[propName]
       if (Array.isArray(propValue)) {
         for (var valueIndex = 0; valueIndex < propValue.length; valueIndex++) {
-          propLength += getLengthProperty(propName, propValue[valueIndex])
+          propValueLength = getLengthProperty(propName, propValue[valueIndex])
+          if (!propValueLength) { return false }
+          propLength += propValueLength
         }
       } else {
-        propLength = getLengthProperty(propName, propValue)
+        propValueLength = getLengthProperty(propName, propValue)
+        if (!propValueLength) { return false }
+        propLength = propValueLength
       }
       if (!propLength) return false
       propertiesLength += propLength
