@@ -443,10 +443,13 @@ Parser.prototype._parseDisconnect = function () {
   if (this.settings.protocolVersion === 5) {
     // response code
     packet.reasonCode = this._parseByte()
+
     // properies mqtt 5
-    var properties = this._parseProperties()
-    if (Object.getOwnPropertyNames(properties).length) {
-      packet.properties = properties
+    if (packet.length > 1) {
+      var properties = this._parseProperties()
+      if (Object.getOwnPropertyNames(properties).length) {
+        packet.properties = properties
+      }
     }
   }
 
