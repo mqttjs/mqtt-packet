@@ -716,7 +716,7 @@ function disconnect (packet, stream, opts) {
 
   // properies mqtt 5
   var propertiesData = null
-  if (version === 5) {
+  if (version === 5 && properties) {
     propertiesData = getPropertiesByMaximumPacketSize(stream, properties, opts, length)
     if (!propertiesData) { return false }
     length += propertiesData.length
