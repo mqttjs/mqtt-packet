@@ -1903,6 +1903,18 @@ testParseGenerate('disconnect MQTT 5', {
   28, 0, 4, 116, 101, 115, 116// serverReference
 ]), { protocolVersion: 5 })
 
+testParseGenerate('disconnect MQTT 5 with no properties', {
+  cmd: 'disconnect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 1,
+  reasonCode: 0
+}, Buffer.from([
+  224, 1, // Header
+  0 // reason code
+]), {protocolVersion: 5})
+
 testParseGenerate('auth MQTT 5', {
   cmd: 'auth',
   retain: false,
