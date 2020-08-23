@@ -47,7 +47,7 @@ protocol.LENGTH_FIN_MASK = 0x80
 /* Connack */
 protocol.SESSIONPRESENT_MASK = 0x01
 protocol.SESSIONPRESENT_HEADER = Buffer.from([protocol.SESSIONPRESENT_MASK])
-protocol.CONNACK_HEADER = Buffer.from([protocol.codes['connack'] << protocol.CMD_SHIFT])
+protocol.CONNACK_HEADER = Buffer.from([protocol.codes.connack << protocol.CMD_SHIFT])
 
 /* Connect */
 protocol.USERNAME_MASK = 0x80
@@ -57,7 +57,7 @@ protocol.WILL_QOS_MASK = 0x18
 protocol.WILL_QOS_SHIFT = 3
 protocol.WILL_FLAG_MASK = 0x04
 protocol.CLEAN_SESSION_MASK = 0x02
-protocol.CONNECT_HEADER = Buffer.from([protocol.codes['connect'] << protocol.CMD_SHIFT])
+protocol.CONNECT_HEADER = Buffer.from([protocol.codes.connect << protocol.CMD_SHIFT])
 
 /* Properties */
 protocol.properties = {
@@ -168,7 +168,7 @@ protocol.ACKS = {
   pubrec: genHeader('pubrec')
 }
 
-protocol.SUBACK_HEADER = Buffer.from([protocol.codes['suback'] << protocol.CMD_SHIFT])
+protocol.SUBACK_HEADER = Buffer.from([protocol.codes.suback << protocol.CMD_SHIFT])
 
 /* Protocol versions */
 protocol.VERSION3 = Buffer.from([3])
@@ -182,7 +182,7 @@ protocol.QOS = [0, 1, 2].map(function (qos) {
 
 /* Empty packets */
 protocol.EMPTY = {
-  pingreq: Buffer.from([protocol.codes['pingreq'] << 4, 0]),
-  pingresp: Buffer.from([protocol.codes['pingresp'] << 4, 0]),
-  disconnect: Buffer.from([protocol.codes['disconnect'] << 4, 0])
+  pingreq: Buffer.from([protocol.codes.pingreq << 4, 0]),
+  pingresp: Buffer.from([protocol.codes.pingresp << 4, 0]),
+  disconnect: Buffer.from([protocol.codes.disconnect << 4, 0])
 }
