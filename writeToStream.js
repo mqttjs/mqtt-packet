@@ -723,7 +723,7 @@ function disconnect (packet, stream, opts) {
   }
 
   // Header
-  stream.write(Buffer.from([protocol.codes['disconnect'] << 4]))
+  stream.write(Buffer.from([protocol.codes.disconnect << 4]))
 
   // Length
   writeVarByteInt(stream, length)
@@ -756,7 +756,7 @@ function auth (packet, stream, opts) {
   length += propertiesData.length
 
   // Header
-  stream.write(Buffer.from([protocol.codes['auth'] << 4]))
+  stream.write(Buffer.from([protocol.codes.auth << 4]))
 
   // Length
   writeVarByteInt(stream, length)
@@ -1080,7 +1080,7 @@ function writeProperties (stream, properties, propertiesLength) {
   /* write properties to stream */
   writeVarByteInt(stream, propertiesLength)
   for (var propName in properties) {
-    if (properties.hasOwnProperty(propName) && properties[propName] !== null) {
+    if (Object.prototype.hasOwnProperty.call(properties, propName) && properties[propName] !== null) {
       var value = properties[propName]
       if (Array.isArray(value)) {
         for (var valueIndex = 0; valueIndex < value.length; valueIndex++) {

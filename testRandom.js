@@ -35,7 +35,7 @@ var firstBytes = [
   16 * 12, // PINGREQ
   16 * 13, // PINGRESP
   16 * 14, // DISCONNECT
-  16 * 15  // RESERVED
+  16 * 15 // RESERVED
 ]
 
 function doParse () {
