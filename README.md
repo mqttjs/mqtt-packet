@@ -1,4 +1,4 @@
-mqtt-packet&nbsp;&nbsp;&nbsp;[![Build Status](https://travis-ci.org/mqttjs/mqtt-packet.png)](https://travis-ci.org/mqttjs/mqtt-packet)
+mqtt-packet
 ===========
 
 Encode and Decode MQTT 3.1.1, 5.0 packets the node way.
