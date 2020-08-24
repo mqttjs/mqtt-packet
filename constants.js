@@ -1,9 +1,7 @@
-'use strict'
-
-var Buffer = require('safe-buffer').Buffer
+const Buffer = require('safe-buffer').Buffer
 
 /* Protocol - protocol constants */
-var protocol = module.exports
+const protocol = module.exports
 
 /* Command code => mnemonic */
 protocol.types = {
@@ -27,8 +25,8 @@ protocol.types = {
 
 /* Mnemonic => Command code */
 protocol.codes = {}
-for (var k in protocol.types) {
-  var v = protocol.types[k]
+for (const k in protocol.types) {
+  const v = protocol.types[k]
   protocol.codes[v] = k
 }
 
@@ -90,8 +88,8 @@ protocol.properties = {
   subscriptionIdentifier: 11
 }
 protocol.propertiesCodes = {}
-for (var prop in protocol.properties) {
-  var id = protocol.properties[prop]
+for (const prop in protocol.properties) {
+  const id = protocol.properties[prop]
   protocol.propertiesCodes[id] = prop
 }
 protocol.propertiesTypes = {
@@ -125,10 +123,10 @@ protocol.propertiesTypes = {
 }
 
 function genHeader (type) {
-  return [0, 1, 2].map(function (qos) {
-    return [0, 1].map(function (dup) {
-      return [0, 1].map(function (retain) {
-        var buf = Buffer.alloc(1)
+  return [0, 1, 2].map(qos => {
+    return [0, 1].map(dup => {
+      return [0, 1].map(retain => {
+        const buf = Buffer.alloc(1)
         buf.writeUInt8(
           protocol.codes[type] << protocol.CMD_SHIFT |
           (dup ? protocol.DUP_MASK : 0) |
@@ -176,7 +174,7 @@ protocol.VERSION4 = Buffer.from([4])
 protocol.VERSION5 = Buffer.from([5])
 
 /* QoS */
-protocol.QOS = [0, 1, 2].map(function (qos) {
+protocol.QOS = [0, 1, 2].map(qos => {
   return Buffer.from([qos])
 })
 
