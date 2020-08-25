@@ -1,11 +1,9 @@
-'use strict'
-
-var Buffer = require('safe-buffer').Buffer
-var max = 65536
-var cache = {}
+const Buffer = require('safe-buffer').Buffer
+const max = 65536
+const cache = {}
 
 function generateBuffer (i) {
-  var buffer = Buffer.allocUnsafe(2)
+  const buffer = Buffer.allocUnsafe(2)
   buffer.writeUInt8(i >> 8, 0)
   buffer.writeUInt8(i & 0x00FF, 0 + 1)
 
@@ -13,7 +11,7 @@ function generateBuffer (i) {
 }
 
 function generateCache () {
-  for (var i = 0; i < max; i++) {
+  for (let i = 0; i < max; i++) {
     cache[i] = generateBuffer(i)
   }
 }
@@ -33,10 +31,10 @@ function calcVariableByteIntLength (length) {
 }
 
 function genBufVariableByteInt (num) {
-  var digit = 0
-  var pos = 0
-  var length = calcVariableByteIntLength(num)
-  var buffer = Buffer.allocUnsafe(length)
+  let digit = 0
+  let pos = 0
+  const length = calcVariableByteIntLength(num)
+  const buffer = Buffer.allocUnsafe(length)
 
   do {
     digit = num % 128 | 0
@@ -48,20 +46,20 @@ function genBufVariableByteInt (num) {
 
   return {
     data: buffer,
-    length: length
+    length
   }
 }
 
 function generate4ByteBuffer (num) {
-  var buffer = Buffer.allocUnsafe(4)
+  const buffer = Buffer.allocUnsafe(4)
   buffer.writeUInt32BE(num, 0)
   return buffer
 }
 
 module.exports = {
-  cache: cache,
-  generateCache: generateCache,
+  cache,
+  generateCache,
   generateNumber: generateBuffer,
-  genBufVariableByteInt: genBufVariableByteInt,
-  generate4ByteBuffer: generate4ByteBuffer
+  genBufVariableByteInt,
+  generate4ByteBuffer
 }

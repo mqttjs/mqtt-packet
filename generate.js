@@ -1,12 +1,10 @@
-'use strict'
-
-var Buffer = require('safe-buffer').Buffer
-var writeToStream = require('./writeToStream')
-var EE = require('events').EventEmitter
-var inherits = require('inherits')
+const Buffer = require('safe-buffer').Buffer
+const writeToStream = require('./writeToStream')
+const EE = require('events').EventEmitter
+const inherits = require('inherits')
 
 function generate (packet, opts) {
-  var stream = new Accumulator()
+  const stream = new Accumulator()
   writeToStream(packet, stream, opts)
   return stream.concat()
 }
@@ -24,12 +22,11 @@ Accumulator.prototype.write = function (chunk) {
 }
 
 Accumulator.prototype.concat = function () {
-  var length = 0
-  var lengths = new Array(this._array.length)
-  var list = this._array
-  var pos = 0
-  var i
-  var result
+  let length = 0
+  const lengths = new Array(this._array.length)
+  const list = this._array
+  let pos = 0
+  let i
 
   for (i = 0; i < list.length && list[i] !== undefined; i++) {
     if (typeof list[i] !== 'string') lengths[i] = list[i].length
@@ -38,7 +35,7 @@ Accumulator.prototype.concat = function () {
     length += lengths[i]
   }
 
-  result = Buffer.allocUnsafe(length)
+  const result = Buffer.allocUnsafe(length)
 
   for (i = 0; i < list.length && list[i] !== undefined; i++) {
     if (typeof list[i] !== 'string') {

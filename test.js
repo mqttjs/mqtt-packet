@@ -1,8 +1,6 @@
-'use strict'
-
-var test = require('tape')
-var mqtt = require('./')
-var WS = require('readable-stream').Writable
+const test = require('tape')
+const mqtt = require('./')
+const WS = require('readable-stream').Writable
 
 function normalExpectedObject (object) {
   if (object.username != null) object.username = object.username.toString()
@@ -11,14 +9,14 @@ function normalExpectedObject (object) {
 }
 
 function testParseGenerate (name, object, buffer, opts) {
-  test(name + ' parse', function (t) {
+  test(`${name} parse`, t => {
     t.plan(2)
 
-    var parser = mqtt.parser(opts)
-    var expected = object
-    var fixture = buffer
+    const parser = mqtt.parser(opts)
+    const expected = object
+    const fixture = buffer
 
-    parser.on('packet', function (packet) {
+    parser.on('packet', packet => {
       if (packet.cmd !== 'publish') {
         delete packet.topic
         delete packet.payload
@@ -26,26 +24,26 @@ function testParseGenerate (name, object, buffer, opts) {
       t.deepLooseEqual(packet, normalExpectedObject(expected), 'expected packet')
     })
 
-    parser.on('error', function (err) {
+    parser.on('error', err => {
       t.fail(err)
     })
 
     t.equal(parser.parse(fixture), 0, 'remaining bytes')
   })
 
-  test(name + ' generate', function (t) {
+  test(`${name} generate`, t => {
     t.equal(mqtt.generate(object, opts).toString('hex'), buffer.toString('hex'))
     t.end()
   })
 
-  test(name + ' mirror', function (t) {
+  test(`${name} mirror`, t => {
     t.plan(2)
 
-    var parser = mqtt.parser(opts)
-    var expected = object
-    var fixture = mqtt.generate(object, opts)
+    const parser = mqtt.parser(opts)
+    const expected = object
+    const fixture = mqtt.generate(object, opts)
 
-    parser.on('packet', function (packet) {
+    parser.on('packet', packet => {
       if (packet.cmd !== 'publish') {
         delete packet.topic
         delete packet.payload
@@ -53,35 +51,35 @@ function testParseGenerate (name, object, buffer, opts) {
       t.deepLooseEqual(packet, normalExpectedObject(expected), 'expected packet')
     })
 
-    parser.on('error', function (err) {
+    parser.on('error', err => {
       t.fail(err)
     })
 
     t.equal(parser.parse(fixture), 0, 'remaining bytes')
   })
 
-  test(name + ' writeToStream', function (t) {
-    var stream = WS()
+  test(`${name} writeToStream`, t => {
+    const stream = WS()
     stream.write = () => true
     stream.on('error', (err) => t.fail(err))
 
-    var result = mqtt.writeToStream(object, stream, opts)
+    const result = mqtt.writeToStream(object, stream, opts)
     t.equal(result, true, 'should return true')
     t.end()
   })
 }
 
 function testParseError (expected, fixture, opts) {
-  test(expected, function (t) {
+  test(expected, t => {
     t.plan(1)
 
-    var parser = mqtt.parser(opts)
+    const parser = mqtt.parser(opts)
 
-    parser.on('error', function (err) {
+    parser.on('error', err => {
       t.equal(err.message, expected, 'expected error message')
     })
 
-    parser.on('packet', function () {
+    parser.on('packet', () => {
       t.fail('parse errors should not be followed by packet events')
     })
 
@@ -90,7 +88,7 @@ function testParseError (expected, fixture, opts) {
 }
 
 function testGenerateError (expected, fixture, opts) {
-  test(expected, function (t) {
+  test(expected, t => {
     t.plan(1)
 
     try {
@@ -102,46 +100,46 @@ function testGenerateError (expected, fixture, opts) {
 }
 
 function testParseGenerateDefaults (name, object, buffer, opts) {
-  test(name + ' parse', function (t) {
-    var parser = mqtt.parser(opts)
-    var expected = object
-    var fixture = buffer
+  test(`${name} parse`, t => {
+    const parser = mqtt.parser(opts)
+    const expected = object
+    const fixture = buffer
 
     t.plan(1 + Object.keys(expected).length)
 
-    parser.on('packet', function (packet) {
-      Object.keys(expected).forEach(function (key) {
-        t.deepEqual(packet[key], expected[key], 'expected packet property ' + key)
+    parser.on('packet', packet => {
+      Object.keys(expected).forEach(key => {
+        t.deepEqual(packet[key], expected[key], `expected packet property ${key}`)
       })
     })
 
     t.equal(parser.parse(fixture), 0, 'remaining bytes')
   })
 
-  test(name + ' generate', function (t) {
+  test(`${name} generate`, t => {
     t.equal(mqtt.generate(object).toString('hex'), buffer.toString('hex'))
     t.end()
   })
 }
 
 function testWriteToStreamError (expected, fixture) {
-  test('writeToStream ' + expected + ' error', function (t) {
+  test(`writeToStream ${expected} error`, t => {
     t.plan(2)
 
-    var stream = WS()
+    const stream = WS()
 
     stream.write = () => t.fail('should not have called write')
     stream.on('error', () => t.pass('error emitted'))
 
-    var result = mqtt.writeToStream(fixture, stream)
+    const result = mqtt.writeToStream(fixture, stream)
 
     t.false(result, 'result should be false')
   })
 }
 
-test('disabled numbers cache', function (t) {
-  var stream = WS()
-  var message = {
+test('disabled numbers cache', t => {
+  const stream = WS()
+  const message = {
     cmd: 'publish',
     retain: false,
     qos: 0,
@@ -150,13 +148,13 @@ test('disabled numbers cache', function (t) {
     topic: Buffer.from('test'),
     payload: Buffer.from('test')
   }
-  var expected = Buffer.from([
+  const expected = Buffer.from([
     48, 10, // Header
     0, 4, // Topic length
     116, 101, 115, 116, // Topic (test)
     116, 101, 115, 116 // Payload (test)
   ])
-  var written = Buffer.alloc(0)
+  let written = Buffer.alloc(0)
 
   stream.write = (chunk) => {
     written = Buffer.concat([written, chunk])
@@ -676,8 +674,8 @@ testParseGenerate('max connect with special chars', {
   112, 52, 36, 36, 119, 48, 194, 163, 100 // Password
 ]))
 
-test('connect all strings generate', function (t) {
-  var message = {
+test('connect all strings generate', t => {
+  const message = {
     cmd: 'connect',
     retain: false,
     qos: 0,
@@ -697,7 +695,7 @@ test('connect all strings generate', function (t) {
     username: 'username',
     password: 'password'
   }
-  var expected = Buffer.from([
+  const expected = Buffer.from([
     16, 54, // Header
     0, 6, // Protocol ID length
     77, 81, 73, 115, 100, 112, // Protocol ID
@@ -957,8 +955,8 @@ testParseGenerate('publish MQTT5 with multiple same properties', {
   116, 101, 115, 116 // Payload (test)
 ]), { protocolVersion: 5 })
 
-;(function () {
-  var buffer = Buffer.alloc(2048)
+;(() => {
+  const buffer = Buffer.alloc(2048)
   testParseGenerate('2KB publish packet', {
     cmd: 'publish',
     retain: false,
@@ -972,10 +970,8 @@ testParseGenerate('publish MQTT5 with multiple same properties', {
     0, 4, // Topic length
     116, 101, 115, 116 // Topic (test)
   ]), buffer]))
-})()
-
-;(function () {
-  var buffer = Buffer.alloc(2 * 1024 * 1024)
+})(); (() => {
+  const buffer = Buffer.alloc(2 * 1024 * 1024)
   testParseGenerate('2MB publish packet', {
     cmd: 'publish',
     retain: false,
@@ -1008,8 +1004,8 @@ testParseGenerate('maximal publish', {
   116, 101, 115, 116 // Payload
 ]))
 
-test('publish all strings generate', function (t) {
-  var message = {
+test('publish all strings generate', t => {
+  const message = {
     cmd: 'publish',
     retain: true,
     qos: 2,
@@ -1019,7 +1015,7 @@ test('publish all strings generate', function (t) {
     messageId: 10,
     payload: Buffer.from('test')
   }
-  var expected = Buffer.from([
+  const expected = Buffer.from([
     61, 12, // Header
     0, 4, // Topic length
     116, 101, 115, 116, // Topic
@@ -1046,11 +1042,11 @@ testParseGenerate('empty publish', {
   // Empty payload
 ]))
 
-test('splitted publish parse', function (t) {
+test('splitted publish parse', t => {
   t.plan(3)
 
-  var parser = mqtt.parser()
-  var expected = {
+  const parser = mqtt.parser()
+  const expected = {
     cmd: 'publish',
     retain: false,
     qos: 0,
@@ -1060,7 +1056,7 @@ test('splitted publish parse', function (t) {
     payload: Buffer.from('test')
   }
 
-  parser.on('packet', function (packet) {
+  parser.on('packet', packet => {
     t.deepLooseEqual(packet, expected, 'expected packet')
   })
 
@@ -1852,12 +1848,12 @@ testGenerateError('Invalid subscriptionIdentifier: -120', {
   }
 }, { protocolVersion: 5 })
 
-test('support cork', function (t) {
+test('support cork', t => {
   t.plan(9)
 
-  var dest = WS()
+  const dest = WS()
 
-  dest._write = function (chunk, enc, cb) {
+  dest._write = (chunk, enc, cb) => {
     t.pass('_write called')
     cb()
   }
@@ -1981,22 +1977,22 @@ testParseError('Malformed Subscribe Payload', Buffer.from([
   0 // requested QoS
 ]))
 
-test('stops parsing after first error', function (t) {
+test('stops parsing after first error', t => {
   t.plan(4)
 
-  var parser = mqtt.parser()
+  const parser = mqtt.parser()
 
-  var packetCount = 0
-  var errorCount = 0
-  var expectedPackets = 1
-  var expectedErrors = 1
+  let packetCount = 0
+  let errorCount = 0
+  let expectedPackets = 1
+  let expectedErrors = 1
 
-  parser.on('packet', function (packet) {
-    t.ok(++packetCount <= expectedPackets, 'expected <= ' + expectedPackets + ' packets')
+  parser.on('packet', packet => {
+    t.ok(++packetCount <= expectedPackets, `expected <= ${expectedPackets} packets`)
   })
 
-  parser.on('error', function (erroneous) {
-    t.ok(++errorCount <= expectedErrors, 'expected <= ' + expectedErrors + ' errors')
+  parser.on('error', erroneous => {
+    t.ok(++errorCount <= expectedErrors, `expected <= ${expectedErrors} errors`)
   })
 
   parser.parse(Buffer.from([
