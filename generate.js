@@ -1,7 +1,5 @@
-const Buffer = require('safe-buffer').Buffer
 const writeToStream = require('./writeToStream')
-const EE = require('events').EventEmitter
-const inherits = require('inherits')
+const EventEmitter = require('events')
 
 function generate (packet, opts) {
   const stream = new Accumulator()
@@ -9,45 +7,46 @@ function generate (packet, opts) {
   return stream.concat()
 }
 
-function Accumulator () {
-  this._array = new Array(20)
-  this._i = 0
-}
-
-inherits(Accumulator, EE)
-
-Accumulator.prototype.write = function (chunk) {
-  this._array[this._i++] = chunk
-  return true
-}
-
-Accumulator.prototype.concat = function () {
-  let length = 0
-  const lengths = new Array(this._array.length)
-  const list = this._array
-  let pos = 0
-  let i
-
-  for (i = 0; i < list.length && list[i] !== undefined; i++) {
-    if (typeof list[i] !== 'string') lengths[i] = list[i].length
-    else lengths[i] = Buffer.byteLength(list[i])
-
-    length += lengths[i]
+class Accumulator extends EventEmitter {
+  constructor () {
+    super()
+    this._array = new Array(20)
+    this._i = 0
   }
 
-  const result = Buffer.allocUnsafe(length)
+  write (chunk) {
+    this._array[this._i++] = chunk
+    return true
+  }
 
-  for (i = 0; i < list.length && list[i] !== undefined; i++) {
-    if (typeof list[i] !== 'string') {
-      list[i].copy(result, pos)
-      pos += lengths[i]
-    } else {
-      result.write(list[i], pos)
-      pos += lengths[i]
+  concat () {
+    let length = 0
+    const lengths = new Array(this._array.length)
+    const list = this._array
+    let pos = 0
+    let i
+
+    for (i = 0; i < list.length && list[i] !== undefined; i++) {
+      if (typeof list[i] !== 'string') lengths[i] = list[i].length
+      else lengths[i] = Buffer.byteLength(list[i])
+
+      length += lengths[i]
     }
-  }
 
-  return result
+    const result = Buffer.allocUnsafe(length)
+
+    for (i = 0; i < list.length && list[i] !== undefined; i++) {
+      if (typeof list[i] !== 'string') {
+        list[i].copy(result, pos)
+        pos += lengths[i]
+      } else {
+        result.write(list[i], pos)
+        pos += lengths[i]
+      }
+    }
+
+    return result
+  }
 }
 
 module.exports = generate

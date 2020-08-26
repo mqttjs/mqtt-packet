@@ -1,4 +1,3 @@
-const Buffer = require('safe-buffer').Buffer
 const max = 65536
 const cache = {}
 

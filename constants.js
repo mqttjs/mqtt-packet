@@ -1,5 +1,3 @@
-const Buffer = require('safe-buffer').Buffer
-
 /* Protocol - protocol constants */
 const protocol = module.exports
 

@@ -34,7 +34,6 @@
   },
   "homepage": "https://github.com/mqttjs/mqtt-packet",
   "devDependencies": {
-    "dev-null": "^0.1.1",
     "pre-commit": "^1.2.2",
     "readable-stream": "^3.6.0",
     "standard": "^14.3.4",
@@ -44,8 +43,6 @@
   "dependencies": {
     "bl": "^4.0.2",
     "debug": "^4.1.1",
-    "inherits": "^2.0.4",
-    "process-nextick-args": "^2.0.1",
-    "safe-buffer": "^5.2.1"
+    "process-nextick-args": "^2.0.1"
   }
 }
