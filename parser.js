@@ -627,7 +627,7 @@ class Parser extends EventEmitter {
       // user properties process
       if (name === 'userProperties') {
         if (!result[name]) {
-          result[name] = {}
+          result[name] = Object.create(null)
         }
         const currentUserProperty = this._parseByType(constants.propertiesTypes[name])
         if (result[name][currentUserProperty.name]) {
