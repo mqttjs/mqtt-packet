@@ -69,6 +69,15 @@ function testParseGenerate (name, object, buffer, opts) {
   })
 }
 
+// the API allows to pass strings as buffers to writeToStream and generate
+// parsing them back will result in a string so only generate and compare to buffer
+function testGenerateOnly (name, object, buffer, opts) {
+  test(name, t => {
+    t.equal(mqtt.generate(object, opts).toString('hex'), buffer.toString('hex'))
+    t.end()
+  })
+}
+
 function testParseError (expected, fixture, opts) {
   test(expected, t => {
     t.plan(1)
@@ -84,11 +93,12 @@ function testParseError (expected, fixture, opts) {
     })
 
     parser.parse(fixture)
+    t.end()
   })
 }
 
-function testGenerateError (expected, fixture, opts) {
-  test(expected, t => {
+function testGenerateError (expected, fixture, opts, name) {
+  test(name || expected, t => {
     t.plan(1)
 
     try {
@@ -96,7 +106,17 @@ function testGenerateError (expected, fixture, opts) {
     } catch (err) {
       t.equal(expected, err.message)
     }
+    t.end()
   })
+}
+
+function testGenerateErrorMultipleCmds (cmds, expected, fixture, opts) {
+  cmds.forEach(cmd => {
+    const obj = Object.assign({}, fixture)
+    obj.cmd = cmd
+    testGenerateError(expected, obj, opts, `${expected} on ${cmd}`)
+  }
+  )
 }
 
 function testParseGenerateDefaults (name, object, buffer, opts) {
@@ -114,6 +134,7 @@ function testParseGenerateDefaults (name, object, buffer, opts) {
     })
 
     t.equal(parser.parse(fixture), 0, 'remaining bytes')
+    t.end()
   })
 
   test(`${name} generate`, t => {
@@ -134,8 +155,18 @@ function testWriteToStreamError (expected, fixture) {
     const result = mqtt.writeToStream(fixture, stream)
 
     t.false(result, 'result should be false')
+    t.end()
   })
 }
+
+test('cacheNumbers get/set/unset', t => {
+  t.true(mqtt.writeToStream.cacheNumbers, 'initial state of cacheNumbers is enabled')
+  mqtt.writeToStream.cacheNumbers = false
+  t.false(mqtt.writeToStream.cacheNumbers, 'cacheNumbers can be disabled')
+  mqtt.writeToStream.cacheNumbers = true
+  t.true(mqtt.writeToStream.cacheNumbers, 'cacheNumbers can be enabled')
+  t.end()
+})
 
 test('disabled numbers cache', t => {
   const stream = WS()
@@ -171,6 +202,10 @@ test('disabled numbers cache', t => {
   t.end()
 })
 
+testGenerateError('Unknown command', {})
+
+testParseError('Not supported', Buffer.from([0, 1, 0]), {})
+
 testParseGenerate('minimal connect', {
   cmd: 'connect',
   retain: false,
@@ -193,7 +228,29 @@ testParseGenerate('minimal connect', {
   116, 101, 115, 116 // Client ID
 ]))
 
-testParseGenerate('connect MQTT 5.0', {
+testGenerateOnly('minimal connect with clientId as Buffer', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 18,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  clean: false,
+  keepalive: 30,
+  clientId: Buffer.from('test')
+}, Buffer.from([
+  16, 18, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  3, // Protocol version
+  0, // Connect flags
+  0, 30, // Keepalive
+  0, 4, // Client ID length
+  116, 101, 115, 116 // Client ID
+]))
+
+testParseGenerate('connect MQTT 5', {
   cmd: 'connect',
   retain: false,
   qos: 0,
@@ -267,7 +324,7 @@ testParseGenerate('connect MQTT 5.0', {
   4, 3, 2, 1// Will payload
 ]))
 
-testParseGenerate('connect MQTT 5.0 with will properties but w/o will payload', {
+testParseGenerate('connect MQTT 5 with will properties but with empty will payload', {
   cmd: 'connect',
   retain: false,
   qos: 0,
@@ -340,7 +397,7 @@ testParseGenerate('connect MQTT 5.0 with will properties but w/o will payload', 
   0, 0 // Will payload length
 ]))
 
-testParseGenerate('connect MQTT 5.0 w/o will properties', {
+testParseGenerate('connect MQTT 5 w/o will properties', {
   cmd: 'connect',
   retain: false,
   qos: 0,
@@ -674,54 +731,134 @@ testParseGenerate('max connect with special chars', {
   112, 52, 36, 36, 119, 48, 194, 163, 100 // Password
 ]))
 
-test('connect all strings generate', t => {
-  const message = {
-    cmd: 'connect',
-    retain: false,
-    qos: 0,
-    dup: false,
-    length: 54,
-    protocolId: 'MQIsdp',
-    protocolVersion: 3,
-    will: {
-      retain: true,
-      qos: 2,
-      topic: 'topic',
-      payload: 'payload'
-    },
-    clean: true,
-    keepalive: 30,
-    clientId: 'test',
-    username: 'username',
-    password: 'password'
-  }
-  const expected = Buffer.from([
-    16, 54, // Header
-    0, 6, // Protocol ID length
-    77, 81, 73, 115, 100, 112, // Protocol ID
-    3, // Protocol version
-    246, // Connect flags
-    0, 30, // Keepalive
-    0, 4, // Client ID length
-    116, 101, 115, 116, // Client ID
-    0, 5, // Will topic length
-    116, 111, 112, 105, 99, // Will topic
-    0, 7, // Will payload length
-    112, 97, 121, 108, 111, 97, 100, // Will payload
-    0, 8, // Username length
-    117, 115, 101, 114, 110, 97, 109, 101, // Username
-    0, 8, // Password length
-    112, 97, 115, 115, 119, 111, 114, 100 // Password
-  ])
-
-  t.equal(mqtt.generate(message).toString('hex'), expected.toString('hex'))
-  t.end()
-})
+testGenerateOnly('connect all strings generate', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 54,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  will: {
+    retain: true,
+    qos: 2,
+    topic: 'topic',
+    payload: 'payload'
+  },
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: 'username',
+  password: 'password'
+}, Buffer.from([
+  16, 54, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  3, // Protocol version
+  246, // Connect flags
+  0, 30, // Keepalive
+  0, 4, // Client ID length
+  116, 101, 115, 116, // Client ID
+  0, 5, // Will topic length
+  116, 111, 112, 105, 99, // Will topic
+  0, 7, // Will payload length
+  112, 97, 121, 108, 111, 97, 100, // Will payload
+  0, 8, // Username length
+  117, 115, 101, 114, 110, 97, 109, 101, // Username
+  0, 8, // Password length
+  112, 97, 115, 115, 119, 111, 114, 100 // Password
+]))
 
 testParseError('Cannot parse protocolId', Buffer.from([
   16, 4,
   0, 6,
   77, 81
+]))
+
+// missing protocol version on connect
+testParseError('Packet too short', Buffer.from([
+  16, 8, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112 // Protocol ID
+]))
+
+// missing keepalive on connect
+testParseError('Packet too short', Buffer.from([
+  16, 10, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  3, // Protocol version
+  246 // Connect flags
+]))
+
+// missing clientid on connect
+testParseError('Packet too short', Buffer.from([
+  16, 10, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  3, // Protocol version
+  246, // Connect flags
+  0, 30 // Keepalive
+]))
+
+// missing will topic on connect
+testParseError('Cannot parse will topic', Buffer.from([
+  16, 16, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  3, // Protocol version
+  246, // Connect flags
+  0, 30, // Keepalive
+  0, 2, // Will topic length
+  0, 0 // Will topic
+]))
+
+// missing will payload on connect
+testParseError('Cannot parse will payload', Buffer.from([
+  16, 23, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  3, // Protocol version
+  246, // Connect flags
+  0, 30, // Keepalive
+  0, 5, // Will topic length
+  116, 111, 112, 105, 99, // Will topic
+  0, 2, // Will payload length
+  0, 0 // Will payload
+]))
+
+// missing username on connect
+testParseError('Cannot parse username', Buffer.from([
+  16, 32, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  3, // Protocol version
+  246, // Connect flags
+  0, 30, // Keepalive
+  0, 5, // Will topic length
+  116, 111, 112, 105, 99, // Will topic
+  0, 7, // Will payload length
+  112, 97, 121, 108, 111, 97, 100, // Will payload
+  0, 2, // Username length
+  0, 0 // Username
+]))
+
+// missing password on connect
+testParseError('Cannot parse password', Buffer.from([
+  16, 42, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  3, // Protocol version
+  246, // Connect flags
+  0, 30, // Keepalive
+  0, 5, // Will topic length
+  116, 111, 112, 105, 99, // Will topic
+  0, 7, // Will payload length
+  112, 97, 121, 108, 111, 97, 100, // Will payload
+  0, 8, // Username length
+  117, 115, 101, 114, 110, 97, 109, 101, // Username
+  0, 2, // Password length
+  0, 0 // Password
 ]))
 
 testParseGenerate('connack with return code 0', {
@@ -736,7 +873,7 @@ testParseGenerate('connack with return code 0', {
   32, 2, 0, 0
 ]))
 
-testParseGenerate('connack MQTT5 with properties', {
+testParseGenerate('connack MQTT 5 with properties', {
   cmd: 'connack',
   retain: false,
   qos: 0,
@@ -787,7 +924,7 @@ testParseGenerate('connack MQTT5 with properties', {
   22, 0, 4, 1, 2, 3, 4 // authenticationData
 ]), { protocolVersion: 5 })
 
-testParseGenerate('connack MQTT5 with properties and doubled user properties', {
+testParseGenerate('connack MQTT 5 with properties and doubled user properties', {
   cmd: 'connack',
   retain: false,
   qos: 0,
@@ -863,6 +1000,16 @@ testParseGenerate('connack with return code 5', {
   32, 2, 0, 5
 ]))
 
+testGenerateError('Invalid return code', {
+  cmd: 'connack',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  sessionPresent: false,
+  returnCode: '5' // returncode must be a number
+})
+
 testParseGenerate('minimal publish', {
   cmd: 'publish',
   retain: false,
@@ -878,12 +1025,12 @@ testParseGenerate('minimal publish', {
   116, 101, 115, 116 // Payload (test)
 ]))
 
-testParseGenerate('publish MQTT5 properties', {
+testParseGenerate('publish MQTT 5 properties', {
   cmd: 'publish',
   retain: true,
   qos: 2,
   dup: true,
-  length: 60,
+  length: 86,
   topic: 'test',
   payload: Buffer.from('test'),
   messageId: 10,
@@ -894,34 +1041,36 @@ testParseGenerate('publish MQTT5 properties', {
     responseTopic: 'topic',
     correlationData: Buffer.from([1, 2, 3, 4]),
     userProperties: {
-      test: 'test'
+      test: ['test', 'test', 'test']
     },
     subscriptionIdentifier: 120,
     contentType: 'test'
   }
 }, Buffer.from([
-  61, 60, // Header
+  61, 86, // Header
   0, 4, // Topic length
   116, 101, 115, 116, // Topic (test)
   0, 10, // Message ID
-  47, // properties length
+  73, // properties length
   1, 1, // payloadFormatIndicator
   2, 0, 0, 16, 225, // message expiry interval
   35, 0, 100, // topicAlias
   8, 0, 5, 116, 111, 112, 105, 99, // response topic
   9, 0, 4, 1, 2, 3, 4, // correlationData
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
+  38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
   11, 120, // subscriptionIdentifier
   3, 0, 4, 116, 101, 115, 116, // content type
   116, 101, 115, 116 // Payload (test)
 ]), { protocolVersion: 5 })
 
-testParseGenerate('publish MQTT5 with multiple same properties', {
+testParseGenerate('publish MQTT 5 with multiple same properties', {
   cmd: 'publish',
   retain: true,
   qos: 2,
   dup: true,
-  length: 62,
+  length: 64,
   topic: 'test',
   payload: Buffer.from('test'),
   messageId: 10,
@@ -934,15 +1083,15 @@ testParseGenerate('publish MQTT5 with multiple same properties', {
     userProperties: {
       test: 'test'
     },
-    subscriptionIdentifier: [120, 121],
+    subscriptionIdentifier: [120, 121, 122],
     contentType: 'test'
   }
 }, Buffer.from([
-  61, 62, // Header
+  61, 64, // Header
   0, 4, // Topic length
   116, 101, 115, 116, // Topic (test)
   0, 10, // Message ID
-  49, // properties length
+  51, // properties length
   1, 1, // payloadFormatIndicator
   2, 0, 0, 16, 225, // message expiry interval
   35, 0, 100, // topicAlias
@@ -951,11 +1100,38 @@ testParseGenerate('publish MQTT5 with multiple same properties', {
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
   11, 120, // subscriptionIdentifier
   11, 121, // subscriptionIdentifier
+  11, 122, // subscriptionIdentifier
   3, 0, 4, 116, 101, 115, 116, // content type
   116, 101, 115, 116 // Payload (test)
 ]), { protocolVersion: 5 })
 
-;(() => {
+testParseGenerate('publish MQTT 5 properties with 0-4 byte varbyte', {
+  cmd: 'publish',
+  retain: true,
+  qos: 2,
+  dup: true,
+  length: 27,
+  topic: 'test',
+  payload: Buffer.from('test'),
+  messageId: 10,
+  properties: {
+    payloadFormatIndicator: false,
+    subscriptionIdentifier: [128, 16384, 2097152] // this tests the varbyte handling
+  }
+}, Buffer.from([
+  61, 27, // Header
+  0, 4, // Topic length
+  116, 101, 115, 116, // Topic (test)
+  0, 10, // Message ID
+  14, // properties length
+  1, 0, // payloadFormatIndicator
+  11, 128, 1, // subscriptionIdentifier
+  11, 128, 128, 1, // subscriptionIdentifier
+  11, 128, 128, 128, 1, // subscriptionIdentifier
+  116, 101, 115, 116 // Payload (test)
+]), { protocolVersion: 5 })
+
+; (() => {
   const buffer = Buffer.alloc(2048)
   testParseGenerate('2KB publish packet', {
     cmd: 'publish',
@@ -1083,7 +1259,7 @@ testParseGenerate('puback', {
   0, 2 // Message ID
 ]))
 
-testParseGenerate('puback with reason and no MQTT5 properties', {
+testParseGenerate('puback with reason and no MQTT 5 properties', {
   cmd: 'puback',
   retain: false,
   qos: 0,
@@ -1097,7 +1273,7 @@ testParseGenerate('puback with reason and no MQTT5 properties', {
   16 // reason code
 ]), { protocolVersion: 5 })
 
-testParseGenerate('puback MQTT5 properties', {
+testParseGenerate('puback MQTT 5 properties', {
   cmd: 'puback',
   retain: false,
   qos: 0,
@@ -1132,7 +1308,7 @@ testParseGenerate('pubrec', {
   0, 2 // Message ID
 ]))
 
-testParseGenerate('pubrec MQTT5 properties', {
+testParseGenerate('pubrec MQTT 5 properties', {
   cmd: 'pubrec',
   retain: false,
   qos: 0,
@@ -1202,7 +1378,7 @@ testParseGenerate('pubcomp', {
   0, 2 // Message ID
 ]))
 
-testParseGenerate('pubcomp MQTT5 properties', {
+testParseGenerate('pubcomp MQTT 5 properties', {
   cmd: 'pubcomp',
   retain: false,
   qos: 0,
@@ -1386,7 +1562,7 @@ testParseGenerate('suback', {
   0, 1, 2, 128 // Granted qos (0, 1, 2) and a rejected being 0x80
 ]))
 
-testParseGenerate('suback MQTT5', {
+testParseGenerate('suback MQTT 5', {
   cmd: 'suback',
   retain: false,
   qos: 0,
@@ -1428,6 +1604,26 @@ testParseGenerate('unsubscribe', {
   0, 4, // Topic length,
   116, 101, 115, 116 // Topic (test)
 ]))
+
+testGenerateError('Invalid unsubscriptions', {
+  cmd: 'unsubscribe',
+  retain: false,
+  qos: 1,
+  dup: true,
+  length: 5,
+  unsubscriptions: 5,
+  messageId: 7
+}, {}, 'unsubscribe with unsubscriptions not an array')
+
+testGenerateError('Invalid unsubscriptions', {
+  cmd: 'unsubscribe',
+  retain: false,
+  qos: 1,
+  dup: true,
+  length: 5,
+  unsubscriptions: [1, 2],
+  messageId: 7
+}, {}, 'unsubscribe with unsubscriptions as an object')
 
 testParseGenerate('unsubscribe MQTT 5', {
   cmd: 'unsubscribe',
@@ -1571,8 +1767,6 @@ testParseGenerate('auth MQTT 5', {
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
 ]), { protocolVersion: 5 })
 
-testGenerateError('Unknown command', {})
-
 testGenerateError('Invalid protocolId', {
   cmd: 'connect',
   retain: false,
@@ -1581,6 +1775,27 @@ testGenerateError('Invalid protocolId', {
   length: 54,
   protocolId: 42,
   protocolVersion: 3,
+  will: {
+    retain: true,
+    qos: 2,
+    topic: 'topic',
+    payload: 'payload'
+  },
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  username: 'username',
+  password: 'password'
+})
+
+testGenerateError('Invalid protocol version', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 54,
+  protocolId: 'MQIsdp',
+  protocolVersion: 1,
   will: {
     retain: true,
     qos: 2,
@@ -1907,7 +2122,7 @@ testParseError('Invalid protocolId', Buffer.from([
 ]))
 
 // CONNECT Packets that contain an unsupported protocol version
-// Flag (i.e. not `3` or `4`) should cause an error
+// Flag (i.e. not `3` or `4` or '5') should cause an error
 testParseError('Invalid protocol version', Buffer.from([
   16, 18,
   0, 6,
@@ -1976,6 +2191,72 @@ testParseError('Malformed Subscribe Payload', Buffer.from([
   104, 105, 106, 107, 108, 47, 109, 110, 111, // topic filter with length of 9 bytes
   0 // requested QoS
 ]))
+
+testWriteToStreamError('Invalid command', {
+  cmd: 'invalid'
+})
+
+testWriteToStreamError('Invalid protocolId', {
+  cmd: 'connect',
+  protocolId: {}
+})
+
+test('userProperties null prototype', t => {
+  t.plan(3)
+
+  const packet = mqtt.generate({
+    cmd: 'connect',
+    retain: false,
+    qos: 0,
+    dup: false,
+    length: 125,
+    protocolId: 'MQTT',
+    protocolVersion: 5,
+    will: {
+      retain: true,
+      qos: 2,
+      properties: {
+        willDelayInterval: 1234,
+        payloadFormatIndicator: false,
+        messageExpiryInterval: 4321,
+        contentType: 'test',
+        responseTopic: 'topic',
+        correlationData: Buffer.from([1, 2, 3, 4]),
+        userProperties: {
+          test: 'test'
+        }
+      },
+      topic: 'topic',
+      payload: Buffer.from([4, 3, 2, 1])
+    },
+    clean: true,
+    keepalive: 30,
+    properties: {
+      sessionExpiryInterval: 1234,
+      receiveMaximum: 432,
+      maximumPacketSize: 100,
+      topicAliasMaximum: 456,
+      requestResponseInformation: true,
+      requestProblemInformation: true,
+      userProperties: {
+        test: 'test'
+      },
+      authenticationMethod: 'test',
+      authenticationData: Buffer.from([1, 2, 3, 4])
+    },
+    clientId: 'test'
+  })
+
+  const parser = mqtt.parser()
+
+  parser.on('packet', packet => {
+    t.equal(packet.cmd, 'connect')
+    t.equal(Object.getPrototypeOf(packet.properties.userProperties), null)
+    t.equal(Object.getPrototypeOf(packet.will.properties.userProperties), null)
+  })
+
+  parser.parse(packet)
+})
 
 test('stops parsing after first error', t => {
   t.plan(4)
@@ -2050,74 +2331,17 @@ test('stops parsing after first error', t => {
   ]))
 })
 
-testWriteToStreamError('Invalid protocolId', {
-  cmd: 'connect',
-  protocolId: {}
-})
-
-testWriteToStreamError('Invalid topic', {
-  cmd: 'publish',
-  topic: {}
-})
-
-testWriteToStreamError('Invalid messageId', {
-  cmd: 'subscribe',
-  mid: {}
-})
-
-test('userProperties null prototype', t => {
-  t.plan(3)
-
-  const packet = mqtt.generate({
-    cmd: 'connect',
-    retain: false,
-    qos: 0,
-    dup: false,
-    length: 125,
-    protocolId: 'MQTT',
-    protocolVersion: 5,
-    will: {
-      retain: true,
-      qos: 2,
-      properties: {
-        willDelayInterval: 1234,
-        payloadFormatIndicator: false,
-        messageExpiryInterval: 4321,
-        contentType: 'test',
-        responseTopic: 'topic',
-        correlationData: Buffer.from([1, 2, 3, 4]),
-        userProperties: {
-          test: 'test'
-        }
-      },
-      topic: 'topic',
-      payload: Buffer.from([4, 3, 2, 1])
-    },
-    clean: true,
-    keepalive: 30,
-    properties: {
-      sessionExpiryInterval: 1234,
-      receiveMaximum: 432,
-      maximumPacketSize: 100,
-      topicAliasMaximum: 456,
-      requestResponseInformation: true,
-      requestProblemInformation: true,
-      userProperties: {
-        test: 'test'
-      },
-      authenticationMethod: 'test',
-      authenticationData: Buffer.from([1, 2, 3, 4])
-    },
-    clientId: 'test'
-  })
-
-  const parser = mqtt.parser()
-
-  parser.on('packet', packet => {
-    t.equal(packet.cmd, 'connect')
-    t.equal(Object.getPrototypeOf(packet.properties.userProperties), null)
-    t.equal(Object.getPrototypeOf(packet.will.properties.userProperties), null)
-  })
-
-  parser.parse(packet)
-})
+testGenerateErrorMultipleCmds([
+  'publish',
+  'puback',
+  'pubrec',
+  'pubrel',
+  'subscribe',
+  'suback',
+  'unsubscribe',
+  'unsuback'
+], 'Invalid messageId', {
+  qos: 1, // required for publish
+  topic: 'test', // required for publish
+  messageId: 'a'
+}, {})
