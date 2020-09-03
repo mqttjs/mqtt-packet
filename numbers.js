@@ -1,6 +1,13 @@
 const max = 65536
 const cache = {}
 
+// in node 6 Buffer.subarray returns a Uint8Array instead of a Buffer
+// later versions return a Buffer
+// alternative is Buffer.slice but that creates a new buffer
+// creating new buffers takes time
+// SubOk is only false on node < 8
+const SubOk = Buffer.isBuffer(Buffer.from([1, 2]).subarray(0, 1))
+
 function generateBuffer (i) {
   const buffer = Buffer.allocUnsafe(2)
   buffer.writeUInt8(i >> 8, 0)
@@ -33,7 +40,7 @@ function genBufVariableByteInt (num) {
     pos = 0
   }
 
-  return buffer.subarray(0, pos)
+  return SubOk ? buffer.subarray(0, pos) : buffer.slice(0, pos)
 }
 
 function generate4ByteBuffer (num) {
