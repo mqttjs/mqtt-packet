@@ -15,25 +15,11 @@ function generateCache () {
   }
 }
 
-/**
- * calcVariableByteIntLength - calculate the variable byte integer
- * length field
- *
- * @api private
- */
-function calcVariableByteIntLength (length) {
-  if (length >= 0 && length < 128) return 1
-  else if (length >= 128 && length < 16384) return 2
-  else if (length >= 16384 && length < 2097152) return 3
-  else if (length >= 2097152 && length < 268435456) return 4
-  else return 0
-}
-
 function genBufVariableByteInt (num) {
+  const maxLength = 4 // max 4 bytes
   let digit = 0
   let pos = 0
-  const length = calcVariableByteIntLength(num)
-  const buffer = Buffer.allocUnsafe(length)
+  const buffer = Buffer.allocUnsafe(maxLength)
 
   do {
     digit = num % 128 | 0
@@ -41,12 +27,13 @@ function genBufVariableByteInt (num) {
     if (num > 0) digit = digit | 0x80
 
     buffer.writeUInt8(digit, pos++)
-  } while (num > 0)
+  } while (num > 0 && pos < maxLength)
 
-  return {
-    data: buffer,
-    length
+  if (num > 0) {
+    pos = 0
   }
+
+  return buffer.subarray(0, pos)
 }
 
 function generate4ByteBuffer (num) {
