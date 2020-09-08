@@ -783,7 +783,7 @@ function writeVarByteInt (stream, num) {
   let buffer = varByteIntCache[num]
 
   if (!buffer) {
-    buffer = genBufVariableByteInt(num).data
+    buffer = genBufVariableByteInt(num)
     if (num < 16384) varByteIntCache[num] = buffer
   }
   debug('writeVarByteInt: writing to stream: %o', buffer)
@@ -922,11 +922,12 @@ function getProperties (stream, properties) {
         break
       }
       case 'var': {
-        if (typeof value !== 'number' || value < 0 || value > 0xffffffff) {
+        // var byte integer is max 24 bits packed in 32 bits
+        if (typeof value !== 'number' || value < 0 || value > 0x0fffffff) {
           stream.emit('error', new Error(`Invalid ${name}: ${value}`))
           return false
         }
-        length += 1 + genBufVariableByteInt(value).length
+        length += 1 + Buffer.byteLength(genBufVariableByteInt(value))
         break
       }
       case 'string': {
@@ -983,7 +984,7 @@ function getProperties (stream, properties) {
       propertiesLength += propLength
     }
   }
-  const propertiesLengthLength = genBufVariableByteInt(propertiesLength).length
+  const propertiesLengthLength = Buffer.byteLength(genBufVariableByteInt(propertiesLength))
 
   return {
     length: propertiesLengthLength + propertiesLength,

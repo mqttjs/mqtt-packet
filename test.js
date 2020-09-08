@@ -205,6 +205,9 @@ test('disabled numbers cache', t => {
 testGenerateError('Unknown command', {})
 
 testParseError('Not supported', Buffer.from([0, 1, 0]), {})
+testParseError('Invalid length', Buffer.from(
+  [16, 255, 255, 255, 255]
+), {})
 
 testParseGenerate('minimal connect', {
   cmd: 'connect',
@@ -1246,6 +1249,21 @@ test('splitted publish parse', t => {
     116, 101, 115, 116 // Payload (test)
   ])), 0, 'remaining bytes')
 })
+
+testGenerateError('Invalid subscriptionIdentifier: 268435456', {
+  cmd: 'publish',
+  retain: true,
+  qos: 2,
+  dup: true,
+  length: 27,
+  topic: 'test',
+  payload: Buffer.from('test'),
+  messageId: 10,
+  properties: {
+    payloadFormatIndicator: false,
+    subscriptionIdentifier: 268435456
+  }
+}, { protocolVersion: 5 }, 'MQTT 5.0 var byte integer >24 bits throws error')
 
 testParseGenerate('puback', {
   cmd: 'puback',

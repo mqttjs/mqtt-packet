@@ -37,8 +37,8 @@ protocol.QOS_SHIFT = 1
 protocol.RETAIN_MASK = 0x01
 
 /* Length */
-protocol.LENGTH_MASK = 0x7F
-protocol.LENGTH_FIN_MASK = 0x80
+protocol.VARBYTEINT_MASK = 0x7F
+protocol.VARBYTEINT_FIN_MASK = 0x80
 
 /* Connack */
 protocol.SESSIONPRESENT_MASK = 0x01

@@ -72,6 +72,8 @@ class Parser extends EventEmitter {
     if (result) {
       this.packet.length = result.value
       this._list.consume(result.bytes)
+    } else {
+      this._emitError(new Error('Invalid length'))
     }
     debug('_parseLength %d', result.value)
     return !!result
@@ -542,19 +544,21 @@ class Parser extends EventEmitter {
     debug('_parseVarByteNum')
     let bytes = 0
     let mul = 1
-    let length = 0
-    let result = true
+    let value = 0
+    let result = false
     let current
     const padding = this._pos ? this._pos : 0
 
     while (bytes < 5) {
       current = this._list.readUInt8(padding + bytes++)
-      length += mul * (current & constants.LENGTH_MASK)
+      value += mul * (current & constants.VARBYTEINT_MASK)
       mul *= 0x80
 
-      if ((current & constants.LENGTH_FIN_MASK) === 0) break
+      if ((current & constants.VARBYTEINT_FIN_MASK) === 0) {
+        result = true
+        break
+      }
       if (this._list.length <= bytes) {
-        result = false
         break
       }
     }
@@ -566,8 +570,8 @@ class Parser extends EventEmitter {
     result = result
       ? fullInfoFlag ? {
         bytes,
-        value: length
-      } : length
+        value
+      } : value
       : false
 
     debug('_parseVarByteNum: result: %o', result)
