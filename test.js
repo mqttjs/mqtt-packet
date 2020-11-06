@@ -1283,6 +1283,16 @@ test('splitted publish parse', t => {
   ])), 0, 'remaining bytes')
 })
 
+testGenerateError('Invalid length: 268435456', {
+  cmd: 'publish',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: (268435455 + 1),
+  topic: 'test',
+  payload: Buffer.alloc(268435455 + 1 - 6)
+}, {}, 'Length var byte integer over max allowed value throws error')
+
 testGenerateError('Invalid subscriptionIdentifier: 268435456', {
   cmd: 'publish',
   retain: true,
