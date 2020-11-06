@@ -205,8 +205,13 @@ test('disabled numbers cache', t => {
 testGenerateError('Unknown command', {})
 
 testParseError('Not supported', Buffer.from([0, 1, 0]), {})
+
+// Length header field
 testParseError('Invalid length', Buffer.from(
   [16, 255, 255, 255, 255]
+), {})
+testParseError('Invalid length', Buffer.from(
+  [16, 255, 255, 255, 128]
 ), {})
 
 testParseGenerate('minimal connect', {
@@ -1134,6 +1139,31 @@ testParseGenerate('publish MQTT 5 properties with 0-4 byte varbyte', {
   116, 101, 115, 116 // Payload (test)
 ]), { protocolVersion: 5 })
 
+testParseGenerate('publish MQTT 5 properties with max value varbyte', {
+  cmd: 'publish',
+  retain: true,
+  qos: 2,
+  dup: true,
+  length: 22,
+  topic: 'test',
+  payload: Buffer.from('test'),
+  messageId: 10,
+  properties: {
+    payloadFormatIndicator: false,
+    subscriptionIdentifier: [1, 268435455]
+  }
+}, Buffer.from([
+  61, 22, // Header
+  0, 4, // Topic length
+  116, 101, 115, 116, // Topic (test)
+  0, 10, // Message ID
+  9, // properties length
+  1, 0, // payloadFormatIndicator
+  11, 1, // subscriptionIdentifier
+  11, 255, 255, 255, 127, // subscriptionIdentifier (max value)
+  116, 101, 115, 116 // Payload (test)
+]), { protocolVersion: 5 })
+
 ; (() => {
   const buffer = Buffer.alloc(2048)
   testParseGenerate('2KB publish packet', {
@@ -1149,18 +1179,21 @@ testParseGenerate('publish MQTT 5 properties with 0-4 byte varbyte', {
     0, 4, // Topic length
     116, 101, 115, 116 // Topic (test)
   ]), buffer]))
-})(); (() => {
-  const buffer = Buffer.alloc(2 * 1024 * 1024)
-  testParseGenerate('2MB publish packet', {
+})()
+
+; (() => {
+  const maxLength = 268435455
+  const buffer = Buffer.alloc(maxLength - 6)
+  testParseGenerate('Max payload publish packet', {
     cmd: 'publish',
     retain: false,
     qos: 0,
     dup: false,
-    length: 6 + 2 * 1024 * 1024,
+    length: maxLength,
     topic: 'test',
     payload: buffer
   }, Buffer.concat([Buffer.from([
-    48, 134, 128, 128, 1, // Header
+    48, 255, 255, 255, 127, // Header
     0, 4, // Topic length
     116, 101, 115, 116 // Topic (test)
   ]), buffer]))
