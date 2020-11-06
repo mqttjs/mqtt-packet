@@ -1283,6 +1283,75 @@ test('splitted publish parse', t => {
   ])), 0, 'remaining bytes')
 })
 
+test('split publish longer', t => {
+  t.plan(3)
+
+  const length = 255
+  const topic = 'test'
+  // Minus two bytes for the topic length specifier
+  const payloadLength = length - topic.length - 2
+
+  const parser = mqtt.parser()
+  const expected = {
+    cmd: 'publish',
+    retain: false,
+    qos: 0,
+    dup: false,
+    length: length,
+    topic: topic,
+    payload: Buffer.from('a'.repeat(payloadLength))
+  }
+
+  parser.on('packet', packet => {
+    t.deepLooseEqual(packet, expected, 'expected packet')
+  })
+
+  t.equal(parser.parse(Buffer.from([
+    48, 255, 1, // Header
+    0, topic.length, // Topic length
+    116, 101, 115, 116 // Topic (test)
+  ])), 6, 'remaining bytes')
+
+  t.equal(parser.parse(Buffer.from(Array(payloadLength).fill(97))),
+    0, 'remaining bytes')
+})
+
+test('split length parse', t => {
+  t.plan(4)
+
+  const length = 255
+  const topic = 'test'
+  const payloadLength = length - topic.length - 2
+
+  const parser = mqtt.parser()
+  const expected = {
+    cmd: 'publish',
+    retain: false,
+    qos: 0,
+    dup: false,
+    length: length,
+    topic: topic,
+    payload: Buffer.from('a'.repeat(payloadLength))
+  }
+
+  parser.on('packet', packet => {
+    t.deepLooseEqual(packet, expected, 'expected packet')
+  })
+
+  t.equal(parser.parse(Buffer.from([
+    48, 255 // Header (partial length)
+  ])), 1, 'remaining bytes')
+
+  t.equal(parser.parse(Buffer.from([
+    1, // Rest of header length
+    0, topic.length, // Topic length
+    116, 101, 115, 116 // Topic (test)
+  ])), 6, 'remaining bytes')
+
+  t.equal(parser.parse(Buffer.from(Array(payloadLength).fill(97))),
+    0, 'remaining bytes')
+})
+
 testGenerateError('Invalid length: 268435456', {
   cmd: 'publish',
   retain: false,
