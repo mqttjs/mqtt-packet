@@ -1,3 +1,5 @@
+const util = require('util')
+
 const test = require('tape')
 const mqtt = require('./')
 const WS = require('readable-stream').Writable
@@ -32,7 +34,24 @@ function testParseGenerate (name, object, buffer, opts) {
   })
 
   test(`${name} generate`, t => {
-    t.equal(mqtt.generate(object, opts).toString('hex'), buffer.toString('hex'))
+    // For really large buffers, the expanded hex string can be so long as to
+    // generate an error in nodejs 14.x, so only do the test with extra output
+    // for relatively small buffers.
+    const bigLength = 10000
+    const generatedBuffer = mqtt.generate(object, opts)
+    if (generatedBuffer.length < bigLength && buffer.length < bigLength) {
+      t.equal(generatedBuffer.toString('hex'), buffer.toString('hex'))
+    } else {
+      const bufferOkay = generatedBuffer.equals(buffer)
+      if (bufferOkay) {
+        t.pass()
+      } else {
+        // Output abbreviated representations of the buffers.
+        t.comment('Expected:\n' + util.inspect(buffer))
+        t.comment('Got:\n' + util.inspect(generatedBuffer))
+        t.fail('Large buffers not equal')
+      }
+    }
     t.end()
   })
 
