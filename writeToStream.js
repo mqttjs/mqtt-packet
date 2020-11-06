@@ -780,6 +780,11 @@ function auth (packet, stream, opts) {
 
 const varByteIntCache = {}
 function writeVarByteInt (stream, num) {
+  if (num > protocol.VARBYTEINT_MAX) {
+    stream.emit('error', new Error(`Invalid variable byte integer: ${num}`))
+    return false
+  }
+
   let buffer = varByteIntCache[num]
 
   if (!buffer) {
@@ -787,7 +792,7 @@ function writeVarByteInt (stream, num) {
     if (num < 16384) varByteIntCache[num] = buffer
   }
   debug('writeVarByteInt: writing to stream: %o', buffer)
-  stream.write(buffer)
+  return stream.write(buffer)
 }
 
 /**

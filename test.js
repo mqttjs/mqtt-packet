@@ -207,10 +207,10 @@ testGenerateError('Unknown command', {})
 testParseError('Not supported', Buffer.from([0, 1, 0]), {})
 
 // Length header field
-testParseError('Invalid length', Buffer.from(
+testParseError('Invalid variable byte integer', Buffer.from(
   [16, 255, 255, 255, 255]
 ), {})
-testParseError('Invalid length', Buffer.from(
+testParseError('Invalid variable byte integer', Buffer.from(
   [16, 255, 255, 255, 128]
 ), {})
 
@@ -1352,7 +1352,7 @@ test('split length parse', t => {
     0, 'remaining bytes')
 })
 
-testGenerateError('Invalid length: 268435456', {
+testGenerateError('Invalid variable byte integer: 268435456', {
   cmd: 'publish',
   retain: false,
   qos: 0,
