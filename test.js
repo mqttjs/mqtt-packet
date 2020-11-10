@@ -232,6 +232,18 @@ testParseError('Invalid variable byte integer', Buffer.from(
 testParseError('Invalid variable byte integer', Buffer.from(
   [16, 255, 255, 255, 128]
 ), {})
+testParseError('Invalid variable byte integer', Buffer.from(
+  [16, 255, 255, 255, 255, 1]
+), {})
+testParseError('Invalid variable byte integer', Buffer.from(
+  [16, 255, 255, 255, 255, 127]
+), {})
+testParseError('Invalid variable byte integer', Buffer.from(
+  [16, 255, 255, 255, 255, 128]
+), {})
+testParseError('Invalid variable byte integer', Buffer.from(
+  [16, 255, 255, 255, 255, 255, 1]
+), {})
 
 testParseGenerate('minimal connect', {
   cmd: 'connect',
