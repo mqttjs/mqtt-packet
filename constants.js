@@ -39,6 +39,7 @@ protocol.RETAIN_MASK = 0x01
 /* Length */
 protocol.VARBYTEINT_MASK = 0x7F
 protocol.VARBYTEINT_FIN_MASK = 0x80
+protocol.VARBYTEINT_MAX = 268435455
 
 /* Connack */
 protocol.SESSIONPRESENT_MASK = 0x01
