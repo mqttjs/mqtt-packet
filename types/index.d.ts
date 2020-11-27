@@ -223,7 +223,8 @@ export declare type Packet = IConnectPacket |
   IPingreqPacket |
   IPingrespPacket |
   IDisconnectPacket |
-  IPubrecPacket
+  IPubrecPacket |
+  IAuthPacket
 
 export interface Parser extends EventEmitter {
   on(event: 'packet', callback: (packet: Packet) => void): this
