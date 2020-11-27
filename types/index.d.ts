@@ -3,7 +3,8 @@ import WritableStream = NodeJS.WritableStream
 
 export declare type QoS = 0 | 1 | 2
 
-export declare type PacketCmd = 'connack' |
+export declare type PacketCmd = 'auth' |
+  'connack' |
   'connect' |
   'disconnect' |
   'pingreq' |
@@ -22,6 +23,17 @@ export interface IPacket {
   cmd: PacketCmd
   messageId?: number
   length?: number
+}
+
+export interface IAuthPacket extends IPacket {
+  cmd: 'auth'
+  reasonCode: number,
+  properties?: {
+    authenticationMethod?: string,
+    authenticationData?: Buffer,
+    reasonString?: string,
+    userProperties?: Object,
+  }
 }
 
 export interface IConnectPacket extends IPacket {
