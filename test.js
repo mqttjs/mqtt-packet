@@ -1913,7 +1913,7 @@ testParseGenerate('disconnect MQTT 5 with no properties', {
 }, Buffer.from([
   224, 1, // Header
   0 // reason code
-]), {protocolVersion: 5})
+]), { protocolVersion: 5 })
 
 testParseGenerate('auth MQTT 5', {
   cmd: 'auth',
