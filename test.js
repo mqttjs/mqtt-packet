@@ -158,7 +158,12 @@ function testGenerateErrorMultipleCmds (cmds, expected, fixture, opts) {
   )
 }
 
-function testParseGenerateDefaults (name, object, buffer, opts) {
+function testParseGenerateDefaults (name, object, buffer, generated, opts) {
+  testParseOnly(`${name} parse`, generated, buffer, opts)
+  testGenerateOnly(`${name} generate`, object, buffer, opts)
+}
+
+function testParseAndGenerate (name, object, buffer, opts) {
   testParseOnly(`${name} parse`, object, buffer, opts)
   testGenerateOnly(`${name} generate`, object, buffer, opts)
 }
@@ -516,6 +521,13 @@ testParseGenerate('no clientId with 3.1.1', {
 
 testParseGenerateDefaults('default connect', {
   cmd: 'connect',
+  clientId: 'test'
+}, Buffer.from([
+  16, 16, 0, 4, 77, 81, 84,
+  84, 4, 2, 0, 0,
+  0, 4, 116, 101, 115, 116
+]), {
+  cmd: 'connect',
   retain: false,
   qos: 0,
   dup: false,
@@ -527,13 +539,9 @@ testParseGenerateDefaults('default connect', {
   clean: true,
   keepalive: 0,
   clientId: 'test'
-}, Buffer.from([
-  16, 16, 0, 4, 77, 81, 84,
-  84, 4, 2, 0, 0,
-  0, 4, 116, 101, 115, 116
-]))
+})
 
-testParseGenerateDefaults('Version 4 CONACK', {
+testParseAndGenerate('Version 4 CONACK', {
   cmd: 'connack',
   retain: false,
   qos: 0,
@@ -548,7 +556,7 @@ testParseGenerateDefaults('Version 4 CONACK', {
   0, 1 // Variable Header (Session not present, Connection Refused - unacceptable protocol version)
 ]), {}) // Default protocolVersion (4)
 
-testParseGenerateDefaults('Version 5 CONACK', {
+testParseAndGenerate('Version 5 CONACK', {
   cmd: 'connack',
   retain: false,
   qos: 0,
