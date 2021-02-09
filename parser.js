@@ -244,12 +244,17 @@ class Parser extends EventEmitter {
     debug('_parseConnack')
     const packet = this.packet
 
-    if (this._list.length < 2) return null
-
+    if (this._list.length < 1) return null
     packet.sessionPresent = !!(this._list.readUInt8(this._pos++) & constants.SESSIONPRESENT_MASK)
+
     if (this.settings.protocolVersion === 5) {
-      packet.reasonCode = this._list.readUInt8(this._pos++)
+      if (this._list.length >= 2) {
+        packet.reasonCode = this._list.readUInt8(this._pos++)
+      } else {
+        packet.reasonCode = 0
+      }
     } else {
+      if (this._list.length < 2) return null
       packet.returnCode = this._list.readUInt8(this._pos++)
     }
 
@@ -419,6 +424,8 @@ class Parser extends EventEmitter {
         // response code
         packet.reasonCode = this._parseByte()
         debug('_parseConfirmation: packet.reasonCode `%d`', packet.reasonCode)
+      } else {
+        packet.reasonCode = 0
       }
 
       if (packet.length > 3) {
@@ -440,7 +447,11 @@ class Parser extends EventEmitter {
 
     if (this.settings.protocolVersion === 5) {
       // response code
-      packet.reasonCode = this._parseByte()
+      if (this._list.length > 0) {
+        packet.reasonCode = this._parseByte()
+      } else {
+        packet.reasonCode = 0
+      }
       // properies mqtt 5
       const properties = this._parseProperties()
       if (Object.getOwnPropertyNames(properties).length) {
