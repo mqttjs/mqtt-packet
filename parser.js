@@ -548,7 +548,7 @@ class Parser extends EventEmitter {
     let current
     const padding = this._pos ? this._pos : 0
 
-    while (bytes < maxBytes) {
+    while (bytes < maxBytes && (padding + bytes) < this._list.length) {
       current = this._list.readUInt8(padding + bytes++)
       value += mul * (current & constants.VARBYTEINT_MASK)
       mul *= 0x80

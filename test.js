@@ -97,6 +97,26 @@ function testGenerateOnly (name, object, buffer, opts) {
   })
 }
 
+function testParseOnly (name, object, buffer, opts) {
+  test(name, t => {
+    const parser = mqtt.parser(opts)
+    // const expected = object
+    // const fixture = buffer
+
+    t.plan(2 + Object.keys(object).length)
+
+    parser.on('packet', packet => {
+      t.equal(Object.keys(object).length, Object.keys(packet).length, 'key count')
+      Object.keys(object).forEach(key => {
+        t.deepEqual(packet[key], object[key], `expected packet property ${key}`)
+      })
+    })
+
+    t.equal(parser.parse(buffer), 0, 'remaining bytes')
+    t.end()
+  })
+}
+
 function testParseError (expected, fixture, opts) {
   test(expected, t => {
     t.plan(1)
@@ -139,27 +159,8 @@ function testGenerateErrorMultipleCmds (cmds, expected, fixture, opts) {
 }
 
 function testParseGenerateDefaults (name, object, buffer, opts) {
-  test(`${name} parse`, t => {
-    const parser = mqtt.parser(opts)
-    const expected = object
-    const fixture = buffer
-
-    t.plan(1 + Object.keys(expected).length)
-
-    parser.on('packet', packet => {
-      Object.keys(expected).forEach(key => {
-        t.deepEqual(packet[key], expected[key], `expected packet property ${key}`)
-      })
-    })
-
-    t.equal(parser.parse(fixture), 0, 'remaining bytes')
-    t.end()
-  })
-
-  test(`${name} generate`, t => {
-    t.equal(mqtt.generate(object).toString('hex'), buffer.toString('hex'))
-    t.end()
-  })
+  testParseOnly(`${name} parse`, object, buffer, opts)
+  testGenerateOnly(`${name} generate`, object, buffer, opts)
 }
 
 function testWriteToStreamError (expected, fixture) {
@@ -515,12 +516,68 @@ testParseGenerate('no clientId with 3.1.1', {
 
 testParseGenerateDefaults('default connect', {
   cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 16,
+  topic: null,
+  payload: null,
+  protocolId: 'MQTT',
+  protocolVersion: 4,
+  clean: true,
+  keepalive: 0,
   clientId: 'test'
 }, Buffer.from([
   16, 16, 0, 4, 77, 81, 84,
   84, 4, 2, 0, 0,
   0, 4, 116, 101, 115, 116
 ]))
+
+testParseGenerateDefaults('Version 4 CONACK', {
+  cmd: 'connack',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  topic: null,
+  payload: null,
+  sessionPresent: false,
+  returnCode: 1
+}, Buffer.from([
+  32, 2, // Fixed Header (CONNACK, Remaining Length)
+  0, 1 // Variable Header (Session not present, Connection Refused - unacceptable protocol version)
+]), {}) // Default protocolVersion (4)
+
+testParseGenerateDefaults('Version 5 CONACK', {
+  cmd: 'connack',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 3,
+  topic: null,
+  payload: null,
+  sessionPresent: false,
+  reasonCode: 140
+}, Buffer.from([
+  32, 3, // Fixed Header (CONNACK, Remaining Length)
+  0, 140, // Variable Header (Session not present, Bad authentication method)
+  0 // Property Length Zero
+]), { protocolVersion: 5 })
+
+testParseOnly('Version 4 CONACK in Version 5 mode', {
+  cmd: 'connack',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  topic: null,
+  payload: null,
+  sessionPresent: false,
+  reasonCode: 1 // a version 4 return code stored in the version 5 reasonCode because this client is in version 5
+}, Buffer.from([
+  32, 2, // Fixed Header (CONNACK, Remaining Length)
+  0, 1 // Variable Header (Session not present, Connection Refused - unacceptable protocol version)
+]), { protocolVersion: 5 }) // message is in version 4 format, but this client is in version 5 mode
 
 testParseGenerate('empty will payload', {
   cmd: 'connect',
@@ -1901,6 +1958,19 @@ testParseGenerate('disconnect MQTT 5', {
   31, 0, 4, 116, 101, 115, 116, // reasonString
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116, // userProperties
   28, 0, 4, 116, 101, 115, 116// serverReference
+]), { protocolVersion: 5 })
+
+testParseGenerate('disconnect MQTT 5 with no properties', {
+  cmd: 'disconnect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  reasonCode: 0
+}, Buffer.from([
+  224, 2, // Fixed Header (DISCONNECT, Remaining Length)
+  0, // Reason Code (Normal Disconnection)
+  0 // Property Length (0 => No Properties)
 ]), { protocolVersion: 5 })
 
 testParseGenerate('auth MQTT 5', {
