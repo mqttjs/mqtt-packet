@@ -603,7 +603,7 @@ testParseOnly('Version 5 PUBACK test 1', {
 ]), { protocolVersion: 5 }
 )
 
-testParseGenerateDefaults('Version 5 PUBACK test 2', {
+testParseAndGenerate('Version 5 PUBACK test 2', {
   cmd: 'puback',
   messageId: 42,
   retain: false,
@@ -668,7 +668,7 @@ testParseOnly('Version 5 CONNACK test 2', {
 ]), { protocolVersion: 5 }
 )
 
-testParseGenerateDefaults('Version 5 CONNACK test 3', {
+testParseAndGenerate('Version 5 CONNACK test 3', {
   cmd: 'connack',
   retain: false,
   qos: 0,
@@ -714,7 +714,7 @@ testParseOnly('Version 5 DISCONNECT test 2', {
 ]), { protocolVersion: 5 }
 )
 
-testParseGenerateDefaults('Version 5 DISCONNECT test 3', {
+testParseAndGenerate('Version 5 DISCONNECT test 3', {
   cmd: 'disconnect',
   retain: false,
   qos: 0,
