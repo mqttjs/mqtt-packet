@@ -19,7 +19,7 @@ export declare type PacketCmd = 'auth' |
   'unsuback' |
   'unsubscribe'
 
-export declare type UserProperties = {[index: string]: string}
+export declare type UserProperties = {[index: string]: string | string[]}
 
 export interface IPacket {
   cmd: PacketCmd
