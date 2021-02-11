@@ -19,6 +19,8 @@ export declare type PacketCmd = 'auth' |
   'unsuback' |
   'unsubscribe'
 
+export declare type UserProperties = {[index: string]: string}
+
 export interface IPacket {
   cmd: PacketCmd
   messageId?: number
@@ -32,7 +34,7 @@ export interface IAuthPacket extends IPacket {
     authenticationMethod?: string,
     authenticationData?: Buffer,
     reasonString?: string,
-    userProperties?: Object,
+    userProperties?: UserProperties,
   }
 }
 
@@ -57,7 +59,7 @@ export interface IConnectPacket extends IPacket {
       contentType?: string,
       responseTopic?: string,
       correlationData?: Buffer,
-      userProperties?: Object
+      userProperties?: UserProperties
     }
   }
   properties?: {
@@ -67,7 +69,7 @@ export interface IConnectPacket extends IPacket {
     topicAliasMaximum?: number,
     requestResponseInformation?: boolean,
     requestProblemInformation?: boolean,
-    userProperties?: Object,
+    userProperties?: UserProperties,
     authenticationMethod?: string,
     authenticationData?: Buffer
   }
@@ -86,7 +88,7 @@ export interface IPublishPacket extends IPacket {
     topicAlias?: number,
     responseTopic?: string,
     correlationData?: Buffer,
-    userProperties?: Object,
+    userProperties?: UserProperties,
     subscriptionIdentifier?: number,
     contentType?: string
   }
@@ -105,7 +107,7 @@ export interface IConnackPacket extends IPacket {
     assignedClientIdentifier?: string,
     topicAliasMaximum?: number,
     reasonString?: string,
-    userProperties?: Object,
+    userProperties?: UserProperties,
     wildcardSubscriptionAvailable?: boolean,
     subscriptionIdentifiersAvailable?: boolean,
     sharedSubscriptionAvailable?: boolean,
@@ -130,7 +132,7 @@ export interface ISubscribePacket extends IPacket {
   subscriptions: ISubscription[],
   properties?: {
     reasonString?: string,
-    userProperties?: Object
+    userProperties?: UserProperties
   }
 }
 
@@ -138,7 +140,7 @@ export interface ISubackPacket extends IPacket {
   cmd: 'suback',
   properties?: {
     reasonString?: string,
-    userProperties?: Object
+    userProperties?: UserProperties
   },
   granted: number[] | Object[]
 }
@@ -147,7 +149,7 @@ export interface IUnsubscribePacket extends IPacket {
   cmd: 'unsubscribe',
   properties?: {
     reasonString?: string,
-    userProperties?: Object
+    userProperties?: UserProperties
   },
   unsubscriptions: string[]
 }
@@ -156,7 +158,7 @@ export interface IUnsubackPacket extends IPacket {
   cmd: 'unsuback',
   properties?: {
     reasonString?: string,
-    userProperties?: Object
+    userProperties?: UserProperties
   }
 }
 
@@ -164,7 +166,7 @@ export interface IPubackPacket extends IPacket {
   cmd: 'puback',
   properties?: {
     reasonString?: string,
-    userProperties?: Object
+    userProperties?: UserProperties
   }
 }
 
@@ -172,7 +174,7 @@ export interface IPubcompPacket extends IPacket {
   cmd: 'pubcomp',
   properties?: {
     reasonString?: string,
-    userProperties?: Object
+    userProperties?: UserProperties
   }
 }
 
@@ -180,7 +182,7 @@ export interface IPubrelPacket extends IPacket {
   cmd: 'pubrel',
   properties?: {
     reasonString?: string,
-    userProperties?: Object
+    userProperties?: UserProperties
   }
 }
 
@@ -188,7 +190,7 @@ export interface IPubrecPacket extends IPacket {
   cmd: 'pubrec',
   properties?: {
     reasonString?: string,
-    userProperties?: Object
+    userProperties?: UserProperties
   }
 }
 
@@ -205,7 +207,7 @@ export interface IDisconnectPacket extends IPacket {
     properties?: {
       sessionExpiryInterval?: number,
       reasonString?: string,
-      userProperties?: Object,
+      userProperties?: UserProperties,
       serverReference?: string
     }
 }
