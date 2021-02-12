@@ -587,6 +587,149 @@ testParseOnly('Version 4 CONACK in Version 5 mode', {
   0, 1 // Variable Header (Session not present, Connection Refused - unacceptable protocol version)
 ]), { protocolVersion: 5 }) // message is in version 4 format, but this client is in version 5 mode
 
+testParseOnly('Version 5 PUBACK test 1', {
+  cmd: 'puback',
+  messageId: 42,
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  topic: null,
+  payload: null,
+  reasonCode: 0
+}, Buffer.from([
+  64, 2, // Fixed Header (PUBACK, Remaining Length)
+  0, 42 // Variable Header (2 Bytes: Packet Identifier 42, Implied Reason code: Success, Implied no properties)
+]), { protocolVersion: 5 }
+)
+
+testParseAndGenerate('Version 5 PUBACK test 2', {
+  cmd: 'puback',
+  messageId: 42,
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 3,
+  topic: null,
+  payload: null,
+  reasonCode: 0
+}, Buffer.from([
+  64, 3, // Fixed Header (PUBACK, Remaining Length)
+  0, 42, 0 // Variable Header (2 Bytes: Packet Identifier 42, Reason code: 0 Success, Implied no properties)
+]), { protocolVersion: 5 }
+)
+
+testParseOnly('Version 5 PUBACK test 3', {
+  cmd: 'puback',
+  messageId: 42,
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 4,
+  topic: null,
+  payload: null,
+  reasonCode: 0
+}, Buffer.from([
+  64, 4, // Fixed Header (PUBACK, Remaining Length)
+  0, 42, 0, // Variable Header (2 Bytes: Packet Identifier 42, Reason code: 0 Success)
+  0 // no properties
+]), { protocolVersion: 5 }
+)
+
+testParseOnly('Version 5 CONNACK test 1', {
+  cmd: 'connack',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 1,
+  topic: null,
+  payload: null,
+  sessionPresent: true,
+  reasonCode: 0
+}, Buffer.from([
+  32, 1, // Fixed Header (CONNACK, Remaining Length)
+  1 // Variable Header (Session Present: 1 => true, Implied Reason code: Success, Implied no properties)
+]), { protocolVersion: 5 }
+)
+
+testParseOnly('Version 5 CONNACK test 2', {
+  cmd: 'connack',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  topic: null,
+  payload: null,
+  sessionPresent: true,
+  reasonCode: 0
+}, Buffer.from([
+  32, 2, // Fixed Header (CONNACK, Remaining Length)
+  1, 0 // Variable Header (Session Present: 1 => true, Connect Reason code: Success, Implied no properties)
+]), { protocolVersion: 5 }
+)
+
+testParseAndGenerate('Version 5 CONNACK test 3', {
+  cmd: 'connack',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 3,
+  topic: null,
+  payload: null,
+  sessionPresent: true,
+  reasonCode: 0
+}, Buffer.from([
+  32, 3, // Fixed Header (CONNACK, Remaining Length)
+  1, 0, // Variable Header (Session Present: 1 => true, Connect Reason code: Success)
+  0 // no properties
+]), { protocolVersion: 5 }
+)
+
+testParseOnly('Version 5 DISCONNECT test 1', {
+  cmd: 'disconnect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 0,
+  topic: null,
+  payload: null,
+  reasonCode: 0
+}, Buffer.from([
+  224, 0 // Fixed Header (DISCONNECT, Remaining Length), Implied Reason code: Normal Disconnection
+]), { protocolVersion: 5 }
+)
+
+testParseOnly('Version 5 DISCONNECT test 2', {
+  cmd: 'disconnect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 1,
+  topic: null,
+  payload: null,
+  reasonCode: 0
+}, Buffer.from([
+  224, 1, // Fixed Header (DISCONNECT, Remaining Length)
+  0 // reason Code (Normal disconnection)
+]), { protocolVersion: 5 }
+)
+
+testParseAndGenerate('Version 5 DISCONNECT test 3', {
+  cmd: 'disconnect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  topic: null,
+  payload: null,
+  reasonCode: 0
+}, Buffer.from([
+  224, 2, // Fixed Header (DISCONNECT, Remaining Length)
+  0, // reason Code (Normal disconnection)
+  0 // no properties
+]), { protocolVersion: 5 }
+)
+
 testParseGenerate('empty will payload', {
   cmd: 'connect',
   retain: false,
