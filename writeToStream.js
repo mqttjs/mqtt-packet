@@ -110,9 +110,9 @@ function connect (packet, stream, opts) {
     return false
   } else length += 1
 
-  // ClientId might be omitted in 3.1.1, but only if cleanSession is set to 1
+  // ClientId might be omitted in 3.1.1 and 5, but only if cleanSession is set to 1
   if ((typeof clientId === 'string' || Buffer.isBuffer(clientId)) &&
-     (clientId || protocolVersion === 4) && (clientId || clean)) {
+     (clientId || protocolVersion >= 4) && (clientId || clean)) {
     length += clientId.length + 2
   } else {
     if (protocolVersion < 4) {

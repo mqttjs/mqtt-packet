@@ -519,6 +519,37 @@ testParseGenerate('no clientId with 3.1.1', {
   0, 0 // Client ID length
 ]))
 
+testParseGenerateDefaults('no clientId with 5.0', {
+  cmd: 'connect',
+  protocolId: 'MQTT',
+  protocolVersion: 5,
+  clean: true,
+  keepalive: 60,
+  properties:
+    {
+      receiveMaximum: 20
+    },
+  clientId: ''
+}, Buffer.from(
+  [16, 16, 0, 4, 77, 81, 84, 84, 5, 2, 0, 60, 3, 33, 0, 20, 0, 0]
+), {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 16,
+  topic: null,
+  payload: null,
+  protocolId: 'MQTT',
+  protocolVersion: 5,
+  clean: true,
+  keepalive: 60,
+  properties: {
+    receiveMaximum: 20
+  },
+  clientId: ''
+}, { protocolVersion: 5 })
+
 testParseGenerateDefaults('default connect', {
   cmd: 'connect',
   clientId: 'test'
