@@ -113,7 +113,7 @@ function connect (packet, stream, opts) {
   // ClientId might be omitted in 3.1.1 and 5, but only if cleanSession is set to 1
   if ((typeof clientId === 'string' || Buffer.isBuffer(clientId)) &&
      (clientId || protocolVersion >= 4) && (clientId || clean)) {
-    length += clientId.length + 2
+    length += Buffer.byteLength(clientId) + 2
   } else {
     if (protocolVersion < 4) {
       stream.emit('error', new Error('clientId must be supplied before 3.1.1'))

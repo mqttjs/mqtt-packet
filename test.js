@@ -550,6 +550,45 @@ testParseGenerateDefaults('no clientId with 5.0', {
   clientId: ''
 }, { protocolVersion: 5 })
 
+testParseGenerateDefaults('utf-8 clientId with 5.0', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 23,
+  protocolId: 'MQTT',
+  protocolVersion: 4,
+  clean: true,
+  keepalive: 30,
+  clientId: 'Ŧėśt🜄'
+}, Buffer.from([
+  16, 23, // Header
+  0, 4, // Protocol ID length
+  77, 81, 84, 84, // Protocol ID
+  4, // Protocol version
+  2, // Connect flags
+  0, 30, // Keepalive
+  0, 11, // Client ID length
+  197, 166, // Ŧ (UTF-8: 0xc5a6)
+  196, 151, // ė (UTF-8: 0xc497)
+  197, 155, // ś (utf-8: 0xc59b)
+  116, // t (utf-8: 0x74)
+  240, 159, 156, 132 // 🜄 (utf-8: 0xf09f9c84)
+]), {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 23,
+  topic: null,
+  payload: null,
+  protocolId: 'MQTT',
+  protocolVersion: 4,
+  clean: true,
+  keepalive: 30,
+  clientId: 'Ŧėśt🜄'
+}, { protocol: 5 })
+
 testParseGenerateDefaults('default connect', {
   cmd: 'connect',
   clientId: 'test'
