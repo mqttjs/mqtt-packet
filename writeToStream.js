@@ -83,7 +83,7 @@ function uncork (stream) {
 function connect (packet, stream, opts) {
   const settings = packet || {}
   const protocolId = settings.protocolId || 'MQTT'
-  const protocolVersion = settings.protocolVersion || 4
+  let protocolVersion = settings.protocolVersion || 4
   const will = settings.will
   let clean = settings.clean
   const keepalive = settings.keepalive || 0
@@ -217,12 +217,21 @@ function connect (packet, stream, opts) {
 
   // Generate protocol ID
   writeStringOrBuffer(stream, protocolId)
+
+  if (protocolVersion === 3 && settings.bridgeVersion) {
+    protocolVersion = settings.bridgeVersion
+  }
+
   stream.write(
-    protocolVersion === 4
-      ? protocol.VERSION4
-      : protocolVersion === 5
-        ? protocol.VERSION5
-        : protocol.VERSION3
+    protocolVersion === 131
+      ? protocol.VERSION131
+      : protocolVersion === 132
+        ? protocol.VERSION132
+        : protocolVersion === 4
+          ? protocol.VERSION4
+          : protocolVersion === 5
+            ? protocol.VERSION5
+            : protocol.VERSION3
   )
 
   // Connect flags
