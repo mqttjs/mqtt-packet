@@ -158,9 +158,9 @@ class Parser extends EventEmitter {
 
     packet.protocolVersion = this._list.readUInt8(this._pos)
 
-    if (packet.protocolVersion === 131 || packet.protocolVersion === 132) {
-      packet.bridgeVersion = packet.protocolVersion
-      packet.protocolVersion = 3
+    if (packet.protocolVersion >= 128) {
+      packet.bridgeMode = true
+      packet.protocolVersion = packet.protocolVersion - 128
     }
 
     if (packet.protocolVersion !== 3 && packet.protocolVersion !== 4 && packet.protocolVersion !== 5) {
@@ -342,7 +342,7 @@ class Parser extends EventEmitter {
         subscription.nl = nl
         subscription.rap = rap
         subscription.rh = rh
-      } else if (this.settings.bridgeVersion) {
+      } else if (this.settings.bridgeMode) {
         subscription.rh = 0
         subscription.rap = true
         subscription.nl = true

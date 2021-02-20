@@ -218,8 +218,8 @@ function connect (packet, stream, opts) {
   // Generate protocol ID
   writeStringOrBuffer(stream, protocolId)
 
-  if (protocolVersion === 3 && settings.bridgeVersion) {
-    protocolVersion = settings.bridgeVersion
+  if (settings.bridgeMode) {
+    protocolVersion += 128
   }
 
   stream.write(

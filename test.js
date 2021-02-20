@@ -303,7 +303,7 @@ testParseGenerate('connect MQTT bridge 131', {
   length: 18,
   protocolId: 'MQIsdp',
   protocolVersion: 3,
-  bridgeVersion: 131,
+  bridgeMode: true,
   clean: false,
   keepalive: 30,
   clientId: 'test'
@@ -325,8 +325,8 @@ testParseGenerate('connect MQTT bridge 132', {
   dup: false,
   length: 18,
   protocolId: 'MQIsdp',
-  protocolVersion: 3,
-  bridgeVersion: 132,
+  protocolVersion: 4,
+  bridgeMode: true,
   clean: false,
   keepalive: 30,
   clientId: 'test'
