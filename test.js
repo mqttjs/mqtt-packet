@@ -295,6 +295,52 @@ testGenerateOnly('minimal connect with clientId as Buffer', {
   116, 101, 115, 116 // Client ID
 ]))
 
+testParseGenerate('connect MQTT bridge 131', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 18,
+  protocolId: 'MQIsdp',
+  protocolVersion: 3,
+  bridgeMode: true,
+  clean: false,
+  keepalive: 30,
+  clientId: 'test'
+}, Buffer.from([
+  16, 18, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  131, // Protocol version
+  0, // Connect flags
+  0, 30, // Keepalive
+  0, 4, // Client ID length
+  116, 101, 115, 116 // Client ID
+]))
+
+testParseGenerate('connect MQTT bridge 132', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 18,
+  protocolId: 'MQIsdp',
+  protocolVersion: 4,
+  bridgeMode: true,
+  clean: false,
+  keepalive: 30,
+  clientId: 'test'
+}, Buffer.from([
+  16, 18, // Header
+  0, 6, // Protocol ID length
+  77, 81, 73, 115, 100, 112, // Protocol ID
+  132, // Protocol version
+  0, // Connect flags
+  0, 30, // Keepalive
+  0, 4, // Client ID length
+  116, 101, 115, 116 // Client ID
+]))
+
 testParseGenerate('connect MQTT 5', {
   cmd: 'connect',
   retain: false,
