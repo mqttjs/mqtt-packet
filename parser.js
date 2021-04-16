@@ -602,8 +602,11 @@ class Parser extends EventEmitter {
   }
 
   _parseByte () {
-    const result = this._list.readUInt8(this._pos)
-    this._pos++
+    let result
+    if (this._pos < this._list.length) {
+      result = this._list.readUInt8(this._pos)
+      this._pos++
+    }
     debug('_parseByte: result: %o', result)
     return result
   }
@@ -646,6 +649,10 @@ class Parser extends EventEmitter {
     const result = {}
     while (this._pos < end) {
       const type = this._parseByte()
+      if (!type) {
+        this._emitError(new Error('Cannot parse property code type'))
+        return false
+      }
       const name = constants.propertiesCodes[type]
       if (!name) {
         this._emitError(new Error('Unknown property'))

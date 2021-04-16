@@ -572,9 +572,9 @@ testParseGenerateDefaults('no clientId with 5.0', {
   clean: true,
   keepalive: 60,
   properties:
-    {
-      receiveMaximum: 20
-    },
+  {
+    receiveMaximum: 20
+  },
   clientId: ''
 }, Buffer.from(
   [16, 16, 0, 4, 77, 81, 84, 84, 5, 2, 0, 60, 3, 33, 0, 20, 0, 0]
@@ -2689,6 +2689,27 @@ testParseError('Malformed Subscribe Payload', Buffer.from([
   104, 105, 106, 107, 108, 47, 109, 110, 111, // topic filter with length of 9 bytes
   0 // requested QoS
 ]))
+
+test('Cannot parse property code type', t => {
+  const packets = Buffer.from([
+    16, 16, 0, 4, 77, 81, 84, 84, 5, 2, 0, 60, 3, 33, 0, 20, 0, 0, 98, 2, 211, 1, 224, 2, 0, 32
+  ])
+
+  t.plan(3)
+
+  const parser = mqtt.parser()
+
+  parser.on('error', err => {
+    t.equal(err.message, 'Cannot parse property code type', 'expected error message')
+    t.end()
+  })
+
+  parser.on('packet', (packet) => {
+    t.pass('Packet parsed')
+  })
+
+  parser.parse(packets)
+})
 
 testWriteToStreamError('Invalid command', {
   cmd: 'invalid'
