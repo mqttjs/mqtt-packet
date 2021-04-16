@@ -602,8 +602,11 @@ class Parser extends EventEmitter {
   }
 
   _parseByte () {
-    const result = this._list.readUInt8(this._pos)
-    this._pos++
+    let result
+    if (this._pos < this._list.length) {
+      result = this._list.readUInt8(this._pos)
+      this._pos++
+    }
     debug('_parseByte: result: %o', result)
     return result
   }
