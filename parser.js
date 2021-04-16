@@ -649,6 +649,10 @@ class Parser extends EventEmitter {
     const result = {}
     while (this._pos < end) {
       const type = this._parseByte()
+      if (!type) {
+        this._emitError(new Error('Cannot parse property code type'))
+        return false
+      }
       const name = constants.propertiesCodes[type]
       if (!name) {
         this._emitError(new Error('Unknown property'))
