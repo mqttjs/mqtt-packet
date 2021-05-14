@@ -96,7 +96,8 @@ export interface IPublishPacket extends IPacket {
 
 export interface IConnackPacket extends IPacket {
   cmd: 'connack'
-  returnCode: number
+  returnCode?: number,
+  reasonCode?: number,
   sessionPresent: boolean
   properties?: {
     sessionExpiryInterval?: number,
@@ -138,6 +139,7 @@ export interface ISubscribePacket extends IPacket {
 
 export interface ISubackPacket extends IPacket {
   cmd: 'suback',
+  reasonCode?: number,
   properties?: {
     reasonString?: string,
     userProperties?: UserProperties
@@ -156,6 +158,7 @@ export interface IUnsubscribePacket extends IPacket {
 
 export interface IUnsubackPacket extends IPacket {
   cmd: 'unsuback',
+  reasonCode?: number,
   properties?: {
     reasonString?: string,
     userProperties?: UserProperties
@@ -164,6 +167,7 @@ export interface IUnsubackPacket extends IPacket {
 
 export interface IPubackPacket extends IPacket {
   cmd: 'puback',
+  reasonCode?: number,
   properties?: {
     reasonString?: string,
     userProperties?: UserProperties
@@ -172,6 +176,7 @@ export interface IPubackPacket extends IPacket {
 
 export interface IPubcompPacket extends IPacket {
   cmd: 'pubcomp',
+  reasonCode?: number,
   properties?: {
     reasonString?: string,
     userProperties?: UserProperties
@@ -180,6 +185,7 @@ export interface IPubcompPacket extends IPacket {
 
 export interface IPubrelPacket extends IPacket {
   cmd: 'pubrel',
+  reasonCode?: number,
   properties?: {
     reasonString?: string,
     userProperties?: UserProperties
@@ -188,6 +194,7 @@ export interface IPubrelPacket extends IPacket {
 
 export interface IPubrecPacket extends IPacket {
   cmd: 'pubrec',
+  reasonCode?: number,
   properties?: {
     reasonString?: string,
     userProperties?: UserProperties
@@ -204,12 +211,13 @@ export interface IPingrespPacket extends IPacket {
 
 export interface IDisconnectPacket extends IPacket {
   cmd: 'disconnect',
-    properties?: {
-      sessionExpiryInterval?: number,
-      reasonString?: string,
-      userProperties?: UserProperties,
-      serverReference?: string
-    }
+  reasonCode?: number,
+  properties?: {
+    sessionExpiryInterval?: number,
+    reasonString?: string,
+    userProperties?: UserProperties,
+    serverReference?: string
+  }
 }
 
 export declare type Packet = IConnectPacket |
