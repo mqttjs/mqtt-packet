@@ -54,9 +54,19 @@ class Parser extends EventEmitter {
   _parseHeader () {
     // There is at least one byte in the buffer
     const zero = this._list.readUInt8(0)
-    this.packet.cmd = constants.types[zero >> constants.CMD_SHIFT]
+    const cmdIndex = zero >> constants.CMD_SHIFT
+    this.packet.cmd = constants.types[cmdIndex]
+    const headerFlags = zero & 0xf
+    const requiredHeaderFlags = constants.requiredHeaderFlags[cmdIndex]
+    if (requiredHeaderFlags != null && headerFlags !== requiredHeaderFlags) {
+      // Where a flag bit is marked as “Reserved” in Table 2.2 - Flag Bits, it is reserved for future use and MUST be set to the value listed in that table [MQTT-2.2.2-1]. If invalid flags are received, the receiver MUST close the Network Connection [MQTT-2.2.2-2]
+      return this._emitError(new Error(constants.requiredHeaderFlagsErrors[cmdIndex]))
+    }
     this.packet.retain = (zero & constants.RETAIN_MASK) !== 0
     this.packet.qos = (zero >> constants.QOS_SHIFT) & constants.QOS_MASK
+    if (this.packet.qos > 2) {
+      return this._emitError(new Error('Packet must not have both QoS bits set to 1'))
+    }
     this.packet.dup = (zero & constants.DUP_MASK) !== 0
     debug('_parseHeader: packet: %o', this.packet)
 
@@ -173,16 +183,30 @@ class Parser extends EventEmitter {
       return this._emitError(new Error('Packet too short'))
     }
 
+    if (this._list.readUInt8(this._pos) & 0x1) {
+      // The Server MUST validate that the reserved flag in the CONNECT Control Packet is set to zero and disconnect the Client if it is not zero [MQTT-3.1.2-3]
+      return this._emitError(new Error('Connect flag bit 0 must be 0, but got 1'))
+    }
     // Parse connect flags
     flags.username = (this._list.readUInt8(this._pos) & constants.USERNAME_MASK)
     flags.password = (this._list.readUInt8(this._pos) & constants.PASSWORD_MASK)
     flags.will = (this._list.readUInt8(this._pos) & constants.WILL_FLAG_MASK)
 
+    const willRetain = !!(this._list.readUInt8(this._pos) & constants.WILL_RETAIN_MASK)
+    const willQos = (this._list.readUInt8(this._pos) &
+        constants.WILL_QOS_MASK) >> constants.WILL_QOS_SHIFT
+
     if (flags.will) {
       packet.will = {}
-      packet.will.retain = (this._list.readUInt8(this._pos) & constants.WILL_RETAIN_MASK) !== 0
-      packet.will.qos = (this._list.readUInt8(this._pos) &
-        constants.WILL_QOS_MASK) >> constants.WILL_QOS_SHIFT
+      packet.will.retain = willRetain
+      packet.will.qos = willQos
+    } else {
+      if (willRetain) {
+        return this._emitError(new Error('Will Retain Flag must be set to zero when Will Flag is set to 0'))
+      }
+      if (willQos) {
+        return this._emitError(new Error('Will QoS must be set to zero when Will Flag is set to 0'))
+      }
     }
 
     packet.clean = (this._list.readUInt8(this._pos) & constants.CLEAN_SESSION_MASK) !== 0
@@ -250,7 +274,11 @@ class Parser extends EventEmitter {
     const packet = this.packet
 
     if (this._list.length < 1) return null
-    packet.sessionPresent = !!(this._list.readUInt8(this._pos++) & constants.SESSIONPRESENT_MASK)
+    const flags = this._list.readUInt8(this._pos++)
+    if (flags > 1) {
+      return this._emitError(new Error('Invalid connack flags, bits 7-1 must be set to 0'))
+    }
+    packet.sessionPresent = !!(flags & constants.SESSIONPRESENT_MASK)
 
     if (this.settings.protocolVersion === 5) {
       if (this._list.length >= 2) {
@@ -306,10 +334,6 @@ class Parser extends EventEmitter {
     let rap
     let nl
     let subscription
-
-    if (packet.qos !== 1) {
-      return this._emitError(new Error('Wrong subscribe header'))
-    }
 
     packet.subscriptions = []
 

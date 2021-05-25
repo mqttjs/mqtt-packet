@@ -21,6 +21,29 @@ protocol.types = {
   15: 'auth'
 }
 
+protocol.requiredHeaderFlags = {
+  1: 0, // 'connect'
+  2: 0, // 'connack'
+  4: 0, // 'puback'
+  5: 0, // 'pubrec'
+  6: 2, // 'pubrel'
+  7: 0, // 'pubcomp'
+  8: 2, // 'subscribe'
+  9: 0, // 'suback'
+  10: 2, // 'unsubscribe'
+  11: 0, // 'unsuback'
+  12: 0, // 'pingreq'
+  13: 0, // 'pingresp'
+  14: 0, // 'disconnect'
+  15: 0 // 'auth'
+}
+
+protocol.requiredHeaderFlagsErrors = {}
+for (const k in protocol.requiredHeaderFlags) {
+  const v = protocol.requiredHeaderFlags[k]
+  protocol.requiredHeaderFlagsErrors[k] = 'Invalid header flag bits, must be 0x' + v.toString(16) + ' for ' + protocol.types[k] + ' packet'
+}
+
 /* Mnemonic => Command code */
 protocol.codes = {}
 for (const k in protocol.types) {
