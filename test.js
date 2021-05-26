@@ -1224,6 +1224,56 @@ testParseError('Cannot parse password', Buffer.from([
   0, 0 // Password
 ]))
 
+// Where a flag bit is marked as “Reserved” in Table 2.2 - Flag Bits, it is reserved for future use and MUST be set to the value listed in that table [MQTT-2.2.2-1]. If invalid flags are received, the receiver MUST close the Network Connection [MQTT-2.2.2-2]
+testParseError('Invalid header flag bits, must be 0x0 for connect packet', Buffer.from([
+  18, 10, // Header
+  0, 4, // Protocol ID length
+  0x4d, 0x51, 0x54, 0x54, // Protocol ID
+  3, // Protocol version
+  2, // Connect flags
+  0, 30 // Keepalive
+]))
+
+// The Server MUST validate that the reserved flag in the CONNECT Control Packet is set to zero and disconnect the Client if it is not zero [MQTT-3.1.2-3]
+testParseError('Connect flag bit 0 must be 0, but got 1', Buffer.from([
+  16, 10, // Header
+  0, 4, // Protocol ID length
+  0x4d, 0x51, 0x54, 0x54, // Protocol ID
+  3, // Protocol version
+  3, // Connect flags
+  0, 30 // Keepalive
+]))
+
+// If the Will Flag is set to 0 the Will QoS and Will Retain fields in the Connect Flags MUST be set to zero and the Will Topic and Will Message fields MUST NOT be present in the payload [MQTT-3.1.2-11].
+testParseError('Will Retain Flag must be set to zero when Will Flag is set to 0', Buffer.from([
+  16, 10, // Header
+  0, 4, // Protocol ID length
+  0x4d, 0x51, 0x54, 0x54, // Protocol ID
+  3, // Protocol version
+  0x22, // Connect flags
+  0, 30 // Keepalive
+]))
+
+// If the Will Flag is set to 0 the Will QoS and Will Retain fields in the Connect Flags MUST be set to zero and the Will Topic and Will Message fields MUST NOT be present in the payload [MQTT-3.1.2-11].
+testParseError('Will QoS must be set to zero when Will Flag is set to 0', Buffer.from([
+  16, 10, // Header
+  0, 4, // Protocol ID length
+  0x4d, 0x51, 0x54, 0x54, // Protocol ID
+  3, // Protocol version
+  0x12, // Connect flags
+  0, 30 // Keepalive
+]))
+
+// If the Will Flag is set to 0 the Will QoS and Will Retain fields in the Connect Flags MUST be set to zero and the Will Topic and Will Message fields MUST NOT be present in the payload [MQTT-3.1.2-11].
+testParseError('Will QoS must be set to zero when Will Flag is set to 0', Buffer.from([
+  16, 10, // Header
+  0, 4, // Protocol ID length
+  0x4d, 0x51, 0x54, 0x54, // Protocol ID
+  3, // Protocol version
+  0xa, // Connect flags
+  0, 30 // Keepalive
+]))
+
 testParseGenerate('connack with return code 0', {
   cmd: 'connack',
   retain: false,
@@ -1361,6 +1411,20 @@ testParseGenerate('connack with return code 5', {
   returnCode: 5
 }, Buffer.from([
   32, 2, 0, 5
+]))
+
+// Where a flag bit is marked as “Reserved” in Table 2.2 - Flag Bits, it is reserved for future use and MUST be set to the value listed in that table [MQTT-2.2.2-1]. If invalid flags are received, the receiver MUST close the Network Connection [MQTT-2.2.2-2]
+testParseError('Invalid header flag bits, must be 0x0 for connack packet', Buffer.from([
+  33, 2, // header
+  0, // flags
+  5 // return code
+]))
+
+// Byte 1 is the "Connect Acknowledge Flags". Bits 7-1 are reserved and MUST be set to 0 [MQTT-3.2.2-1].
+testParseError('Invalid connack flags, bits 7-1 must be set to 0', Buffer.from([
+  32, 2, // header
+  2, // flags
+  5 // return code
 ]))
 
 testGenerateError('Invalid return code', {
@@ -1609,6 +1673,14 @@ testParseGenerate('empty publish', {
   // Empty payload
 ]))
 
+// A PUBLISH Packet MUST NOT have both QoS bits set to 1. If a Server or Client receives a PUBLISH Packet which has both QoS bits set to 1 it MUST close the Network Connection [MQTT-3.3.1-4].
+testParseError('Packet must not have both QoS bits set to 1', Buffer.from([
+  0x36, 6, // Header
+  0, 4, // Topic length
+  116, 101, 115, 116 // Topic
+  // Empty payload
+]))
+
 test('splitted publish parse', t => {
   t.plan(3)
 
@@ -1744,6 +1816,12 @@ testParseGenerate('puback', {
   0, 2 // Message ID
 ]))
 
+// Where a flag bit is marked as “Reserved” in Table 2.2 - Flag Bits, it is reserved for future use and MUST be set to the value listed in that table [MQTT-2.2.2-1]. If invalid flags are received, the receiver MUST close the Network Connection [MQTT-2.2.2-2]
+testParseError('Invalid header flag bits, must be 0x0 for puback packet', Buffer.from([
+  65, 2, // Header
+  0, 2 // Message ID
+]))
+
 testParseGenerate('puback with reason and no MQTT 5 properties', {
   cmd: 'puback',
   retain: false,
@@ -1793,6 +1871,12 @@ testParseGenerate('pubrec', {
   0, 2 // Message ID
 ]))
 
+// Where a flag bit is marked as “Reserved” in Table 2.2 - Flag Bits, it is reserved for future use and MUST be set to the value listed in that table [MQTT-2.2.2-1]. If invalid flags are received, the receiver MUST close the Network Connection [MQTT-2.2.2-2]
+testParseError('Invalid header flag bits, must be 0x0 for pubrec packet', Buffer.from([
+  81, 2, // Header
+  0, 2 // Message ID
+]))
+
 testParseGenerate('pubrec MQTT 5 properties', {
   cmd: 'pubrec',
   retain: false,
@@ -1825,6 +1909,12 @@ testParseGenerate('pubrel', {
   messageId: 2
 }, Buffer.from([
   98, 2, // Header
+  0, 2 // Message ID
+]))
+
+// Where a flag bit is marked as “Reserved” in Table 2.2 - Flag Bits, it is reserved for future use and MUST be set to the value listed in that table [MQTT-2.2.2-1]. If invalid flags are received, the receiver MUST close the Network Connection [MQTT-2.2.2-2]
+testParseError('Invalid header flag bits, must be 0x2 for pubrel packet', Buffer.from([
+  96, 2, // Header
   0, 2 // Message ID
 ]))
 
@@ -1863,6 +1953,12 @@ testParseGenerate('pubcomp', {
   0, 2 // Message ID
 ]))
 
+// Where a flag bit is marked as “Reserved” in Table 2.2 - Flag Bits, it is reserved for future use and MUST be set to the value listed in that table [MQTT-2.2.2-1]. If invalid flags are received, the receiver MUST close the Network Connection [MQTT-2.2.2-2]
+testParseError('Invalid header flag bits, must be 0x0 for pubcomp packet', Buffer.from([
+  113, 2, // Header
+  0, 2 // Message ID
+]))
+
 testParseGenerate('pubcomp MQTT 5 properties', {
   cmd: 'pubcomp',
   retain: false,
@@ -1886,7 +1982,7 @@ testParseGenerate('pubcomp MQTT 5 properties', {
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
 ]), { protocolVersion: 5 })
 
-testParseError('Wrong subscribe header', Buffer.from([
+testParseError('Invalid header flag bits, must be 0x2 for subscribe packet', Buffer.from([
   128, 9, // Header (subscribeqos=0length=9)
   0, 6, // Message ID (6)
   0, 4, // Topic length,
@@ -2090,6 +2186,16 @@ testParseGenerate('unsubscribe', {
   116, 101, 115, 116 // Topic (test)
 ]))
 
+// Where a flag bit is marked as “Reserved” in Table 2.2 - Flag Bits, it is reserved for future use and MUST be set to the value listed in that table [MQTT-2.2.2-1]. If invalid flags are received, the receiver MUST close the Network Connection [MQTT-2.2.2-2]
+testParseError('Invalid header flag bits, must be 0x2 for unsubscribe packet', Buffer.from([
+  160, 14,
+  0, 7, // Message ID (7)
+  0, 4, // Topic length
+  116, 102, 115, 116, // Topic (tfst)
+  0, 4, // Topic length,
+  116, 101, 115, 116 // Topic (test)
+]))
+
 testGenerateError('Invalid unsubscriptions', {
   cmd: 'unsubscribe',
   retain: false,
@@ -2149,6 +2255,12 @@ testParseGenerate('unsuback', {
   0, 8 // Message ID
 ]))
 
+// Where a flag bit is marked as “Reserved” in Table 2.2 - Flag Bits, it is reserved for future use and MUST be set to the value listed in that table [MQTT-2.2.2-1]. If invalid flags are received, the receiver MUST close the Network Connection [MQTT-2.2.2-2]
+testParseError('Invalid header flag bits, must be 0x0 for unsuback packet', Buffer.from([
+  177, 2, // Header
+  0, 8 // Message ID
+]))
+
 testParseGenerate('unsuback MQTT 5', {
   cmd: 'unsuback',
   retain: false,
@@ -2182,6 +2294,11 @@ testParseGenerate('pingreq', {
   192, 0 // Header
 ]))
 
+// Where a flag bit is marked as “Reserved” in Table 2.2 - Flag Bits, it is reserved for future use and MUST be set to the value listed in that table [MQTT-2.2.2-1]. If invalid flags are received, the receiver MUST close the Network Connection [MQTT-2.2.2-2]
+testParseError('Invalid header flag bits, must be 0x0 for pingreq packet', Buffer.from([
+  193, 0 // Header
+]))
+
 testParseGenerate('pingresp', {
   cmd: 'pingresp',
   retain: false,
@@ -2192,6 +2309,11 @@ testParseGenerate('pingresp', {
   208, 0 // Header
 ]))
 
+// Where a flag bit is marked as “Reserved” in Table 2.2 - Flag Bits, it is reserved for future use and MUST be set to the value listed in that table [MQTT-2.2.2-1]. If invalid flags are received, the receiver MUST close the Network Connection [MQTT-2.2.2-2]
+testParseError('Invalid header flag bits, must be 0x0 for pingresp packet', Buffer.from([
+  209, 0 // Header
+]))
+
 testParseGenerate('disconnect', {
   cmd: 'disconnect',
   retain: false,
@@ -2200,6 +2322,11 @@ testParseGenerate('disconnect', {
   length: 0
 }, Buffer.from([
   224, 0 // Header
+]))
+
+// Where a flag bit is marked as “Reserved” in Table 2.2 - Flag Bits, it is reserved for future use and MUST be set to the value listed in that table [MQTT-2.2.2-1]. If invalid flags are received, the receiver MUST close the Network Connection [MQTT-2.2.2-2]
+testParseError('Invalid header flag bits, must be 0x0 for disconnect packet', Buffer.from([
+  225, 0 // Header
 ]))
 
 testParseGenerate('disconnect MQTT 5', {
