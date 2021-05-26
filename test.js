@@ -1859,6 +1859,13 @@ testParseGenerate('puback MQTT 5 properties', {
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
 ]), { protocolVersion: 5 })
 
+testParseError('Invalid puback reason code', Buffer.from([
+  64, 4, // Header
+  0, 2, // Message ID
+  0x11, // reason code
+  0 // properties length
+]), { protocolVersion: 5 })
+
 testParseGenerate('pubrec', {
   cmd: 'pubrec',
   retain: false,
@@ -1912,6 +1919,13 @@ testParseGenerate('pubrel', {
   0, 2 // Message ID
 ]))
 
+testParseError('Invalid pubrel reason code', Buffer.from([
+  98, 4, // Header
+  0, 2, // Message ID
+  0x11, // Reason code
+  0 // Properties length
+]), { protocolVersion: 5 })
+
 // Where a flag bit is marked as “Reserved” in Table 2.2 - Flag Bits, it is reserved for future use and MUST be set to the value listed in that table [MQTT-2.2.2-1]. If invalid flags are received, the receiver MUST close the Network Connection [MQTT-2.2.2-2]
 testParseError('Invalid header flag bits, must be 0x2 for pubrel packet', Buffer.from([
   96, 2, // Header
@@ -1925,7 +1939,7 @@ testParseGenerate('pubrel MQTT5 properties', {
   dup: false,
   length: 24,
   messageId: 2,
-  reasonCode: 16,
+  reasonCode: 0x92,
   properties: {
     reasonString: 'test',
     userProperties: {
@@ -1935,10 +1949,17 @@ testParseGenerate('pubrel MQTT5 properties', {
 }, Buffer.from([
   98, 24, // Header
   0, 2, // Message ID
-  16, // reason code
+  0x92, // reason code
   20, // properties length
   31, 0, 4, 116, 101, 115, 116, // reasonString
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
+]), { protocolVersion: 5 })
+
+testParseError('Invalid pubrel reason code', Buffer.from([
+  98, 4, // Header
+  0, 2, // Message ID
+  16, // reason code
+  0 // properties length
 ]), { protocolVersion: 5 })
 
 testParseGenerate('pubcomp', {
@@ -1966,7 +1987,7 @@ testParseGenerate('pubcomp MQTT 5 properties', {
   dup: false,
   length: 24,
   messageId: 2,
-  reasonCode: 16,
+  reasonCode: 0x92,
   properties: {
     reasonString: 'test',
     userProperties: {
@@ -1976,10 +1997,17 @@ testParseGenerate('pubcomp MQTT 5 properties', {
 }, Buffer.from([
   112, 24, // Header
   0, 2, // Message ID
-  16, // reason code
+  0x92, // reason code
   20, // properties length
   31, 0, 4, 116, 101, 115, 116, // reasonString
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
+]), { protocolVersion: 5 })
+
+testParseError('Invalid pubcomp reason code', Buffer.from([
+  112, 4, // Header
+  0, 2, // Message ID
+  16, // reason code
+  0 // properties length
 ]), { protocolVersion: 5 })
 
 testParseError('Invalid header flag bits, must be 0x2 for subscribe packet', Buffer.from([
@@ -2009,6 +2037,40 @@ testParseGenerate('subscribe to one topic', {
   0, 4, // Topic length,
   116, 101, 115, 116, // Topic (test)
   0 // Qos (0)
+]))
+
+testParseError('Invalid subscribe QoS, must be <= 2', Buffer.from([
+  130, 9, // Header (subscribeqos=0length=9)
+  0, 6, // Message ID (6)
+  0, 4, // Topic length,
+  116, 101, 115, 116, // Topic (test)
+  3 // Qos
+]))
+
+testParseError('Invalid subscribe topic flag bits, bits 7-6 must be 0', Buffer.from([
+  130, 10, // Header (subscribeqos=0length=9)
+  0, 6, // Message ID (6)
+  0, // Property length (0)
+  0, 4, // Topic length,
+  116, 101, 115, 116, // Topic (test)
+  0x80 // Flags
+]), { protocolVersion: 5 })
+
+testParseError('Invalid retain handling, must be <= 2', Buffer.from([
+  130, 10, // Header (subscribeqos=0length=9)
+  0, 6, // Message ID (6)
+  0, // Property length (0)
+  0, 4, // Topic length,
+  116, 101, 115, 116, // Topic (test)
+  0x30 // Flags
+]), { protocolVersion: 5 })
+
+testParseError('Invalid subscribe topic flag bits, bits 7-2 must be 0', Buffer.from([
+  130, 9, // Header (subscribeqos=0length=9)
+  0, 6, // Message ID (6)
+  0, 4, // Topic length,
+  116, 101, 115, 116, // Topic (test)
+  0x08 // Flags
 ]))
 
 testParseGenerate('subscribe to one topic by MQTT 5', {
@@ -2134,14 +2196,41 @@ testParseGenerate('suback', {
   retain: false,
   qos: 0,
   dup: false,
-  length: 6,
+  length: 5,
+  granted: [0, 1, 2],
+  messageId: 6
+}, Buffer.from([
+  144, 5, // Header
+  0, 6, // Message ID
+  0, 1, 2
+]))
+
+testParseGenerate('suback', {
+  cmd: 'suback',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 7,
   granted: [0, 1, 2, 128],
   messageId: 6
 }, Buffer.from([
+  144, 7, // Header
+  0, 6, // Message ID
+  0, // Property length
+  0, 1, 2, 128 // Granted qos (0, 1, 2) and a rejected being 0x80
+]), { protocolVersion: 5 })
+
+testParseError('Invalid suback QoS, must be <= 2', Buffer.from([
   144, 6, // Header
   0, 6, // Message ID
   0, 1, 2, 128 // Granted qos (0, 1, 2) and a rejected being 0x80
 ]))
+
+testParseError('Invalid suback code', Buffer.from([
+  144, 6, // Header
+  0, 6, // Message ID
+  0, 1, 2, 0x79 // Granted qos (0, 1, 2) and an invalid code
+]), { protocolVersion: 5 })
 
 testParseGenerate('suback MQTT 5', {
   cmd: 'suback',
@@ -2284,6 +2373,13 @@ testParseGenerate('unsuback MQTT 5', {
   0, 128 // success and error
 ]), { protocolVersion: 5 })
 
+testParseError('Invalid unsuback code', Buffer.from([
+  176, 4, // Header
+  0, 8, // Message ID
+  0, // properties length
+  0x84 // reason codes
+]), { protocolVersion: 5 })
+
 testParseGenerate('pingreq', {
   cmd: 'pingreq',
   retain: false,
@@ -2367,6 +2463,12 @@ testParseGenerate('disconnect MQTT 5 with no properties', {
   0 // Property Length (0 => No Properties)
 ]), { protocolVersion: 5 })
 
+testParseError('Invalid disconnect reason code', Buffer.from([
+  224, 2, // Fixed Header (DISCONNECT, Remaining Length)
+  0x05, // Reason Code (Normal Disconnection)
+  0 // Property Length (0 => No Properties)
+]), { protocolVersion: 5 })
+
 testParseGenerate('auth MQTT 5', {
   cmd: 'auth',
   retain: false,
@@ -2390,6 +2492,12 @@ testParseGenerate('auth MQTT 5', {
   22, 0, 4, 0, 1, 2, 3, // auth data
   31, 0, 4, 116, 101, 115, 116, // reasonString
   38, 0, 4, 116, 101, 115, 116, 0, 4, 116, 101, 115, 116 // userProperties
+]), { protocolVersion: 5 })
+
+testParseError('Invalid auth reason code', Buffer.from([
+  240, 2, // Fixed Header (DISCONNECT, Remaining Length)
+  0x17, // Reason Code
+  0 // Property Length (0 => No Properties)
 ]), { protocolVersion: 5 })
 
 testGenerateError('Invalid protocolId', {

@@ -354,10 +354,28 @@ class Parser extends EventEmitter {
       if (this._pos >= packet.length) return this._emitError(new Error('Malformed Subscribe Payload'))
 
       options = this._parseByte()
+
+      if (this.settings.protocolVersion === 5) {
+        if (options & 0xc0) {
+          return this._emitError(new Error('Invalid subscribe topic flag bits, bits 7-6 must be 0'))
+        }
+      } else {
+        if (options & 0xfc) {
+          return this._emitError(new Error('Invalid subscribe topic flag bits, bits 7-2 must be 0'))
+        }
+      }
+
       qos = options & constants.SUBSCRIBE_OPTIONS_QOS_MASK
+      if (qos > 2) {
+        return this._emitError(new Error('Invalid subscribe QoS, must be <= 2'))
+      }
       nl = ((options >> constants.SUBSCRIBE_OPTIONS_NL_SHIFT) & constants.SUBSCRIBE_OPTIONS_NL_MASK) !== 0
       rap = ((options >> constants.SUBSCRIBE_OPTIONS_RAP_SHIFT) & constants.SUBSCRIBE_OPTIONS_RAP_MASK) !== 0
       rh = (options >> constants.SUBSCRIBE_OPTIONS_RH_SHIFT) & constants.SUBSCRIBE_OPTIONS_RH_MASK
+
+      if (rh > 2) {
+        return this._emitError(new Error('Invalid retain handling, must be <= 2'))
+      }
 
       subscription = { topic, qos }
 
@@ -395,7 +413,17 @@ class Parser extends EventEmitter {
 
     // Parse granted QoSes
     while (this._pos < this.packet.length) {
-      this.packet.granted.push(this._list.readUInt8(this._pos++))
+      const code = this._list.readUInt8(this._pos++)
+      if (this.settings.protocolVersion === 5) {
+        if (!constants.MQTT5_SUBACK_CODES[code]) {
+          return this._emitError(new Error('Invalid suback code'))
+        }
+      } else {
+        if (code > 2) {
+          return this._emitError(new Error('Invalid suback QoS, must be <= 2'))
+        }
+      }
+      this.packet.granted.push(code)
     }
   }
 
@@ -440,7 +468,11 @@ class Parser extends EventEmitter {
       // Parse granted QoSes
       packet.granted = []
       while (this._pos < this.packet.length) {
-        this.packet.granted.push(this._list.readUInt8(this._pos++))
+        const code = this._list.readUInt8(this._pos++)
+        if (!constants.MQTT5_UNSUBACK_CODES[code]) {
+          return this._emitError(new Error('Invalid unsuback code'))
+        }
+        this.packet.granted.push(code)
       }
     }
   }
@@ -456,6 +488,20 @@ class Parser extends EventEmitter {
       if (packet.length > 2) {
         // response code
         packet.reasonCode = this._parseByte()
+        switch (this.packet.cmd) {
+          case 'puback':
+          case 'pubrec':
+            if (!constants.MQTT5_PUBACK_PUBREC_CODES[packet.reasonCode]) {
+              return this._emitError(new Error('Invalid ' + this.packet.cmd + ' reason code'))
+            }
+            break
+          case 'pubrel':
+          case 'pubcomp':
+            if (!constants.MQTT5_PUBREL_PUBCOMP_CODES[packet.reasonCode]) {
+              return this._emitError(new Error('Invalid ' + this.packet.cmd + ' reason code'))
+            }
+            break
+        }
         debug('_parseConfirmation: packet.reasonCode `%d`', packet.reasonCode)
       } else {
         packet.reasonCode = 0
@@ -482,6 +528,9 @@ class Parser extends EventEmitter {
       // response code
       if (this._list.length > 0) {
         packet.reasonCode = this._parseByte()
+        if (!constants.MQTT5_DISCONNECT_CODES[packet.reasonCode]) {
+          this._emitError(new Error('Invalid disconnect reason code'))
+        }
       } else {
         packet.reasonCode = 0
       }
@@ -507,6 +556,9 @@ class Parser extends EventEmitter {
 
     // response code
     packet.reasonCode = this._parseByte()
+    if (!constants.MQTT5_AUTH_CODES[packet.reasonCode]) {
+      return this._emitError(new Error('Invalid auth reason code'))
+    }
     // properies mqtt 5
     const properties = this._parseProperties()
     if (Object.getOwnPropertyNames(properties).length) {
