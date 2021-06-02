@@ -1926,7 +1926,6 @@ testParseError('Invalid pubrel reason code', Buffer.from([
   0 // Properties length
 ]), { protocolVersion: 5 })
 
-
 // Where a flag bit is marked as “Reserved” in Table 2.2 - Flag Bits, it is reserved for future use and MUST be set to the value listed in that table [MQTT-2.2.2-1]. If invalid flags are received, the receiver MUST close the Network Connection [MQTT-2.2.2-2]
 testParseError('Invalid header flag bits, must be 0x2 for pubrel packet', Buffer.from([
   96, 2, // Header
