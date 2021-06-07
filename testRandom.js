@@ -2,9 +2,9 @@ const mqtt = require('./')
 const crypto = require('crypto')
 const max = 1E5
 const start = Date.now() / 1000
-var errors = 0
-var packets = 0
-var randomPacket
+let errors = 0
+let packets = 0
+let randomPacket
 const firstBytes = [
   16 * 1, // CONNECT
   16 * 2, // CONNACK
