@@ -666,12 +666,15 @@ class Parser extends EventEmitter {
       this._pos += bytes
     }
 
-    result = result
-      ? fullInfoFlag ? {
-        bytes,
-        value
-      } : value
-      : false
+    if (result) {
+      if (fullInfoFlag) {
+        result = { bytes, value }
+      } else {
+        result = value
+      }
+    } else {
+      result = false
+    }
 
     debug('_parseVarByteNum: result: %o', result)
     return result

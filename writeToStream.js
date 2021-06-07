@@ -137,9 +137,12 @@ function connect (packet, stream, opts) {
   // Connect flags
   length += 1
 
+  let propertiesData
+  let willProperties
+
   // Properties
   if (protocolVersion === 5) {
-    var propertiesData = getProperties(stream, properties)
+    propertiesData = getProperties(stream, properties)
     if (!propertiesData) { return false }
     length += propertiesData.length
   }
@@ -174,7 +177,7 @@ function connect (packet, stream, opts) {
       }
     }
     // will properties
-    var willProperties = {}
+    willProperties = {}
     if (protocolVersion === 5) {
       willProperties = getProperties(stream, will.properties)
       if (!willProperties) { return false }
