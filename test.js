@@ -1274,6 +1274,51 @@ testParseError('Will QoS must be set to zero when Will Flag is set to 0', Buffer
   0, 30 // Keepalive
 ]))
 
+// CONNECT, SUBSCRIBE, SUBACK, UNSUBSCRIBE, UNSUBACK (v.5) packets must have payload
+// CONNECT
+testParseError('Packet too short', Buffer.from([
+  16, // Header
+  8, // Packet length
+  0, 4, // Protocol ID length
+  77, 81, 84, 84, // MQTT
+  5, // Version
+  2, // Clean Start enabled
+  0, 0, // Keep-Alive
+  0, // Property Length
+  0, 0 // Properties
+  // No payload
+]), { protocolVersion: 5 })
+// SUBSCRIBE
+testParseError('Malformed subscribe, no payload specified', Buffer.from([
+  130, // Header
+  0 // Packet length
+]), { protocolVersion: 5 })
+// SUBACK
+testParseError('Malformed suback, no payload specified', Buffer.from([
+  144, // Header
+  0 // Packet length
+]), { protocolVersion: 5 })
+// UNSUBSCRIBE
+testParseError('Malformed unsubscribe, no payload specified', Buffer.from([
+  162, // Header
+  0 // Packet length
+]), { protocolVersion: 5 })
+// UNSUBACK (v.5)
+testParseError('Malformed unsuback, no payload specified', Buffer.from([
+  176, // Header
+  0 // Packet length
+]), { protocolVersion: 5 })
+// UNSUBACK (v.4)
+testParseError('Malformed unsuback, payload length must be 2', Buffer.from([
+  176, // Header
+  0 // Packet length
+]), { protocolVersion: 4 })
+// UNSUBACK (v.3)
+testParseError('Malformed unsuback, payload length must be 2', Buffer.from([
+  176, // Header
+  0 // Packet length
+]), { protocolVersion: 4 })
+
 testParseGenerate('connack with return code 0', {
   cmd: 'connack',
   retain: false,
