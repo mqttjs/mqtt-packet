@@ -1311,13 +1311,15 @@ testParseError('Malformed unsuback, no payload specified', Buffer.from([
 // UNSUBACK (v.4)
 testParseError('Malformed unsuback, payload length must be 2', Buffer.from([
   176, // Header
-  0 // Packet length
+  1, // Packet length
+  1
 ]), { protocolVersion: 4 })
 // UNSUBACK (v.3)
 testParseError('Malformed unsuback, payload length must be 2', Buffer.from([
   176, // Header
-  0 // Packet length
-]), { protocolVersion: 4 })
+  1, // Packet length
+  1
+]), { protocolVersion: 3 })
 
 testParseGenerate('connack with return code 0', {
   cmd: 'connack',

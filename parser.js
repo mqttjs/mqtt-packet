@@ -467,7 +467,7 @@ class Parser extends EventEmitter {
     if (!this._parseMessageId()) return this._emitError(new Error('Cannot parse messageId'))
 
     if ((this.settings.protocolVersion === 3 ||
-      this.settings.protocolVersion === 4) && packet.length <= 0) {
+      this.settings.protocolVersion === 4) && packet.length !== 2) {
       return this._emitError(new Error('Malformed unsuback, payload length must be 2'))
     }
     if (packet.length <= 0) { return this._emitError(new Error('Malformed unsuback, no payload specified')) }
