@@ -347,6 +347,8 @@ class Parser extends EventEmitter {
       }
     }
 
+    if (packet.length <= 0) { return this._emitError(new Error('Malformed subscribe, no payload specified')) }
+
     while (this._pos < packet.length) {
       // Parse topic
       topic = this._parseString()
@@ -411,6 +413,8 @@ class Parser extends EventEmitter {
       }
     }
 
+    if (packet.length <= 0) { return this._emitError(new Error('Malformed suback, no payload specified')) }
+
     // Parse granted QoSes
     while (this._pos < this.packet.length) {
       const code = this._list.readUInt8(this._pos++)
@@ -444,6 +448,8 @@ class Parser extends EventEmitter {
       }
     }
 
+    if (packet.length <= 0) { return this._emitError(new Error('Malformed unsubscribe, no payload specified')) }
+
     while (this._pos < packet.length) {
       // Parse topic
       const topic = this._parseString()
@@ -459,6 +465,13 @@ class Parser extends EventEmitter {
     debug('_parseUnsuback')
     const packet = this.packet
     if (!this._parseMessageId()) return this._emitError(new Error('Cannot parse messageId'))
+
+    if ((this.settings.protocolVersion === 3 ||
+      this.settings.protocolVersion === 4) && packet.length !== 2) {
+      return this._emitError(new Error('Malformed unsuback, payload length must be 2'))
+    }
+    if (packet.length <= 0) { return this._emitError(new Error('Malformed unsuback, no payload specified')) }
+
     // Properties mqtt 5
     if (this.settings.protocolVersion === 5) {
       const properties = this._parseProperties()
@@ -467,6 +480,7 @@ class Parser extends EventEmitter {
       }
       // Parse granted QoSes
       packet.granted = []
+
       while (this._pos < this.packet.length) {
         const code = this._list.readUInt8(this._pos++)
         if (!constants.MQTT5_UNSUBACK_CODES[code]) {
