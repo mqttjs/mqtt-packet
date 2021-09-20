@@ -54,7 +54,7 @@ export interface IConnectPacket extends IPacket {
     retain?: boolean
     properties?: {
       willDelayInterval?: number,
-      payloadFormatIndicator?: number,
+      payloadFormatIndicator?: boolean,
       messageExpiryInterval?: number,
       contentType?: string,
       responseTopic?: string,
