@@ -248,7 +248,7 @@ export declare function parser(opts?: Object): Parser
 
 export declare function generate(packet: Packet, opts?: Object): Buffer
 
-export declare function writeToStream(object: Packet, stream: WritableStream, opts?: Object): void
+export declare function writeToStream(object: Packet, stream: WritableStream, opts?: Object): boolean
 
 export declare namespace writeToStream {
   let cacheNumbers: boolean
