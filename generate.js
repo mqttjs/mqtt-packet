@@ -48,6 +48,10 @@ class Accumulator extends EventEmitter {
 
     return result
   }
+
+  destroy (err) {
+    if (err) this.emit('error', err)
+  }
 }
 
 module.exports = generate
