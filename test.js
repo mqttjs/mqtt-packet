@@ -180,7 +180,6 @@ function testWriteToStreamError (expected, fixture) {
     const result = mqtt.writeToStream(fixture, stream)
 
     t.false(result, 'result should be false')
-    t.end()
   })
 }
 
