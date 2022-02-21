@@ -41,7 +41,7 @@
     "tape": "^5.0.1"
   },
   "dependencies": {
-    "bl": "^4.0.2",
+    "bl": "^5.0.0",
     "debug": "^4.1.1",
     "process-nextick-args": "^2.0.1"
   }
