@@ -4,7 +4,7 @@ const empty = Buffer.allocUnsafe(0)
 const zeroBuf = Buffer.from([0])
 const numbers = require('./numbers')
 const nextTick = require('process-nextick-args').nextTick
-const debug = require('debug')('mqtt-packet:writeToStream')
+const logger = require('./logger')
 
 const numCache = numbers.cache
 const generateNumber = numbers.generateNumber
@@ -15,7 +15,7 @@ let writeNumber = writeNumberCached
 let toGenerate = true
 
 function generate (packet, stream, opts) {
-  debug('generate called')
+  logger.trace('generate called')
   if (stream.cork) {
     stream.cork()
     nextTick(uncork, stream)
@@ -25,7 +25,7 @@ function generate (packet, stream, opts) {
     toGenerate = false
     generateCache()
   }
-  debug('generate: packet.cmd: %s', packet.cmd)
+  logger.trace('generate: packet.cmd: %s', packet.cmd)
   switch (packet.cmd) {
     case 'connect':
       return connect(packet, stream, opts)
@@ -314,7 +314,7 @@ function connack (packet, stream, opts) {
 }
 
 function publish (packet, stream, opts) {
-  debug('publish: packet: %o', packet)
+  logger.trace('publish: packet: %o', packet)
   const version = opts ? opts.protocolVersion : 4
   const settings = packet || {}
   const qos = settings.qos || 0
@@ -371,7 +371,7 @@ function publish (packet, stream, opts) {
   }
 
   // Payload
-  debug('publish: payload: %o', payload)
+  logger.trace('publish: payload: %o', payload)
   return stream.write(payload)
 }
 
@@ -428,7 +428,7 @@ function confirmation (packet, stream, opts) {
 }
 
 function subscribe (packet, stream, opts) {
-  debug('subscribe: packet: ')
+  logger.trace('subscribe: packet: ')
   const version = opts ? opts.protocolVersion : 4
   const settings = packet || {}
   const dup = settings.dup ? protocol.DUP_MASK : 0
@@ -493,7 +493,7 @@ function subscribe (packet, stream, opts) {
   }
 
   // Generate header
-  debug('subscribe: writing to stream: %o', protocol.SUBSCRIBE_HEADER)
+  logger.trace('subscribe: writing to stream: %o', protocol.SUBSCRIBE_HEADER)
   stream.write(protocol.SUBSCRIBE_HEADER[1][dup ? 1 : 0][0])
 
   // Generate length
@@ -804,7 +804,7 @@ function writeVarByteInt (stream, num) {
     buffer = genBufVariableByteInt(num)
     if (num < 16384) varByteIntCache[num] = buffer
   }
-  debug('writeVarByteInt: writing to stream: %o', buffer)
+  logger.trace('writeVarByteInt: writing to stream: %o', buffer)
   return stream.write(buffer)
 }
 
@@ -823,7 +823,7 @@ function writeString (stream, string) {
   const strlen = Buffer.byteLength(string)
   writeNumber(stream, strlen)
 
-  debug('writeString: %s', string)
+  logger.trace('writeString: %s', string)
   return stream.write(string, 'utf8')
 }
 
@@ -853,18 +853,18 @@ function writeStringPair (stream, name, value) {
  * @api private
  */
 function writeNumberCached (stream, number) {
-  debug('writeNumberCached: number: %d', number)
-  debug('writeNumberCached: %o', numCache[number])
+  logger.trace('writeNumberCached: number: %d', number)
+  logger.trace('writeNumberCached: %o', numCache[number])
   return stream.write(numCache[number])
 }
 function writeNumberGenerated (stream, number) {
   const generatedNumber = generateNumber(number)
-  debug('writeNumberGenerated: %o', generatedNumber)
+  logger.trace('writeNumberGenerated: %o', generatedNumber)
   return stream.write(generatedNumber)
 }
 function write4ByteNumber (stream, number) {
   const generated4ByteBuffer = generate4ByteBuffer(number)
-  debug('write4ByteNumber: %o', generated4ByteBuffer)
+  logger.trace('write4ByteNumber: %o', generated4ByteBuffer)
   return stream.write(generated4ByteBuffer)
 }
 /**

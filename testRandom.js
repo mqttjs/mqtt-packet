@@ -1,5 +1,7 @@
 const mqtt = require('./')
 const crypto = require('crypto')
+const logger = require('pino')()
+
 const max = 1E5
 const start = Date.now() / 1000
 let errors = 0
@@ -48,15 +50,15 @@ function doParse () {
 }
 
 try {
-  console.log('Starting benchmark')
+  logger.info('Starting benchmark')
   for (let i = 0; i < max; i++) {
     doParse()
   }
 } catch (e) {
-  console.log('Exception occurred at packet')
-  console.log(randomPacket)
-  console.log(e.message)
-  console.log(e.stack)
+  logger.info('Exception occurred at packet')
+  logger.info(randomPacket)
+  logger.info(e.message)
+  logger.info(e.stack)
 }
 
 function onError () {
@@ -69,18 +71,18 @@ function onPacket () {
 
 const delta = Math.abs(max - packets - errors)
 const time = Date.now() / 1000 - start
-console.log('Benchmark complete')
-console.log('==========================')
-console.log('Sent packets:', max)
-console.log('Total time:', Math.round(time * 100) / 100, 'seconds', '\r\n')
+logger.info('Benchmark complete')
+logger.info('==========================')
+logger.info('Sent packets:', max)
+logger.info('Total time:', Math.round(time * 100) / 100, 'seconds', '\r\n')
 
-console.log('Valid packets:', packets)
-console.log('Erroneous packets:', errors)
+logger.info('Valid packets:', packets)
+logger.info('Erroneous packets:', errors)
 
-if ((max - packets - errors) < 0) console.log('Excess packets:', delta, '\r\n')
-else console.log('Missing packets:', delta, '\r\n')
+if ((max - packets - errors) < 0) logger.info('Excess packets:', delta, '\r\n')
+else logger.info('Missing packets:', delta, '\r\n')
 
-console.log('Total packets:', packets + errors)
-console.log('Total errors:', errors + delta)
-console.log('Error rate:', `${((errors + delta) / max * 100).toFixed(2)}%`)
-console.log('==========================')
+logger.info('Total packets:', packets + errors)
+logger.info('Total errors:', errors + delta)
+logger.info('Error rate:', `${((errors + delta) / max * 100).toFixed(2)}%`)
+logger.info('==========================')
