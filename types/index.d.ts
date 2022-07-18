@@ -89,7 +89,7 @@ export interface IPublishPacket extends IPacket {
     responseTopic?: string,
     correlationData?: Buffer,
     userProperties?: UserProperties,
-    subscriptionIdentifier?: number | [number],
+    subscriptionIdentifier?: number | number[],
     contentType?: string
   }
 }
