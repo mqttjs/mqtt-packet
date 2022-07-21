@@ -2,7 +2,7 @@ const bl = require('bl')
 const EventEmitter = require('events')
 const Packet = require('./packet')
 const constants = require('./constants')
-const debug = require('debug')('mqtt-packet:parser')
+const logger = require('./logger')
 
 class Parser extends EventEmitter {
   constructor () {
@@ -27,7 +27,7 @@ class Parser extends EventEmitter {
   }
 
   _resetState () {
-    debug('_resetState: resetting packet, error, _list, and _stateCounter')
+    logger.trace('_resetState: resetting packet, error, _list, and _stateCounter')
     this.packet = new Packet()
     this.error = null
     this._list = bl()
@@ -38,16 +38,16 @@ class Parser extends EventEmitter {
     if (this.error) this._resetState()
 
     this._list.append(buf)
-    debug('parse: current state: %s', this._states[this._stateCounter])
+    logger.trace('parse: current state: %s', this._states[this._stateCounter])
     while ((this.packet.length !== -1 || this._list.length > 0) &&
       this[this._states[this._stateCounter]]() &&
       !this.error) {
       this._stateCounter++
-      debug('parse: state complete. _stateCounter is now: %d', this._stateCounter)
-      debug('parse: packet.length: %d, buffer list length: %d', this.packet.length, this._list.length)
+      logger.trace('parse: state complete. _stateCounter is now: %d', this._stateCounter)
+      logger.trace('parse: packet.length: %d, buffer list length: %d', this.packet.length, this._list.length)
       if (this._stateCounter >= this._states.length) this._stateCounter = 0
     }
-    debug('parse: exited while loop. packet: %d, buffer list length: %d', this.packet.length, this._list.length)
+    logger.trace('parse: exited while loop. packet: %d, buffer list length: %d', this.packet.length, this._list.length)
     return this._list.length
   }
 
@@ -68,7 +68,7 @@ class Parser extends EventEmitter {
       return this._emitError(new Error('Packet must not have both QoS bits set to 1'))
     }
     this.packet.dup = (zero & constants.DUP_MASK) !== 0
-    debug('_parseHeader: packet: %o', this.packet)
+    logger.trace('_parseHeader: packet: %o', this.packet)
 
     this._list.consume(1)
 
@@ -83,12 +83,12 @@ class Parser extends EventEmitter {
       this.packet.length = result.value
       this._list.consume(result.bytes)
     }
-    debug('_parseLength %d', result.value)
+    logger.trace('_parseLength %d', result.value)
     return !!result
   }
 
   _parsePayload () {
-    debug('_parsePayload: payload %O', this._list)
+    logger.trace('_parsePayload: payload %O', this._list)
     let result = false
 
     // Do we have a payload? Do we have enough data to complete the payload?
@@ -140,12 +140,12 @@ class Parser extends EventEmitter {
 
       result = true
     }
-    debug('_parsePayload complete result: %s', result)
+    logger.trace('_parsePayload complete result: %s', result)
     return result
   }
 
   _parseConnect () {
-    debug('_parseConnect')
+    logger.trace('_parseConnect')
     let topic // Will topic
     let payload // Will payload
     let password // Password
@@ -227,7 +227,7 @@ class Parser extends EventEmitter {
     const clientId = this._parseString()
     if (clientId === null) return this._emitError(new Error('Packet too short'))
     packet.clientId = clientId
-    debug('_parseConnect: packet.clientId: %s', packet.clientId)
+    logger.trace('_parseConnect: packet.clientId: %s', packet.clientId)
 
     if (flags.will) {
       if (packet.protocolVersion === 5) {
@@ -240,13 +240,13 @@ class Parser extends EventEmitter {
       topic = this._parseString()
       if (topic === null) return this._emitError(new Error('Cannot parse will topic'))
       packet.will.topic = topic
-      debug('_parseConnect: packet.will.topic: %s', packet.will.topic)
+      logger.trace('_parseConnect: packet.will.topic: %s', packet.will.topic)
 
       // Parse will payload
       payload = this._parseBuffer()
       if (payload === null) return this._emitError(new Error('Cannot parse will payload'))
       packet.will.payload = payload
-      debug('_parseConnect: packet.will.paylaod: %s', packet.will.payload)
+      logger.trace('_parseConnect: packet.will.paylaod: %s', packet.will.payload)
     }
 
     // Parse username
@@ -254,7 +254,7 @@ class Parser extends EventEmitter {
       username = this._parseString()
       if (username === null) return this._emitError(new Error('Cannot parse username'))
       packet.username = username
-      debug('_parseConnect: packet.username: %s', packet.username)
+      logger.trace('_parseConnect: packet.username: %s', packet.username)
     }
 
     // Parse password
@@ -265,12 +265,12 @@ class Parser extends EventEmitter {
     }
     // need for right parse auth packet and self set up
     this.settings = packet
-    debug('_parseConnect: complete')
+    logger.trace('_parseConnect: complete')
     return packet
   }
 
   _parseConnack () {
-    debug('_parseConnack')
+    logger.trace('_parseConnack')
     const packet = this.packet
 
     if (this._list.length < 1) return null
@@ -299,11 +299,11 @@ class Parser extends EventEmitter {
         packet.properties = properties
       }
     }
-    debug('_parseConnack: complete')
+    logger.trace('_parseConnack: complete')
   }
 
   _parsePublish () {
-    debug('_parsePublish')
+    logger.trace('_parsePublish')
     const packet = this.packet
     packet.topic = this._parseString()
 
@@ -321,11 +321,11 @@ class Parser extends EventEmitter {
     }
 
     packet.payload = this._list.slice(this._pos, packet.length)
-    debug('_parsePublish: payload from buffer list: %o', packet.payload)
+    logger.trace('_parsePublish: payload from buffer list: %o', packet.payload)
   }
 
   _parseSubscribe () {
-    debug('_parseSubscribe')
+    logger.trace('_parseSubscribe')
     const packet = this.packet
     let topic
     let options
@@ -393,13 +393,13 @@ class Parser extends EventEmitter {
       }
 
       // Push pair to subscriptions
-      debug('_parseSubscribe: push subscription `%s` to subscription', subscription)
+      logger.trace('_parseSubscribe: push subscription `%s` to subscription', subscription)
       packet.subscriptions.push(subscription)
     }
   }
 
   _parseSuback () {
-    debug('_parseSuback')
+    logger.trace('_parseSuback')
     const packet = this.packet
     this.packet.granted = []
 
@@ -432,7 +432,7 @@ class Parser extends EventEmitter {
   }
 
   _parseUnsubscribe () {
-    debug('_parseUnsubscribe')
+    logger.trace('_parseUnsubscribe')
     const packet = this.packet
 
     packet.unsubscriptions = []
@@ -456,13 +456,13 @@ class Parser extends EventEmitter {
       if (topic === null) return this._emitError(new Error('Cannot parse topic'))
 
       // Push topic to unsubscriptions
-      debug('_parseUnsubscribe: push topic `%s` to unsubscriptions', topic)
+      logger.trace('_parseUnsubscribe: push topic `%s` to unsubscriptions', topic)
       packet.unsubscriptions.push(topic)
     }
   }
 
   _parseUnsuback () {
-    debug('_parseUnsuback')
+    logger.trace('_parseUnsuback')
     const packet = this.packet
     if (!this._parseMessageId()) return this._emitError(new Error('Cannot parse messageId'))
 
@@ -493,7 +493,7 @@ class Parser extends EventEmitter {
 
   // parse packets like puback, pubrec, pubrel, pubcomp
   _parseConfirmation () {
-    debug('_parseConfirmation: packet.cmd: `%s`', this.packet.cmd)
+    logger.trace('_parseConfirmation: packet.cmd: `%s`', this.packet.cmd)
     const packet = this.packet
 
     this._parseMessageId()
@@ -516,7 +516,7 @@ class Parser extends EventEmitter {
             }
             break
         }
-        debug('_parseConfirmation: packet.reasonCode `%d`', packet.reasonCode)
+        logger.trace('_parseConfirmation: packet.reasonCode `%d`', packet.reasonCode)
       } else {
         packet.reasonCode = 0
       }
@@ -536,7 +536,7 @@ class Parser extends EventEmitter {
   // parse disconnect packet
   _parseDisconnect () {
     const packet = this.packet
-    debug('_parseDisconnect')
+    logger.trace('_parseDisconnect')
 
     if (this.settings.protocolVersion === 5) {
       // response code
@@ -555,13 +555,13 @@ class Parser extends EventEmitter {
       }
     }
 
-    debug('_parseDisconnect result: true')
+    logger.trace('_parseDisconnect result: true')
     return true
   }
 
   // parse auth packet
   _parseAuth () {
-    debug('_parseAuth')
+    logger.trace('_parseAuth')
     const packet = this.packet
 
     if (this.settings.protocolVersion !== 5) {
@@ -579,7 +579,7 @@ class Parser extends EventEmitter {
       packet.properties = properties
     }
 
-    debug('_parseAuth: result: true')
+    logger.trace('_parseAuth: result: true')
     return true
   }
 
@@ -593,7 +593,7 @@ class Parser extends EventEmitter {
       return false
     }
 
-    debug('_parseMessageId: packet.messageId %d', packet.messageId)
+    logger.trace('_parseMessageId: packet.messageId %d', packet.messageId)
     return true
   }
 
@@ -605,12 +605,12 @@ class Parser extends EventEmitter {
 
     const result = this._list.toString('utf8', this._pos, end)
     this._pos += length
-    debug('_parseString: result: %s', result)
+    logger.trace('_parseString: result: %s', result)
     return result
   }
 
   _parseStringPair () {
-    debug('_parseStringPair')
+    logger.trace('_parseStringPair')
     return {
       name: this._parseString(),
       value: this._parseString()
@@ -626,7 +626,7 @@ class Parser extends EventEmitter {
     const result = this._list.slice(this._pos, end)
 
     this._pos += length
-    debug('_parseBuffer: result: %o', result)
+    logger.trace('_parseBuffer: result: %o', result)
     return result
   }
 
@@ -635,7 +635,7 @@ class Parser extends EventEmitter {
 
     const result = this._list.readUInt16BE(this._pos)
     this._pos += 2
-    debug('_parseNum: result: %s', result)
+    logger.trace('_parseNum: result: %s', result)
     return result
   }
 
@@ -644,12 +644,12 @@ class Parser extends EventEmitter {
 
     const result = this._list.readUInt32BE(this._pos)
     this._pos += 4
-    debug('_parse4ByteNum: result: %s', result)
+    logger.trace('_parse4ByteNum: result: %s', result)
     return result
   }
 
   _parseVarByteNum (fullInfoFlag) {
-    debug('_parseVarByteNum')
+    logger.trace('_parseVarByteNum')
     const maxBytes = 4
     let bytes = 0
     let mul = 1
@@ -690,7 +690,7 @@ class Parser extends EventEmitter {
       result = false
     }
 
-    debug('_parseVarByteNum: result: %o', result)
+    logger.trace('_parseVarByteNum: result: %o', result)
     return result
   }
 
@@ -700,12 +700,12 @@ class Parser extends EventEmitter {
       result = this._list.readUInt8(this._pos)
       this._pos++
     }
-    debug('_parseByte: result: %o', result)
+    logger.trace('_parseByte: result: %o', result)
     return result
   }
 
   _parseByType (type) {
-    debug('_parseByType: type: %s', type)
+    logger.trace('_parseByType: type: %s', type)
     switch (type) {
       case 'byte': {
         return this._parseByte() !== 0
@@ -735,7 +735,7 @@ class Parser extends EventEmitter {
   }
 
   _parseProperties () {
-    debug('_parseProperties')
+    logger.trace('_parseProperties')
     const length = this._parseVarByteNum()
     const start = this._pos
     const end = start + length
@@ -785,13 +785,13 @@ class Parser extends EventEmitter {
   }
 
   _newPacket () {
-    debug('_newPacket')
+    logger.trace('_newPacket')
     if (this.packet) {
       this._list.consume(this.packet.length)
-      debug('_newPacket: parser emit packet: packet.cmd: %s, packet.payload: %s, packet.length: %d', this.packet.cmd, this.packet.payload, this.packet.length)
+      logger.trace('_newPacket: parser emit packet: packet.cmd: %s, packet.payload: %s, packet.length: %d', this.packet.cmd, this.packet.payload, this.packet.length)
       this.emit('packet', this.packet)
     }
-    debug('_newPacket: new packet')
+    logger.trace('_newPacket: new packet')
     this.packet = new Packet()
 
     this._pos = 0
@@ -800,7 +800,7 @@ class Parser extends EventEmitter {
   }
 
   _emitError (err) {
-    debug('_emitError')
+    logger.trace('_emitError')
     this.error = err
     this.emit('error', err)
   }
