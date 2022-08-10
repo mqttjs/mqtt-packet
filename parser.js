@@ -423,8 +423,8 @@ class Parser extends EventEmitter {
           return this._emitError(new Error('Invalid suback code'))
         }
       } else {
-        if (code > 2) {
-          return this._emitError(new Error('Invalid suback QoS, must be <= 2'))
+        if (code > 2 && code !== 0x80) {
+          return this._emitError(new Error('Invalid suback QoS, must be 0, 1, 2 or 128'))
         }
       }
       this.packet.granted.push(code)
@@ -800,7 +800,7 @@ class Parser extends EventEmitter {
   }
 
   _emitError (err) {
-    debug('_emitError')
+    debug('_emitError', err)
     this.error = err
     this.emit('error', err)
   }

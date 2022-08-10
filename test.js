@@ -2266,10 +2266,10 @@ testParseGenerate('suback', {
   0, 1, 2, 128 // Granted qos (0, 1, 2) and a rejected being 0x80
 ]), { protocolVersion: 5 })
 
-testParseError('Invalid suback QoS, must be <= 2', Buffer.from([
+testParseError('Invalid suback QoS, must be 0, 1, 2 or 128', Buffer.from([
   144, 6, // Header
   0, 6, // Message ID
-  0, 1, 2, 128 // Granted qos (0, 1, 2) and a rejected being 0x80
+  0, 1, 2, 3 // Granted qos (0, 1, 2)
 ]))
 
 testParseError('Invalid suback code', Buffer.from([
