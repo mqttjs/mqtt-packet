@@ -410,7 +410,7 @@ function confirmation (packet, stream, opts) {
   stream.write(protocol.ACKS[type][qos][dup][0])
 
   // Length
-  writeVarByteInt(stream, length)
+  writeVarByteInt(stream, length === 3 ? 4 : length)
 
   // Message ID
   writeNumber(stream, id)
@@ -423,6 +423,10 @@ function confirmation (packet, stream, opts) {
   // properies mqtt 5
   if (propertiesData !== null) {
     propertiesData.write()
+  } else {
+    if (length === 3) {
+      stream.write(Buffer.from([0]))
+    }
   }
   return true
 }
