@@ -410,7 +410,8 @@ function confirmation (packet, stream, opts) {
   stream.write(protocol.ACKS[type][qos][dup][0])
 
   // Length
-  writeVarByteInt(stream, length === 3 ? 4 : length)
+  if (length === 3) length += 1
+  writeVarByteInt(stream, length)
 
   // Message ID
   writeNumber(stream, id)
@@ -424,7 +425,7 @@ function confirmation (packet, stream, opts) {
   if (propertiesData !== null) {
     propertiesData.write()
   } else {
-    if (length === 3) {
+    if (length === 4) {
       stream.write(Buffer.from([0]))
     }
   }

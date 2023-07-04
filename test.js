@@ -724,13 +724,13 @@ testParseAndGenerate('Version 5 PUBACK test 2', {
   retain: false,
   qos: 0,
   dup: false,
-  length: 3,
+  length: 4,
   topic: null,
   payload: null,
   reasonCode: 0
 }, Buffer.from([
-  64, 3, // Fixed Header (PUBACK, Remaining Length)
-  0, 42, 0 // Variable Header (2 Bytes: Packet Identifier 42, Reason code: 0 Success, Implied no properties)
+  64, 4, // Fixed Header (PUBACK, Remaining Length)
+  0, 42, 0, 0 // Variable Header (2 Bytes: Packet Identifier 42, Reason code: 0 Success, No properties: 0)
 ]), { protocolVersion: 5 }
 )
 
@@ -1873,13 +1873,14 @@ testParseGenerate('puback with reason and no MQTT 5 properties', {
   retain: false,
   qos: 0,
   dup: false,
-  length: 3,
+  length: 4,
   messageId: 2,
   reasonCode: 16
 }, Buffer.from([
-  64, 3, // Header
+  64, 4, // Header
   0, 2, // Message ID
-  16 // reason code
+  16, // reason code
+  0 // no user properties
 ]), { protocolVersion: 5 })
 
 testParseGenerate('puback MQTT 5 properties', {
