@@ -409,7 +409,6 @@ function confirmation (packet, stream, opts) {
   // Header
   stream.write(protocol.ACKS[type][qos][dup][0])
 
-  // Length
   // Length === 3 is only true of version === 5 and no properties; therefore if reasonCode === 0 we are allowed to skip both bytes - but if we write the reason code we also have to write property length [MQTT-3.4.2-1].
   if (length === 3) length += reasonCode !== 0 ? 1 : -1
   writeVarByteInt(stream, length)
@@ -417,7 +416,7 @@ function confirmation (packet, stream, opts) {
   // Message ID
   writeNumber(stream, id)
 
-  // reason code in header - but only if it couldn't be omitted - indicated by length !== 2 (implies version === and reason code === 0)
+  // reason code in header - but only if it couldn't be omitted - indicated by length !== 2.
   if (version === 5 && length !== 2) {
     stream.write(Buffer.from([reasonCode]))
   }
@@ -427,7 +426,7 @@ function confirmation (packet, stream, opts) {
     propertiesData.write()
   } else {
     if (length === 4) {
-      // if we have no properties but have written a reason code - so we need to indicate empty properties by filling in a zero.
+      // we have no properties but have written a reason code - so we need to indicate empty properties by filling in a zero.
       stream.write(Buffer.from([0]))
     }
   }

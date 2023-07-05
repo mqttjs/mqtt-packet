@@ -746,7 +746,7 @@ testParseOnly('Version 5 PUBACK test 2.1', {
   reasonCode: 0
 }, Buffer.from([
   64, 3, // Fixed Header (PUBACK, Remaining Length)
-  0, 42, 0 // Variable Header (2 Bytes: Packet Identifier 42, Reason code: 0 Success)
+  0, 42, 0 // Variable Header (2 Bytes: Packet Identifier 42, Reason code: 0 Success, Implied no properties)
 ]), { protocolVersion: 5 }
 )
 
