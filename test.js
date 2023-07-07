@@ -724,6 +724,22 @@ testParseAndGenerate('Version 5 PUBACK test 2', {
   retain: false,
   qos: 0,
   dup: false,
+  length: 2,
+  topic: null,
+  payload: null,
+  reasonCode: 0
+}, Buffer.from([
+  64, 2, // Fixed Header (PUBACK, Remaining Length)
+  0, 42 // Variable Header (2 Bytes: Packet Identifier 42, Implied reason code: 0 Success, Implied no properties)
+]), { protocolVersion: 5 }
+)
+
+testParseOnly('Version 5 PUBACK test 2.1', {
+  cmd: 'puback',
+  messageId: 42,
+  retain: false,
+  qos: 0,
+  dup: false,
   length: 3,
   topic: null,
   payload: null,
@@ -1868,18 +1884,32 @@ testParseError('Invalid header flag bits, must be 0x0 for puback packet', Buffer
   0, 2 // Message ID
 ]))
 
+testParseGenerate('puback without reason and no MQTT 5 properties', {
+  cmd: 'puback',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 2,
+  messageId: 2,
+  reasonCode: 0
+}, Buffer.from([
+  64, 2, // Header
+  0, 2 // Message ID
+]), { protocolVersion: 5 })
+
 testParseGenerate('puback with reason and no MQTT 5 properties', {
   cmd: 'puback',
   retain: false,
   qos: 0,
   dup: false,
-  length: 3,
+  length: 4,
   messageId: 2,
   reasonCode: 16
 }, Buffer.from([
-  64, 3, // Header
+  64, 4, // Header
   0, 2, // Message ID
-  16 // reason code
+  16, // reason code
+  0 // no user properties
 ]), { protocolVersion: 5 })
 
 testParseGenerate('puback MQTT 5 properties', {
