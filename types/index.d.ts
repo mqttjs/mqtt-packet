@@ -163,7 +163,8 @@ export interface IUnsubackPacket extends IPacket {
   properties?: {
     reasonString?: string,
     userProperties?: UserProperties
-  }
+  },
+  granted: number[]
 }
 
 export interface IPubackPacket extends IPacket {
