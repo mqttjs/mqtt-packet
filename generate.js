@@ -1,5 +1,5 @@
 const writeToStream = require('./writeToStream')
-const EventEmitter = require('events')
+const { EventEmitter } = require('events')
 const { Buffer } = require('buffer')
 
 function generate (packet, opts) {
