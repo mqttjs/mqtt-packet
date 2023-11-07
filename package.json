@@ -13,7 +13,31 @@
   ],
   "scripts": {
     "test": "tape test.js | tap-spec && standard",
-    "ci": "tape test.js && node testRandom && standard"
+    "ci": "tape test.js && node testRandom && standard",
+    "release": "read -p 'GITHUB_TOKEN: ' GITHUB_TOKEN && export GITHUB_TOKEN=$GITHUB_TOKEN && release-it"
+  },
+  "release-it": {
+    "github": {
+      "release": true
+    },
+    "git": {
+      "tagName": "v${version}",
+      "commitMessage": "chore(release): ${version}"
+    },
+    "hooks": {
+      "before:init": [
+        "npm run test"
+      ]
+    },
+    "npm": {
+      "publish": true
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "preset": "angular",
+        "infile": "CHANGELOG.md"
+      }
+    }
   },
   "pre-commit": "test",
   "repository": {
@@ -34,8 +58,10 @@
   },
   "homepage": "https://github.com/mqttjs/mqtt-packet",
   "devDependencies": {
+    "@release-it/conventional-changelog": "^7.0.2",
     "pre-commit": "^1.2.2",
     "readable-stream": "^4.4.2",
+    "release-it": "^16.2.1",
     "standard": "^17.1.0",
     "tap-spec": "^5.0.0",
     "tape": "^5.7.2"
