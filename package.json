@@ -35,14 +35,14 @@
   "homepage": "https://github.com/mqttjs/mqtt-packet",
   "devDependencies": {
     "pre-commit": "^1.2.2",
-    "readable-stream": "^3.6.0",
-    "standard": "^16.0.0",
+    "readable-stream": "^4.4.2",
+    "standard": "^17.1.0",
     "tap-spec": "^5.0.0",
-    "tape": "^5.0.1"
+    "tape": "^5.7.2"
   },
   "dependencies": {
-    "bl": "^5.0.0",
-    "debug": "^4.1.1",
+    "bl": "^6.0.8",
+    "debug": "^4.3.4",
     "process-nextick-args": "^2.0.1"
   }
 }
