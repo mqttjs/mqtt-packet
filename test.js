@@ -1786,8 +1786,8 @@ test('split publish longer', t => {
     retain: false,
     qos: 0,
     dup: false,
-    length: length,
-    topic: topic,
+    length,
+    topic,
     payload: Buffer.from('a'.repeat(payloadLength))
   }
 
@@ -1818,8 +1818,8 @@ test('split length parse', t => {
     retain: false,
     qos: 0,
     dup: false,
-    length: length,
-    topic: topic,
+    length,
+    topic,
     payload: Buffer.from('a'.repeat(payloadLength))
   }
 
