@@ -49,7 +49,7 @@ export interface IConnectPacket extends IPacket {
   password?: Buffer
   will?: {
     topic: string
-    payload: Buffer
+    payload: Buffer | string
     qos?: QoS
     retain?: boolean
     properties?: {
