@@ -200,7 +200,7 @@ function connect (packet, stream, opts) {
 
   // Password
   if (password != null) {
-    if (!providedUsername) {
+    if (!providedUsername && protocolVersion !== 5) {
       stream.destroy(new Error('Username is required to use password'))
       return false
     }
