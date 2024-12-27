@@ -203,7 +203,7 @@ automatically be converted into a `Buffer`.
   properties: { // MQTT 5.0 properties
       sessionExpiryInterval: 1234,
       receiveMaximum: 432,
-      maximumQoS: 2,
+      maximumQoS: 1,
       retainAvailable: true,
       maximumPacketSize: 100,
       assignedClientIdentifier: 'test',
