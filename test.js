@@ -3068,6 +3068,7 @@ test('userProperties null prototype', t => {
       topicAliasMaximum: 456,
       requestResponseInformation: true,
       requestProblemInformation: true,
+      correlationData: undefined,
       userProperties: {
         test: 'test'
       },
