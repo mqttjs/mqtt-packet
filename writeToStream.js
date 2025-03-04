@@ -993,7 +993,9 @@ function getProperties (stream, properties) {
       let propLength = 0
       let propValueLength = 0
       const propValue = properties[propName]
-      if (Array.isArray(propValue)) {
+      if (propValue === undefined) {
+        continue
+      } else if (Array.isArray(propValue)) {
         for (let valueIndex = 0; valueIndex < propValue.length; valueIndex++) {
           propValueLength = getLengthProperty(propName, propValue[valueIndex])
           if (!propValueLength) { return false }
@@ -1101,7 +1103,7 @@ function writeProperties (stream, properties, propertiesLength) {
   /* write properties to stream */
   writeVarByteInt(stream, propertiesLength)
   for (const propName in properties) {
-    if (Object.prototype.hasOwnProperty.call(properties, propName) && properties[propName] !== null) {
+    if (Object.prototype.hasOwnProperty.call(properties, propName) && properties[propName] != null) {
       const value = properties[propName]
       if (Array.isArray(value)) {
         for (let valueIndex = 0; valueIndex < value.length; valueIndex++) {

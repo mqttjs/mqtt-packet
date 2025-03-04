@@ -3161,6 +3161,63 @@ test('stops parsing after first error', t => {
   ]))
 })
 
+test('undefined properties', t => {
+  t.plan(2)
+
+  const packet = mqtt.generate({
+    cmd: 'connect',
+    retain: false,
+    qos: 0,
+    dup: false,
+    length: 125,
+    protocolId: 'MQTT',
+    protocolVersion: 5,
+    will: {
+      retain: true,
+      qos: 2,
+      properties: {
+        willDelayInterval: 1234,
+        payloadFormatIndicator: false,
+        messageExpiryInterval: 4321,
+        contentType: 'test',
+        responseTopic: 'topic',
+        correlationData: Buffer.from([1, 2, 3, 4]),
+        userProperties: {
+          test: 'test'
+        }
+      },
+      topic: 'topic',
+      payload: Buffer.from([4, 3, 2, 1])
+    },
+    clean: true,
+    keepalive: 30,
+    properties: {
+      sessionExpiryInterval: 1234,
+      receiveMaximum: 432,
+      maximumPacketSize: 100,
+      topicAliasMaximum: 456,
+      requestResponseInformation: true,
+      requestProblemInformation: true,
+      correlationData: undefined,
+      userProperties: {
+        test: 'test'
+      },
+      authenticationMethod: 'test',
+      authenticationData: Buffer.from([1, 2, 3, 4])
+    },
+    clientId: 'test'
+  })
+
+  const parser = mqtt.parser()
+
+  parser.on('packet', packet => {
+    t.equal(packet.cmd, 'connect')
+    t.equal(Object.hasOwn(packet.properties, 'correlationData'), false)
+  })
+
+  parser.parse(packet)
+})
+
 testGenerateErrorMultipleCmds([
   'publish',
   'puback',
