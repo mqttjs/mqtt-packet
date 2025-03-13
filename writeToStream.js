@@ -200,7 +200,9 @@ function connect (packet, stream, opts) {
 
   // Password
   if (password != null) {
-    if (!providedUsername) {
+    if (!providedUsername && protocolVersion !== 5) {
+      // `username` is not required when password is present in MQTT-v5
+      // see also: https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901044
       stream.destroy(new Error('Username is required to use password'))
       return false
     }
