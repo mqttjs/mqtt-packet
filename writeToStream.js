@@ -105,8 +105,9 @@ function connect (packet, stream, opts) {
     return false
   } else length += protocolId.length + 2
 
-  // Must be 3 or 4 or 5
-  if (protocolVersion !== 3 && protocolVersion !== 4 && protocolVersion !== 5) {
+  // Must be 3 or 4 or 5 (+128 for bridge functionality)
+  const maskedVersion = protocolVersion < 128 ? protocolVersion : protocolVersion - 128
+  if (maskedVersion !== 3 && maskedVersion !== 4 && maskedVersion !== 5) {
     stream.destroy(new Error('Invalid protocol version'))
     return false
   } else length += 1
