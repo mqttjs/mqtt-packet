@@ -2576,6 +2576,19 @@ testParseError('Invalid auth reason code', Buffer.from([
   0 // Property Length (0 => No Properties)
 ]), { protocolVersion: 5 })
 
+testParseOnly('minimal Success AUTH with reason code and property length omitted', {
+  cmd: 'auth',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 0,
+  topic: null,
+  payload: null,
+  reasonCode: 0
+}, Buffer.from([
+  240, 0 // Fixed Header (AUTH, Remaining Length 0)
+]), { protocolVersion: 5 })
+
 testGenerateError('Invalid protocolId', {
   cmd: 'connect',
   retain: false,

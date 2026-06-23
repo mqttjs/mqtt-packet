@@ -569,9 +569,13 @@ class Parser extends EventEmitter {
     }
 
     // response code
-    packet.reasonCode = this._parseByte()
-    if (!constants.MQTT5_AUTH_CODES[packet.reasonCode]) {
-      return this._emitError(new Error('Invalid auth reason code'))
+    if (this._list.length > 0) {
+      packet.reasonCode = this._parseByte()
+      if (!constants.MQTT5_AUTH_CODES[packet.reasonCode]) {
+        return this._emitError(new Error('Invalid auth reason code'))
+      }
+    } else {
+      packet.reasonCode = 0
     }
     // properies mqtt 5
     const properties = this._parseProperties()
