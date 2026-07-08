@@ -1594,6 +1594,28 @@ testParseGenerate('publish MQTT 5 with multiple same properties', {
   116, 101, 115, 116 // Payload (test)
 ]), { protocolVersion: 5 })
 
+testParseGenerate('publish MQTT 5 with duplicate user property including empty-string value', {
+  cmd: 'publish',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 18,
+  topic: 't',
+  payload: Buffer.from('x'),
+  properties: {
+    userProperties: {
+      a: ['', 'b']
+    }
+  }
+}, Buffer.from([
+  48, 18, // Header
+  0, 1, 116, // Topic length + 't'
+  13, // properties length
+  38, 0, 1, 97, 0, 0, // userProperties a -> ''
+  38, 0, 1, 97, 0, 1, 98, // userProperties a -> 'b'
+  120 // Payload (x)
+]), { protocolVersion: 5 })
+
 testParseGenerate('publish MQTT 5 properties with 0-4 byte varbyte', {
   cmd: 'publish',
   retain: true,

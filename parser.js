@@ -761,7 +761,7 @@ class Parser extends EventEmitter {
           result[name] = Object.create(null)
         }
         const currentUserProperty = this._parseByType(constants.propertiesTypes[name])
-        if (result[name][currentUserProperty.name]) {
+        if (result[name][currentUserProperty.name] !== undefined) {
           if (Array.isArray(result[name][currentUserProperty.name])) {
             result[name][currentUserProperty.name].push(currentUserProperty.value)
           } else {
