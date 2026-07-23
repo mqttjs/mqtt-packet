@@ -540,7 +540,7 @@ class Parser extends EventEmitter {
 
     if (this.settings.protocolVersion === 5) {
       // response code
-      if (this._list.length > 0) {
+      if (packet.length > 0) {
         packet.reasonCode = this._parseByte()
         if (!constants.MQTT5_DISCONNECT_CODES[packet.reasonCode]) {
           this._emitError(new Error('Invalid disconnect reason code'))
@@ -548,10 +548,12 @@ class Parser extends EventEmitter {
       } else {
         packet.reasonCode = 0
       }
-      // properies mqtt 5
-      const properties = this._parseProperties()
-      if (Object.getOwnPropertyNames(properties).length) {
-        packet.properties = properties
+      // properies mqtt 5 (only present when the remaining length is >= 2)
+      if (packet.length >= 2) {
+        const properties = this._parseProperties()
+        if (Object.getOwnPropertyNames(properties).length) {
+          packet.properties = properties
+        }
       }
     }
 
@@ -569,7 +571,7 @@ class Parser extends EventEmitter {
     }
 
     // response code
-    if (this._list.length > 0) {
+    if (packet.length > 0) {
       packet.reasonCode = this._parseByte()
       if (!constants.MQTT5_AUTH_CODES[packet.reasonCode]) {
         return this._emitError(new Error('Invalid auth reason code'))
@@ -577,10 +579,12 @@ class Parser extends EventEmitter {
     } else {
       packet.reasonCode = 0
     }
-    // properies mqtt 5
-    const properties = this._parseProperties()
-    if (Object.getOwnPropertyNames(properties).length) {
-      packet.properties = properties
+    // properies mqtt 5 (only present when the remaining length is >= 2)
+    if (packet.length >= 2) {
+      const properties = this._parseProperties()
+      if (Object.getOwnPropertyNames(properties).length) {
+        packet.properties = properties
+      }
     }
 
     debug('_parseAuth: result: true')
