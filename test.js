@@ -845,6 +845,27 @@ testParseOnly('Version 5 DISCONNECT test 2', {
 ]), { protocolVersion: 5 }
 )
 
+test('Version 5 minimal DISCONNECT/AUTH before another packet parses both', t => {
+  // A minimal DISCONNECT/AUTH (remaining length 0 or 1) must be bounded by its
+  // own remaining length, not by the whole parse buffer, so a following packet
+  // is not mis-read as its reason code or properties.
+  const cases = [
+    { bytes: [224, 0, 192, 0], cmds: ['disconnect', 'pingreq'], rcs: [0, undefined] },
+    { bytes: [224, 1, 128, 192, 0], cmds: ['disconnect', 'pingreq'], rcs: [128, undefined] },
+    { bytes: [240, 0, 192, 0], cmds: ['auth', 'pingreq'], rcs: [0, undefined] }
+  ]
+  for (const { bytes, cmds, rcs } of cases) {
+    const parser = mqtt.parser({ protocolVersion: 5 })
+    const got = []
+    parser.on('packet', p => got.push(p))
+    parser.on('error', e => t.fail(`unexpected error: ${e.message}`))
+    parser.parse(Buffer.from(bytes))
+    t.deepEqual(got.map(p => p.cmd), cmds, 'both packets parsed')
+    t.deepEqual(got.map(p => p.reasonCode), rcs, 'reason codes')
+  }
+  t.end()
+})
+
 testParseAndGenerate('Version 5 DISCONNECT test 3', {
   cmd: 'disconnect',
   retain: false,
