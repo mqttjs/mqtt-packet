@@ -2,6 +2,7 @@ const util = require('util')
 
 const test = require('tape')
 const mqtt = require('./')
+const numbers = require('./numbers')
 const WS = require('readable-stream').Writable
 
 function normalExpectedObject (object) {
@@ -223,6 +224,49 @@ test('disabled numbers cache', t => {
   mqtt.writeToStream.cacheNumbers = true
 
   stream.end()
+  t.end()
+})
+
+// issue #163: buffers kept in the module-level caches must own their memory.
+// A slice of the shared Buffer pool pins the whole Buffer.poolSize block it
+// was carved from, so each cached entry would retain far more than it holds.
+test('writeToStream varByteInt cache buffers are not pool slices', t => {
+  const stream = WS()
+  const written = []
+  stream.write = chunk => {
+    written.push(chunk)
+    return true
+  }
+  stream.on('error', err => t.fail(err))
+
+  const packet = { cmd: 'connack', returnCode: 0, sessionPresent: false }
+
+  // each connack is four writes: header, remaining length, sessionPresent, rc
+  mqtt.writeToStream(packet, stream)
+  mqtt.writeToStream(packet, stream)
+
+  const varByteInt = written[5] // the second packet's cached remaining length
+  t.equal(varByteInt.length, 1)
+  t.equal(varByteInt[0], 2, 'remaining length is 2')
+  t.equal(varByteInt.buffer.byteLength, varByteInt.length, 'cached buffer owns its backing store')
+  t.end()
+})
+
+test('numbers cache is backed by a single un-pooled block', t => {
+  const stream = WS()
+  stream.write = () => true
+  stream.on('error', err => t.fail(err))
+
+  // the cache is generated lazily on the first writeToStream call
+  mqtt.writeToStream({ cmd: 'pingreq' }, stream)
+
+  const cache = numbers.cache
+  t.equal(Object.keys(cache).length, 65536, 'all entries generated')
+  t.equal(cache[0].buffer, cache[65535].buffer, 'entries share one backing block')
+  t.equal(cache[0].buffer.byteLength, 2 * 65536, 'backing block is exactly the cache size')
+  t.deepEqual([...cache[0]], [0, 0])
+  t.deepEqual([...cache[300]], [1, 44])
+  t.deepEqual([...cache[65535]], [255, 255])
   t.end()
 })
 

@@ -808,7 +808,15 @@ function writeVarByteInt (stream, num) {
 
   if (!buffer) {
     buffer = genBufVariableByteInt(num)
-    if (num < 16384) varByteIntCache[num] = buffer
+    if (num < 16384) {
+      // Cached buffers are retained for the lifetime of the process, so they
+      // must not be slices of the shared Buffer pool: a pooled slice pins the
+      // whole Buffer.poolSize block it was carved from.
+      const cached = Buffer.allocUnsafeSlow(buffer.length)
+      buffer.copy(cached)
+      buffer = cached
+      varByteIntCache[num] = cached
+    }
   }
   debug('writeVarByteInt: writing to stream: %o', buffer)
   return stream.write(buffer)

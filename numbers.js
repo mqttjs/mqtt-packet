@@ -18,8 +18,14 @@ function generateBuffer (i) {
 }
 
 function generateCache () {
+  // The cache is retained for the lifetime of the process, so back it with a
+  // single un-pooled block: entries carved from the shared Buffer pool would
+  // each pin the Buffer.poolSize block they were sliced from.
+  const block = Buffer.allocUnsafeSlow(max * 2)
   for (let i = 0; i < max; i++) {
-    cache[i] = generateBuffer(i)
+    block.writeUInt8(i >> 8, i * 2)
+    block.writeUInt8(i & 0x00FF, i * 2 + 1)
+    cache[i] = SubOk ? block.subarray(i * 2, i * 2 + 2) : block.slice(i * 2, i * 2 + 2)
   }
 }
 
