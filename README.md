@@ -126,6 +126,11 @@ will emit:
     [packets](#packets)
   * `error`, if an error happens
 
+The `error` argument carries `code` — always `'MALFORMED_PACKET'`, meaning the
+peer violated the protocol and the connection should be closed — and `cmd`, the
+packet type being parsed when the fixed header had already been read. Match on
+those rather than on `message`, which is not a stable contract.
+
 <a name="parse">
 
 #### Parser.parse(buffer)
