@@ -3267,3 +3267,74 @@ testGenerateErrorMultipleCmds([
   topic: 'test', // required for publish
   messageId: 'a'
 }, {})
+
+const emptyUserPropertiesPackets = [
+  { cmd: 'connect', protocolVersion: 5, clientId: 'empty', clean: true },
+  { cmd: 'connack', sessionPresent: false, reasonCode: 0 },
+  { cmd: 'publish', topic: 't', payload: 'payload', qos: 0 },
+  ...['puback', 'pubrec', 'pubrel', 'pubcomp'].map(cmd => ({ cmd, messageId: 1, reasonCode: 0 })),
+  { cmd: 'subscribe', messageId: 1, subscriptions: [{ topic: 't', qos: 0 }] },
+  { cmd: 'suback', messageId: 1, granted: [0] },
+  { cmd: 'unsubscribe', messageId: 1, unsubscriptions: ['t'] },
+  { cmd: 'unsuback', messageId: 1, granted: [0] },
+  { cmd: 'disconnect', reasonCode: 0 },
+  { cmd: 'auth', reasonCode: 0 }
+]
+
+for (const packet of emptyUserPropertiesPackets) {
+  test(`empty userProperties on ${packet.cmd}`, t => {
+    const opts = { protocolVersion: 5 }
+    const expected = mqtt.generate({ ...packet, properties: {} }, opts)
+    for (const userProperties of [{}, Object.create(null), { unused: [] }]) {
+      const stream = WS()
+      const chunks = []
+      stream.write = chunk => { chunks.push(Buffer.from(chunk)); return true }
+      stream.on('error', err => t.fail(err))
+      const input = { ...packet, properties: { userProperties } }
+      t.equal(mqtt.writeToStream(input, stream, opts), true, 'writing succeeds')
+      t.deepEqual(Buffer.concat(chunks), expected, 'writes the same bytes as omitted userProperties')
+      t.deepEqual(mqtt.generate(input, opts), expected, 'generate writes the complete packet')
+    }
+    t.end()
+  })
+}
+
+test('empty userProperties in CONNECT Will and beside other properties', t => {
+  const packet = {
+    cmd: 'connect',
+    protocolVersion: 5,
+    clientId: 'empty',
+    clean: true,
+    properties: { receiveMaximum: 10, userProperties: {} },
+    will: { topic: 't', payload: 'last', properties: { willDelayInterval: 7, userProperties: {} } }
+  }
+  const expected = {
+    ...packet,
+    properties: { receiveMaximum: 10 },
+    will: { ...packet.will, properties: { willDelayInterval: 7 } }
+  }
+  t.deepEqual(mqtt.generate(packet), mqtt.generate(expected), 'preserves CONNECT and Will properties')
+  t.end()
+})
+
+test('empty userProperties publish wire format', t => {
+  t.deepEqual(mqtt.generate({
+    cmd: 'publish', topic: 't', payload: 'payload', properties: { userProperties: {} }
+  }, { protocolVersion: 5 }), Buffer.from([
+    0x30, 11, 0, 1, 0x74, 0, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64
+  ]), 'includes the zero property length before the payload')
+  t.end()
+})
+
+test('empty userProperties do not permit empty scalar or unknown properties', t => {
+  for (const properties of [{ unknownProperty: [] }, { topicAlias: [] }]) {
+    const stream = WS()
+    let writes = 0
+    stream.write = () => { writes++; return true }
+    t.equal(mqtt.writeToStream({
+      cmd: 'publish', topic: 't', payload: 'payload', properties
+    }, stream, { protocolVersion: 5 }), false, 'invalid property is rejected')
+    t.equal(writes, 0, 'does not write part of a rejected packet')
+  }
+  t.end()
+})

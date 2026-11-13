@@ -998,15 +998,15 @@ function getProperties (stream, properties) {
       } else if (Array.isArray(propValue)) {
         for (let valueIndex = 0; valueIndex < propValue.length; valueIndex++) {
           propValueLength = getLengthProperty(propName, propValue[valueIndex])
-          if (!propValueLength) { return false }
+          if (propValueLength === false) { return false }
           propLength += propValueLength
         }
       } else {
         propValueLength = getLengthProperty(propName, propValue)
-        if (!propValueLength) { return false }
+        if (propValueLength === false) { return false }
         propLength = propValueLength
       }
-      if (!propLength) return false
+      if (!propLength && protocol.propertiesTypes[propName] !== 'pair') return false
       propertiesLength += propLength
     }
   }
