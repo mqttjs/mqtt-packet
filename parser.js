@@ -1,4 +1,4 @@
-const bl = require('bl')
+const { DynamicBuffer } = require('@platformatic/dynamic-buffer')
 const { EventEmitter } = require('events')
 const Packet = require('./packet')
 const constants = require('./constants')
@@ -30,7 +30,7 @@ class Parser extends EventEmitter {
     debug('_resetState: resetting packet, error, _list, and _stateCounter')
     this.packet = new Packet()
     this.error = null
-    this._list = bl()
+    this._list = new DynamicBuffer()
     this._stateCounter = 0
   }
 

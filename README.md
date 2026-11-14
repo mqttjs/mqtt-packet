@@ -12,8 +12,7 @@ Encode and Decode MQTT 3.1.1, 5.0 packets the node way.
   * <a href="#contributing">Contributing</a>
   * <a href="#license">License &amp; copyright</a>
 
-This library is tested with node v6, v8, v10, v12 and v14. The last version to support
-older versions of node was mqtt-packet@4.1.2.
+This library requires Node.js >= 22.19.0. It relies on `require(esm)` to load `@platformatic/dynamic-buffer` for parsing.
 
 Installation
 ------------
