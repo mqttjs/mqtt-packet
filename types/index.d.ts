@@ -238,10 +238,16 @@ export declare type Packet = IConnectPacket |
   IPubrecPacket |
   IAuthPacket
 
+/** UNSUPPORTED_PROTOCOL_VERSION: a CONNECT with an unknown protocol version
+ *  (a v5 server may answer CONNACK 0x84). MALFORMED_PACKET: any other protocol
+ *  violation. Either way the connection should be closed. */
+export declare type ParserErrorCode = 'MALFORMED_PACKET' | 'UNSUPPORTED_PROTOCOL_VERSION'
+
+export declare const parserErrorCodes: { readonly [K in ParserErrorCode]: K }
+
 export interface ParserError extends Error {
-  /** The packet violated the protocol and the connection should be closed
-   *  (MQTT-5 §4.13). Match on this, not on message. */
-  code: 'MALFORMED_PACKET'
+  /** Match on this, not on message. */
+  code: ParserErrorCode
   /** The packet type being parsed. Always set: the fixed header is read before
    *  anything can fail. 'reserved' is packet type 0, which no version defines. */
   cmd: PacketCmd | 'reserved'

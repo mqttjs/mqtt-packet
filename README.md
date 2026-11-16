@@ -126,10 +126,15 @@ will emit:
     [packets](#packets)
   * `error`, if an error happens
 
-The `error` argument carries `code` — always `'MALFORMED_PACKET'`, meaning the
-peer violated the protocol and the connection should be closed — and `cmd`, the
-packet type being parsed when the fixed header had already been read. Match on
-those rather than on `message`, which is not a stable contract.
+The `error` argument carries `code` and `cmd`, the packet type being parsed
+(always set). `code` is one of `mqtt.parserErrorCodes`:
+
+  * `'UNSUPPORTED_PROTOCOL_VERSION'`: a CONNECT with an unknown protocol
+    version. A v5 server may answer with CONNACK `0x84` before closing.
+  * `'MALFORMED_PACKET'`: any other protocol violation.
+
+Either way the connection should be closed. Match on `code` and `cmd` rather
+than on `message`, which is not a stable contract.
 
 <a name="parse">
 
