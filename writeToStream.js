@@ -963,7 +963,8 @@ function getProperties (stream, properties) {
         break
       }
       case 'pair': {
-        if (typeof value !== 'object') {
+        if (value === null || typeof value !== 'object' ||
+            (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null)) {
           stream.destroy(new Error(`Invalid ${name}: ${value}`))
           return false
         }
@@ -1006,7 +1007,11 @@ function getProperties (stream, properties) {
         if (propValueLength === false) { return false }
         propLength = propValueLength
       }
-      if (!propLength && protocol.propertiesTypes[propName] !== 'pair') return false
+      // An empty userProperties collection is valid and adds zero bytes.
+      if (!propLength && protocol.propertiesTypes[propName] !== 'pair') {
+        stream.destroy(new Error(`Invalid property ${propName}: empty array`))
+        return false
+      }
       propertiesLength += propLength
     }
   }

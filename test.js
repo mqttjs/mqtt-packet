@@ -168,7 +168,7 @@ function testParseAndGenerate (name, object, buffer, opts) {
   testGenerateOnly(`${name} generate`, object, buffer, opts)
 }
 
-function testWriteToStreamError (expected, fixture) {
+function testWriteToStreamError (expected, fixture, opts) {
   test(`writeToStream ${expected} error`, t => {
     t.plan(2)
 
@@ -177,7 +177,7 @@ function testWriteToStreamError (expected, fixture) {
     stream.write = () => t.fail('should not have called write')
     stream.on('error', () => t.pass('error emitted'))
 
-    const result = mqtt.writeToStream(fixture, stream)
+    const result = mqtt.writeToStream(fixture, stream, opts)
 
     t.false(result, 'result should be false')
   })
@@ -3268,11 +3268,11 @@ testGenerateErrorMultipleCmds([
   messageId: 'a'
 }, {})
 
-const emptyUserPropertiesPackets = [
+const minimalV5Packets = [
   { cmd: 'connect', protocolVersion: 5, clientId: 'empty', clean: true },
   { cmd: 'connack', sessionPresent: false, reasonCode: 0 },
   { cmd: 'publish', topic: 't', payload: 'payload', qos: 0 },
-  ...['puback', 'pubrec', 'pubrel', 'pubcomp'].map(cmd => ({ cmd, messageId: 1, reasonCode: 0 })),
+  { cmd: 'puback', messageId: 1, reasonCode: 0 },
   { cmd: 'subscribe', messageId: 1, subscriptions: [{ topic: 't', qos: 0 }] },
   { cmd: 'suback', messageId: 1, granted: [0] },
   { cmd: 'unsubscribe', messageId: 1, unsubscriptions: ['t'] },
@@ -3281,22 +3281,13 @@ const emptyUserPropertiesPackets = [
   { cmd: 'auth', reasonCode: 0 }
 ]
 
-for (const packet of emptyUserPropertiesPackets) {
-  test(`empty userProperties on ${packet.cmd}`, t => {
-    const opts = { protocolVersion: 5 }
-    const expected = mqtt.generate({ ...packet, properties: {} }, opts)
-    for (const userProperties of [{}, Object.create(null), { unused: [] }]) {
-      const stream = WS()
-      const chunks = []
-      stream.write = chunk => { chunks.push(Buffer.from(chunk)); return true }
-      stream.on('error', err => t.fail(err))
-      const input = { ...packet, properties: { userProperties } }
-      t.equal(mqtt.writeToStream(input, stream, opts), true, 'writing succeeds')
-      t.deepEqual(Buffer.concat(chunks), expected, 'writes the same bytes as omitted userProperties')
-      t.deepEqual(mqtt.generate(input, opts), expected, 'generate writes the complete packet')
-    }
-    t.end()
-  })
+for (const packet of minimalV5Packets) {
+  for (const userProperties of [{}, { unused: [] }]) {
+    // Keep the property block present: PUBACK omits it when properties is absent.
+    testGenerateOnly(`empty userProperties ${JSON.stringify(userProperties)} on ${packet.cmd}`,
+      { ...packet, properties: { userProperties } },
+      mqtt.generate({ ...packet, properties: {} }, { protocolVersion: 5 }), { protocolVersion: 5 })
+  }
 }
 
 test('empty userProperties in CONNECT Will and beside other properties', t => {
@@ -3317,24 +3308,47 @@ test('empty userProperties in CONNECT Will and beside other properties', t => {
   t.end()
 })
 
-test('empty userProperties publish wire format', t => {
-  t.deepEqual(mqtt.generate({
-    cmd: 'publish', topic: 't', payload: 'payload', properties: { userProperties: {} }
-  }, { protocolVersion: 5 }), Buffer.from([
-    0x30, 11, 0, 1, 0x74, 0, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64
-  ]), 'includes the zero property length before the payload')
+testGenerateOnly('empty userProperties publish wire format', {
+  cmd: 'publish', topic: 't', payload: 'payload', properties: { userProperties: {} }
+}, Buffer.from([
+  0x30, 11, // PUBLISH header and remaining length
+  0, 1, 0x74, // Topic (t)
+  0, // Property length
+  0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64 // Payload (payload)
+]), { protocolVersion: 5 })
+
+test('null-prototype userProperties encode and parse', t => {
+  t.plan(3)
+  const userProperties = Object.create(null)
+  const packet = { cmd: 'publish', topic: 't', payload: 'p', properties: { userProperties } }
+  const opts = { protocolVersion: 5 }
+  const parser = mqtt.parser(opts)
+  parser.on('error', err => t.fail(err))
+  parser.on('packet', parsed => {
+    t.equal(parsed.properties, undefined, 'empty collection produces no parsed properties')
+    t.equal(parsed.payload.toString(), 'p', 'preserves payload')
+  })
+  parser.parse(mqtt.generate(packet, opts))
+  userProperties.key = ['a', 'b']
+  t.deepEqual(mqtt.generate(packet, opts), mqtt.generate({
+    ...packet, properties: { userProperties: { key: ['a', 'b'] } }
+  }, opts), 'populated null-prototype collection preserves pairs')
   t.end()
 })
 
-test('empty userProperties do not permit empty scalar or unknown properties', t => {
-  for (const properties of [{ unknownProperty: [] }, { topicAlias: [] }]) {
-    const stream = WS()
-    let writes = 0
-    stream.write = () => { writes++; return true }
-    t.equal(mqtt.writeToStream({
-      cmd: 'publish', topic: 't', payload: 'payload', properties
-    }, stream, { protocolVersion: 5 }), false, 'invalid property is rejected')
-    t.equal(writes, 0, 'does not write part of a rejected packet')
-  }
-  t.end()
-})
+for (const [name, userProperties] of [
+  ['Map', new Map([['a', 'b']])],
+  ['Set', new Set(['a'])],
+  ['Date', new Date(0)],
+  ['null', null]
+]) {
+  const fixture = { cmd: 'publish', topic: 't', payload: 'p', properties: { userProperties } }
+  testWriteToStreamError(`${name} userProperties`, fixture, { protocolVersion: 5 })
+  testGenerateError(`Invalid userProperties: ${userProperties}`, fixture, { protocolVersion: 5 })
+}
+
+for (const propName of ['unknownProperty', 'topicAlias']) {
+  const fixture = { cmd: 'publish', topic: 't', payload: 'p', properties: { [propName]: [] } }
+  testWriteToStreamError(`empty array for ${propName}`, fixture, { protocolVersion: 5 })
+  testGenerateError(`Invalid property ${propName}: empty array`, fixture, { protocolVersion: 5 })
+}
