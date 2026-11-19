@@ -102,6 +102,18 @@ Generates a `Buffer` containing an MQTT packet.
 The object must be one of the ones specified by the [packets](#packets)
 section. Throws an `Error` if a packet cannot be generated.
 
+For MQTT 5, `userProperties` accepts a plain object from the current JavaScript
+realm (`{}`) or an object created with `Object.create(null)`. Empty objects,
+empty arrays, and keys with empty value arrays contribute no user-property bytes.
+Only own string keys are encoded.
+
+Compatibility note: other prototypes, including class instances, inherited-default
+objects, cross-realm objects, `Map`, `Set`, and `Date`, are now rejected. Copy own
+string pairs into a plain or null-prototype object before encoding. Previously,
+class instances could encode, while `Map`, `Set`, and `Date` could silently lose
+their data. The same rules apply to `mqtt.writeToStream()` and CONNECT Will
+properties.
+
 <a name="writeToStream">
 
 ### mqtt.writeToStream(object, stream, [opts])

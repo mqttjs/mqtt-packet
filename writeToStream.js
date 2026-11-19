@@ -901,6 +901,7 @@ function getProperties (stream, properties) {
     }
   }
   let propertiesLength = 0
+  // Returns a byte length (including zero), or false after reporting invalid input.
   function getLengthProperty (name, value) {
     const type = protocol.propertiesTypes[name]
     let length = 0
@@ -963,9 +964,9 @@ function getProperties (stream, properties) {
         break
       }
       case 'pair': {
-        if (value === null || typeof value !== 'object' ||
-            (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null)) {
-          stream.destroy(new Error(`Invalid ${name}: ${value}`))
+        const prototype = value === null || typeof value !== 'object' ? undefined : Object.getPrototypeOf(value)
+        if (prototype !== Object.prototype && prototype !== null) {
+          stream.destroy(new Error(`Invalid ${name}: expected a plain object`))
           return false
         }
         length += Object.getOwnPropertyNames(value).reduce((result, name) => {
