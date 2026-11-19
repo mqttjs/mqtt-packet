@@ -172,7 +172,7 @@ function testParseAndGenerate (name, object, buffer, opts) {
   testGenerateOnly(`${name} generate`, object, buffer, opts)
 }
 
-function testWriteToStreamError (expected, fixture) {
+function testWriteToStreamError (expected, fixture, opts) {
   test(`writeToStream ${expected} error`, t => {
     t.plan(2)
 
@@ -181,7 +181,7 @@ function testWriteToStreamError (expected, fixture) {
     stream.write = () => t.fail('should not have called write')
     stream.on('error', () => t.pass('error emitted'))
 
-    const result = mqtt.writeToStream(fixture, stream)
+    const result = mqtt.writeToStream(fixture, stream, opts)
 
     t.false(result, 'result should be false')
   })
@@ -3673,3 +3673,101 @@ testGenerateErrorMultipleCmds([
   topic: 'test', // required for publish
   messageId: 'a'
 }, {})
+
+const minimalV5Packets = [
+  { cmd: 'connect', protocolVersion: 5, clientId: 'empty', clean: true },
+  { cmd: 'connack', sessionPresent: false, reasonCode: 0 },
+  { cmd: 'publish', topic: 't', payload: 'payload', qos: 0 },
+  { cmd: 'puback', messageId: 1, reasonCode: 0 },
+  { cmd: 'subscribe', messageId: 1, subscriptions: [{ topic: 't', qos: 0 }] },
+  { cmd: 'suback', messageId: 1, granted: [0] },
+  { cmd: 'unsubscribe', messageId: 1, unsubscriptions: ['t'] },
+  { cmd: 'unsuback', messageId: 1, granted: [0] },
+  { cmd: 'disconnect', reasonCode: 0 },
+  { cmd: 'auth', reasonCode: 0 }
+]
+
+for (const packet of minimalV5Packets) {
+  for (const userProperties of [{}, [], { unused: [] }]) {
+    // Keep the property block present: PUBACK omits it when properties is absent.
+    testGenerateOnly(`empty userProperties ${JSON.stringify(userProperties)} on ${packet.cmd}`,
+      { ...packet, properties: { userProperties } },
+      mqtt.generate({ ...packet, properties: {} }, { protocolVersion: 5 }), { protocolVersion: 5 })
+  }
+}
+
+testGenerateOnly('empty userProperties in CONNECT Will and beside other properties', {
+  cmd: 'connect',
+  protocolVersion: 5,
+  clientId: 'empty',
+  clean: true,
+  properties: { receiveMaximum: 10, userProperties: {} },
+  will: { topic: 't', payload: 'last', properties: { willDelayInterval: 7, userProperties: {} } }
+}, Buffer.from([
+  0x10, 36, // CONNECT header and remaining length
+  0, 4, 0x4d, 0x51, 0x54, 0x54, 5, 6, 0, 0, // Protocol, flags, keepalive
+  3, 0x21, 0, 10, // Receive maximum
+  0, 5, 0x65, 0x6d, 0x70, 0x74, 0x79, // Client ID (empty)
+  5, 0x18, 0, 0, 0, 7, // Will delay interval
+  0, 1, 0x74, 0, 4, 0x6c, 0x61, 0x73, 0x74 // Will topic and payload
+]))
+
+testGenerateOnly('empty userProperties publish wire format', {
+  cmd: 'publish', topic: 't', payload: 'payload', properties: { userProperties: {} }
+}, Buffer.from([
+  0x30, 11, // PUBLISH header and remaining length
+  0, 1, 0x74, // Topic (t)
+  0, // Property length
+  0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64 // Payload (payload)
+]), { protocolVersion: 5 })
+
+testParseGenerateDefaults('empty null-prototype userProperties', {
+  cmd: 'publish', topic: 't', payload: 'p', properties: { userProperties: Object.create(null) }
+}, Buffer.from([0x30, 5, 0, 1, 0x74, 0, 0x70]), {
+  cmd: 'publish',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 5,
+  topic: 't',
+  payload: Buffer.from('p')
+}, { protocolVersion: 5 })
+
+for (const [name, userProperties] of [
+  ['Map', new Map([['a', 'b']])],
+  ['Set', new Set(['a'])],
+  ['Date', new Date(0)],
+  ['null', null]
+]) {
+  const fixture = { cmd: 'publish', topic: 't', payload: 'p', properties: { userProperties } }
+  testWriteToStreamError(`${name} userProperties`, fixture, { protocolVersion: 5 })
+  testGenerateError('Invalid userProperties: expected a plain object', fixture, { protocolVersion: 5 }, `${name} userProperties error`)
+}
+
+for (const propName of ['unknownProperty', 'topicAlias']) {
+  const fixture = { cmd: 'publish', topic: 't', payload: 'p', properties: { [propName]: [] } }
+  testWriteToStreamError(`empty array for ${propName}`, fixture, { protocolVersion: 5 })
+  testGenerateError(`Invalid property ${propName}: empty array`, fixture, { protocolVersion: 5 })
+}
+
+const unprintableMap = new Map()
+unprintableMap[Symbol.toPrimitive] = () => { throw new Error('must not coerce rejected input') }
+for (const [name, userProperties] of [
+  ['null-prototype chain', Object.create(Object.create(null))],
+  ['unprintable Map', unprintableMap]
+]) {
+  const fixture = { cmd: 'publish', topic: 't', payload: '', properties: { userProperties } }
+  testWriteToStreamError(name, fixture, { protocolVersion: 5 })
+  testGenerateError('Invalid userProperties: expected a plain object', fixture, { protocolVersion: 5 }, name)
+}
+
+testGenerateOnly('repeated null-prototype userProperties', {
+  cmd: 'publish',
+  topic: 't',
+  payload: 'p',
+  properties: { userProperties: Object.assign(Object.create(null), { a: ['b', 'c'] }) }
+}, Buffer.from([
+  0x30, 19, 0, 1, 0x74, 14,
+  0x26, 0, 1, 0x61, 0, 1, 0x62,
+  0x26, 0, 1, 0x61, 0, 1, 0x63, 0x70
+]), { protocolVersion: 5 })
