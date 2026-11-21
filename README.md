@@ -3,7 +3,7 @@ mqtt-packet
 
 Encode and Decode MQTT 3.1.1, 5.0 packets the node way.
 
-[![JavaScript Style Guide](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
+[![neostandard javascript style](https://img.shields.io/badge/neo-standard-7fffff?style=flat&labelColor=ff80ff)](https://github.com/neostandard/neostandard)
 
   * <a href="#installation">Installation</a>
   * <a href="#examples">Examples</a>

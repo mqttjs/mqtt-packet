@@ -12,8 +12,9 @@
     "Siarhei Buntsevich (https://github.com/scarry1992)"
   ],
   "scripts": {
-    "test": "tape test.js | tap-spec && standard",
-    "ci": "tape test.js && node testRandom && standard"
+    "test": "tape test.js | tap-spec && eslint .",
+    "ci": "tape test.js && node testRandom && eslint .",
+    "lint": "eslint ."
   },
   "pre-commit": "test",
   "repository": {
@@ -34,9 +35,10 @@
   },
   "homepage": "https://github.com/mqttjs/mqtt-packet",
   "devDependencies": {
+    "eslint": "^10.15.0",
+    "neostandard": "^0.14.1",
     "pre-commit": "^1.2.2",
     "readable-stream": "^4.4.2",
-    "standard": "^17.1.0",
     "tap-spec": "^5.0.0",
     "tape": "^5.7.2"
   },
