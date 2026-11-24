@@ -3,7 +3,7 @@ mqtt-packet
 
 Encode and Decode MQTT 3.1.1, 5.0 packets the node way.
 
-[![JavaScript Style Guide](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
+[![neostandard javascript style](https://img.shields.io/badge/neo-standard-7fffff?style=flat&labelColor=ff80ff)](https://github.com/neostandard/neostandard)
 
   * <a href="#installation">Installation</a>
   * <a href="#examples">Examples</a>
@@ -12,8 +12,7 @@ Encode and Decode MQTT 3.1.1, 5.0 packets the node way.
   * <a href="#contributing">Contributing</a>
   * <a href="#license">License &amp; copyright</a>
 
-This library is tested with node v6, v8, v10, v12 and v14. The last version to support
-older versions of node was mqtt-packet@4.1.2.
+This library requires Node.js >= 22.19.0. It relies on `require(esm)` to load `@platformatic/dynamic-buffer` for parsing.
 
 Installation
 ------------
@@ -125,6 +124,16 @@ will emit:
   * `packet`, when a new packet is parsed, according to
     [packets](#packets)
   * `error`, if an error happens
+
+The `error` argument carries `code` and `cmd`, the packet type being parsed
+(always set). `code` is one of `mqtt.parserErrorCodes`:
+
+  * `'UNSUPPORTED_PROTOCOL_VERSION'`: a CONNECT with an unknown protocol
+    version. A v5 server may answer with CONNACK `0x84` before closing.
+  * `'MALFORMED_PACKET'`: any other protocol violation.
+
+Either way the connection should be closed. Match on `code` and `cmd` rather
+than on `message`, which is not a stable contract.
 
 <a name="parse">
 

@@ -289,3 +289,9 @@ protocol.MQTT5_AUTH_CODES = {
   0x18: 'Continue authentication',
   0x19: 'Re-authenticate'
 }
+
+/* Parser error codes, set as err.code on every parser 'error' */
+protocol.parserErrorCodes = {
+  MALFORMED_PACKET: 'MALFORMED_PACKET',
+  UNSUPPORTED_PROTOCOL_VERSION: 'UNSUPPORTED_PROTOCOL_VERSION'
+}

@@ -238,10 +238,25 @@ export declare type Packet = IConnectPacket |
   IPubrecPacket |
   IAuthPacket
 
+/** UNSUPPORTED_PROTOCOL_VERSION: a CONNECT with an unknown protocol version
+ *  (a v5 server may answer CONNACK 0x84). MALFORMED_PACKET: any other protocol
+ *  violation. Either way the connection should be closed. */
+export declare type ParserErrorCode = 'MALFORMED_PACKET' | 'UNSUPPORTED_PROTOCOL_VERSION'
+
+export declare const parserErrorCodes: { readonly [K in ParserErrorCode]: K }
+
+export interface ParserError extends Error {
+  /** Match on this, not on message. */
+  code: ParserErrorCode
+  /** The packet type being parsed. Always set: the fixed header is read before
+   *  anything can fail. 'reserved' is packet type 0, which no version defines. */
+  cmd: PacketCmd | 'reserved'
+}
+
 export interface Parser extends EventEmitter {
   on(event: 'packet', callback: (packet: Packet) => void): this
 
-  on(event: 'error', callback: (error: any) => void): this
+  on(event: 'error', callback: (error: ParserError) => void): this
 
   parse(buffer: Buffer, opts?: Object): number
 }
