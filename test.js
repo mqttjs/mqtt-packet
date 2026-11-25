@@ -413,6 +413,49 @@ testParseGenerate('connect MQTT bridge 133', {
   116, 101, 115, 116 // Client ID
 ]))
 
+testParseGenerate('connect MQTT bridge 133 with properties and will properties', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 41,
+  protocolId: 'MQTT',
+  protocolVersion: 5,
+  bridgeMode: true,
+  will: {
+    retain: false,
+    qos: 0,
+    properties: {
+      willDelayInterval: 1234
+    },
+    topic: 'topic',
+    payload: Buffer.from([4, 3, 2, 1])
+  },
+  clean: true,
+  keepalive: 30,
+  properties: {
+    sessionExpiryInterval: 1234
+  },
+  clientId: 'test'
+}, Buffer.from([
+  16, 41, // Header
+  0, 4, // Protocol ID length
+  77, 81, 84, 84, // Protocol ID
+  133, // Protocol version
+  6, // Connect flags: will, clean
+  0, 30, // Keepalive
+  5, // Properties length
+  17, 0, 0, 4, 210, // sessionExpiryInterval
+  0, 4, // Client ID length
+  116, 101, 115, 116, // Client ID
+  5, // Will properties length
+  24, 0, 0, 4, 210, // willDelayInterval
+  0, 5, // Will topic length
+  116, 111, 112, 105, 99, // Will topic
+  0, 4, // Will payload length
+  4, 3, 2, 1 // Will payload
+]))
+
 testParseGenerate('connect MQTT 5', {
   cmd: 'connect',
   retain: false,

@@ -223,7 +223,7 @@ function connect (packet, stream, opts) {
   // Generate protocol ID
   writeStringOrBuffer(stream, protocolId)
 
-  // A separate variable: the MQTT 5 checks below must still see 5 in bridge mode
+  // Keep protocolVersion unchanged: the MQTT 5 checks below must still see 5 in bridge mode
   const versionByte = settings.bridgeMode ? protocolVersion + 128 : protocolVersion
 
   stream.write(
