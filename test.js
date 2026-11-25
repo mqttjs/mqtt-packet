@@ -173,7 +173,7 @@ function testParseAndGenerate (name, object, buffer, opts) {
   testGenerateOnly(`${name} generate`, object, buffer, opts)
 }
 
-function testWriteToStreamError (expected, fixture) {
+function testWriteToStreamError (expected, fixture, opts) {
   test(`writeToStream ${expected} error`, t => {
     t.plan(2)
 
@@ -182,7 +182,7 @@ function testWriteToStreamError (expected, fixture) {
     stream.write = () => t.fail('should not have called write')
     stream.on('error', () => t.pass('error emitted'))
 
-    const result = mqtt.writeToStream(fixture, stream)
+    const result = mqtt.writeToStream(fixture, stream, opts)
 
     t.false(result, 'result should be false')
   })
@@ -614,6 +614,32 @@ testParseGenerate('connect MQTT 5 w/o will properties', {
   116, 111, 112, 105, 99, // Will topic
   0, 4, // Will payload length
   4, 3, 2, 1// Will payload
+]))
+
+testParseGenerate('connect MQTT 5 with password and no username', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 27,
+  protocolId: 'MQTT',
+  protocolVersion: 5,
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  password: Buffer.from('password')
+}, Buffer.from([
+  16, 27, // Header
+  0, 4, // Protocol ID length
+  77, 81, 84, 84, // Protocol ID
+  5, // Protocol version
+  66, // Connect flags: password, clean
+  0, 30, // Keepalive
+  0, // Properties length
+  0, 4, // Client ID length
+  116, 101, 115, 116, // Client ID
+  0, 8, // Password length
+  112, 97, 115, 115, 119, 111, 114, 100 // Password
 ]))
 
 testParseGenerate('no clientId with 3.1.1', {
@@ -1729,6 +1755,25 @@ testParseError('Connect flag bit 0 must be 0, but got 1', Buffer.from([
   0x4d, 0x51, 0x54, 0x54, // Protocol ID
   3, // Protocol version
   3, // Connect flags
+  0, 30 // Keepalive
+]))
+
+// If the User Name Flag is set to 0, the Password Flag MUST be set to 0 [MQTT-3.1.2-22]
+testParseError('Password Flag must be set to zero when User Name Flag is set to 0', Buffer.from([
+  16, 10, // Header
+  0, 4, // Protocol ID length
+  0x4d, 0x51, 0x54, 0x54, // Protocol ID
+  4, // Protocol version
+  0x42, // Connect flags: password, clean
+  0, 30 // Keepalive
+]))
+
+testParseError('Password Flag must be set to zero when User Name Flag is set to 0', Buffer.from([
+  16, 12, // Header
+  0, 6, // Protocol ID length
+  0x4d, 0x51, 0x49, 0x73, 0x64, 0x70, // Protocol ID: MQIsdp
+  3, // Protocol version
+  0x42, // Connect flags: password, clean
   0, 30 // Keepalive
 ]))
 
@@ -3291,7 +3336,7 @@ testGenerateError('Invalid password', {
   password: 42
 })
 
-testGenerateError('Username is required to use password', {
+testGenerateError('Username is required to use password before MQTT 5', {
   cmd: 'connect',
   retain: false,
   qos: 0,
@@ -3309,7 +3354,20 @@ testGenerateError('Username is required to use password', {
   keepalive: 30,
   clientId: 'test',
   password: 'password'
-})
+}, {}, 'Username is required to use password with MQTT 3.1')
+
+testGenerateError('Username is required to use password before MQTT 5', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  protocolId: 'MQTT',
+  protocolVersion: 4,
+  clean: true,
+  keepalive: 30,
+  clientId: 'test',
+  password: 'password'
+}, {}, 'Username is required to use password with MQTT 3.1.1')
 
 testGenerateError('Invalid messageExpiryInterval: -4321', {
   cmd: 'publish',
@@ -3741,6 +3799,104 @@ testGenerateErrorMultipleCmds([
   topic: 'test', // required for publish
   messageId: 'a'
 }, {})
+
+const minimalV5Packets = [
+  { cmd: 'connect', protocolVersion: 5, clientId: 'empty', clean: true },
+  { cmd: 'connack', sessionPresent: false, reasonCode: 0 },
+  { cmd: 'publish', topic: 't', payload: 'payload', qos: 0 },
+  { cmd: 'puback', messageId: 1, reasonCode: 0 },
+  { cmd: 'subscribe', messageId: 1, subscriptions: [{ topic: 't', qos: 0 }] },
+  { cmd: 'suback', messageId: 1, granted: [0] },
+  { cmd: 'unsubscribe', messageId: 1, unsubscriptions: ['t'] },
+  { cmd: 'unsuback', messageId: 1, granted: [0] },
+  { cmd: 'disconnect', reasonCode: 0 },
+  { cmd: 'auth', reasonCode: 0 }
+]
+
+for (const packet of minimalV5Packets) {
+  for (const userProperties of [{}, [], { unused: [] }]) {
+    // Keep the property block present: PUBACK omits it when properties is absent.
+    testGenerateOnly(`empty userProperties ${JSON.stringify(userProperties)} on ${packet.cmd}`,
+      { ...packet, properties: { userProperties } },
+      mqtt.generate({ ...packet, properties: {} }, { protocolVersion: 5 }), { protocolVersion: 5 })
+  }
+}
+
+testGenerateOnly('empty userProperties in CONNECT Will and beside other properties', {
+  cmd: 'connect',
+  protocolVersion: 5,
+  clientId: 'empty',
+  clean: true,
+  properties: { receiveMaximum: 10, userProperties: {} },
+  will: { topic: 't', payload: 'last', properties: { willDelayInterval: 7, userProperties: {} } }
+}, Buffer.from([
+  0x10, 36, // CONNECT header and remaining length
+  0, 4, 0x4d, 0x51, 0x54, 0x54, 5, 6, 0, 0, // Protocol, flags, keepalive
+  3, 0x21, 0, 10, // Receive maximum
+  0, 5, 0x65, 0x6d, 0x70, 0x74, 0x79, // Client ID (empty)
+  5, 0x18, 0, 0, 0, 7, // Will delay interval
+  0, 1, 0x74, 0, 4, 0x6c, 0x61, 0x73, 0x74 // Will topic and payload
+]))
+
+testGenerateOnly('empty userProperties publish wire format', {
+  cmd: 'publish', topic: 't', payload: 'payload', properties: { userProperties: {} }
+}, Buffer.from([
+  0x30, 11, // PUBLISH header and remaining length
+  0, 1, 0x74, // Topic (t)
+  0, // Property length
+  0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64 // Payload (payload)
+]), { protocolVersion: 5 })
+
+testParseGenerateDefaults('empty null-prototype userProperties', {
+  cmd: 'publish', topic: 't', payload: 'p', properties: { userProperties: Object.create(null) }
+}, Buffer.from([0x30, 5, 0, 1, 0x74, 0, 0x70]), {
+  cmd: 'publish',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 5,
+  topic: 't',
+  payload: Buffer.from('p')
+}, { protocolVersion: 5 })
+
+for (const [name, userProperties] of [
+  ['Map', new Map([['a', 'b']])],
+  ['Set', new Set(['a'])],
+  ['Date', new Date(0)],
+  ['null', null]
+]) {
+  const fixture = { cmd: 'publish', topic: 't', payload: 'p', properties: { userProperties } }
+  testWriteToStreamError(`${name} userProperties`, fixture, { protocolVersion: 5 })
+  testGenerateError('Invalid userProperties: expected a plain object', fixture, { protocolVersion: 5 }, `${name} userProperties error`)
+}
+
+for (const propName of ['unknownProperty', 'topicAlias']) {
+  const fixture = { cmd: 'publish', topic: 't', payload: 'p', properties: { [propName]: [] } }
+  testWriteToStreamError(`empty array for ${propName}`, fixture, { protocolVersion: 5 })
+  testGenerateError(`Invalid property ${propName}: empty array`, fixture, { protocolVersion: 5 })
+}
+
+const unprintableMap = new Map()
+unprintableMap[Symbol.toPrimitive] = () => { throw new Error('must not coerce rejected input') }
+for (const [name, userProperties] of [
+  ['null-prototype chain', Object.create(Object.create(null))],
+  ['unprintable Map', unprintableMap]
+]) {
+  const fixture = { cmd: 'publish', topic: 't', payload: '', properties: { userProperties } }
+  testWriteToStreamError(name, fixture, { protocolVersion: 5 })
+  testGenerateError('Invalid userProperties: expected a plain object', fixture, { protocolVersion: 5 }, name)
+}
+
+testGenerateOnly('repeated null-prototype userProperties', {
+  cmd: 'publish',
+  topic: 't',
+  payload: 'p',
+  properties: { userProperties: Object.assign(Object.create(null), { a: ['b', 'c'] }) }
+}, Buffer.from([
+  0x30, 19, 0, 1, 0x74, 14,
+  0x26, 0, 1, 0x61, 0, 1, 0x62,
+  0x26, 0, 1, 0x61, 0, 1, 0x63, 0x70
+]), { protocolVersion: 5 })
 
 test('parses a large packet delivered in many small chunks', t => {
   const payloadSize = 1024 * 1024

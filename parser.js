@@ -203,6 +203,11 @@ class Parser extends EventEmitter {
     flags.password = (this._list.readUInt8(this._pos) & constants.PASSWORD_MASK)
     flags.will = (this._list.readUInt8(this._pos) & constants.WILL_FLAG_MASK)
 
+    // If the User Name Flag is set to 0, the Password Flag MUST be set to 0 [MQTT-3.1.2-22]; MQTT 5 drops this rule
+    if (flags.password && !flags.username && packet.protocolVersion !== 5) {
+      return this._emitError(new Error('Password Flag must be set to zero when User Name Flag is set to 0'))
+    }
+
     const willRetain = !!(this._list.readUInt8(this._pos) & constants.WILL_RETAIN_MASK)
     const willQos = (this._list.readUInt8(this._pos) &
         constants.WILL_QOS_MASK) >> constants.WILL_QOS_SHIFT

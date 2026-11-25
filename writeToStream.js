@@ -200,8 +200,9 @@ function connect (packet, stream, opts) {
 
   // Password
   if (password != null) {
-    if (!providedUsername) {
-      stream.destroy(new Error('Username is required to use password'))
+    // [MQTT-3.1.2-22]; MQTT 5 drops it: https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901044
+    if (!providedUsername && protocolVersion !== 5) {
+      stream.destroy(new Error('Username is required to use password before MQTT 5'))
       return false
     }
 
@@ -910,6 +911,7 @@ function getProperties (stream, properties) {
     }
   }
   let propertiesLength = 0
+  // Returns a byte length (including zero), or false after reporting invalid input.
   function getLengthProperty (name, value) {
     const type = protocol.propertiesTypes[name]
     let length = 0
@@ -972,8 +974,9 @@ function getProperties (stream, properties) {
         break
       }
       case 'pair': {
-        if (typeof value !== 'object') {
-          stream.destroy(new Error(`Invalid ${name}: ${value}`))
+        const prototype = value === null || typeof value !== 'object' ? undefined : Object.getPrototypeOf(value)
+        if (prototype !== Object.prototype && prototype !== null) {
+          stream.destroy(new Error(`Invalid ${name}: expected a plain object`))
           return false
         }
         length += Object.getOwnPropertyNames(value).reduce((result, name) => {
@@ -1007,15 +1010,19 @@ function getProperties (stream, properties) {
       } else if (Array.isArray(propValue)) {
         for (let valueIndex = 0; valueIndex < propValue.length; valueIndex++) {
           propValueLength = getLengthProperty(propName, propValue[valueIndex])
-          if (!propValueLength) { return false }
+          if (propValueLength === false) { return false }
           propLength += propValueLength
         }
       } else {
         propValueLength = getLengthProperty(propName, propValue)
-        if (!propValueLength) { return false }
+        if (propValueLength === false) { return false }
         propLength = propValueLength
       }
-      if (!propLength) return false
+      // An empty userProperties collection is valid and adds zero bytes.
+      if (!propLength && protocol.propertiesTypes[propName] !== 'pair') {
+        stream.destroy(new Error(`Invalid property ${propName}: empty array`))
+        return false
+      }
       propertiesLength += propLength
     }
   }
