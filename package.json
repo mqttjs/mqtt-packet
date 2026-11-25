@@ -3,7 +3,15 @@
   "version": "9.0.2",
   "description": "Parse and generate MQTT packets like a breeze",
   "main": "mqtt.js",
+  "type": "module",
   "types": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./mqtt.js"
+    },
+    "./package.json": "./package.json"
+  },
   "contributors": [
     "Matteo Collina <matteo.collina@gmail.com> (https://github.com/mcollina)",
     "Adam Rudd <damvrr@gmail.com>",

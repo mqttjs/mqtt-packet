@@ -1,9 +1,11 @@
-const { DynamicBuffer } = require('@platformatic/dynamic-buffer')
-const { Buffer } = require('buffer')
-const { EventEmitter } = require('events')
-const Packet = require('./packet')
-const constants = require('./constants')
-const debug = require('debug')('mqtt-packet:parser')
+import { DynamicBuffer } from '@platformatic/dynamic-buffer'
+import { Buffer } from 'buffer'
+import { EventEmitter } from 'events'
+import Packet from './packet.js'
+import constants from './constants.js'
+import debugFactory from 'debug'
+
+const debug = debugFactory('mqtt-packet:parser')
 
 class Parser extends EventEmitter {
   constructor () {
@@ -811,4 +813,4 @@ class Parser extends EventEmitter {
   }
 }
 
-module.exports = Parser
+export default Parser

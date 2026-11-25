@@ -1,5 +1,5 @@
-const mqtt = require('./')
-const crypto = require('crypto')
+import * as mqtt from './mqtt.js'
+import crypto from 'crypto'
 const max = 1E5
 const start = Date.now() / 1000
 let errors = 0

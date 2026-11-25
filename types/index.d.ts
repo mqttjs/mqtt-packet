@@ -270,3 +270,12 @@ export declare function writeToStream(object: Packet, stream: WritableStream, op
 export declare namespace writeToStream {
   let cacheNumbers: boolean
 }
+
+declare const mqtt: {
+  parser: typeof parser
+  generate: typeof generate
+  writeToStream: typeof writeToStream
+  parserErrorCodes: typeof parserErrorCodes
+}
+
+export default mqtt

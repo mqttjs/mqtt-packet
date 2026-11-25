@@ -1,4 +1,4 @@
-const mqtt = require('../')
+import * as mqtt from '../mqtt.js'
 const parser = mqtt.parser()
 const max = 10000000
 let i

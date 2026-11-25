@@ -1,6 +1,6 @@
-const writeToStream = require('./writeToStream')
-const { EventEmitter } = require('events')
-const { Buffer } = require('buffer')
+import writeToStream from './writeToStream.js'
+import { EventEmitter } from 'events'
+import { Buffer } from 'buffer'
 
 function generate (packet, opts) {
   const stream = new Accumulator()
@@ -54,4 +54,4 @@ class Accumulator extends EventEmitter {
   }
 }
 
-module.exports = generate
+export default generate

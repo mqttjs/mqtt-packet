@@ -1,10 +1,11 @@
-const mqtt = require('../')
+import * as mqtt from '../mqtt.js'
+import net from 'net'
+
 const max = 1000000
 let i = 0
 const start = Date.now()
 let time
 const buf = Buffer.allocUnsafe(10)
-const net = require('net')
 const server = net.createServer(handle)
 let dest
 

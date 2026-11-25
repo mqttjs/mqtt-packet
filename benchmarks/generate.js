@@ -1,4 +1,4 @@
-const mqtt = require('../')
+import * as mqtt from '../mqtt.js'
 const max = 100000
 let i
 const buf = Buffer.from('test')

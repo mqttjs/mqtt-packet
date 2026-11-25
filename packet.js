@@ -10,4 +10,4 @@ class Packet {
   }
 }
 
-module.exports = Packet
+export default Packet

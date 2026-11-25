@@ -12,7 +12,7 @@ Encode and Decode MQTT 3.1.1, 5.0 packets the node way.
   * <a href="#contributing">Contributing</a>
   * <a href="#license">License &amp; copyright</a>
 
-This library requires Node.js >= 22.19.0. It relies on `require(esm)` to load `@platformatic/dynamic-buffer` for parsing.
+`mqtt-packet` is an [ECMAScript module](https://nodejs.org/api/esm.html). It requires Node.js >= 22.19.0, which supports loading ESM from CommonJS via `require(esm)`, so both `import` and `require` consumers are supported.
 
 Installation
 ------------
@@ -27,7 +27,7 @@ Examples
 ### Generating
 
 ```js
-const mqtt = require('mqtt-packet');
+import mqtt from 'mqtt-packet';
 const object = {
   cmd: 'publish',
   retain: false,
@@ -57,7 +57,7 @@ console.log(mqtt.generate(object))
 ### Parsing
 
 ```js
-const mqtt = require('mqtt-packet');
+import mqtt from 'mqtt-packet';
 const opts = { protocolVersion: 4 }; // default is 4. Usually, opts is a connect packet
 const parser = mqtt.parser(opts);
 

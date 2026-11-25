@@ -1,10 +1,36 @@
-const util = require('util')
+import util from 'util'
 
-const test = require('tape')
-const mqtt = require('./')
-const constants = require('./constants')
-const numbers = require('./numbers')
-const WS = require('readable-stream').Writable
+import test from 'tape'
+import * as mqtt from './mqtt.js'
+import constants from './constants.js'
+import * as numbers from './numbers.js'
+import { Writable as WS } from 'readable-stream'
+import { createRequire } from 'module'
+
+// The package must be loadable by name through its `exports` map, both as ESM
+// and from CommonJS via require(esm). Self-referencing works because
+// `package.json` declares an `exports` map.
+test('loads the package by name through the exports map', t => {
+  const assertExports = (mod, label) => {
+    for (const name of ['parser', 'generate', 'writeToStream']) {
+      t.equal(typeof mod[name], 'function', `${label} exposes ${name}`)
+    }
+    t.equal(typeof mod.parserErrorCodes, 'object', `${label} exposes parserErrorCodes`)
+    t.equal(mod.default.parser, mod.parser, `${label} default export matches named export`)
+  }
+
+  Promise.all([
+    import('mqtt-packet').then(mod => assertExports(mod, 'ESM import')),
+    Promise.resolve()
+      .then(() => createRequire(import.meta.url)('mqtt-packet'))
+      .then(mod => assertExports(mod, 'CJS require'))
+  ]).then(() => {
+    t.end()
+  }, err => {
+    t.fail(err)
+    t.end()
+  })
+})
 
 function normalExpectedObject (object) {
   if (object.username != null) object.username = object.username.toString()
