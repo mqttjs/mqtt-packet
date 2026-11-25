@@ -1295,6 +1295,15 @@ testParseError('Password Flag must be set to zero when User Name Flag is set to 
   0, 30 // Keepalive
 ]))
 
+testParseError('Password Flag must be set to zero when User Name Flag is set to 0', Buffer.from([
+  16, 12, // Header
+  0, 6, // Protocol ID length
+  0x4d, 0x51, 0x49, 0x73, 0x64, 0x70, // Protocol ID: MQIsdp
+  3, // Protocol version
+  0x42, // Connect flags: password, clean
+  0, 30 // Keepalive
+]))
+
 // If the Will Flag is set to 0 the Will QoS and Will Retain fields in the Connect Flags MUST be set to zero and the Will Topic and Will Message fields MUST NOT be present in the payload [MQTT-3.1.2-11].
 testParseError('Will Retain Flag must be set to zero when Will Flag is set to 0', Buffer.from([
   16, 10, // Header
