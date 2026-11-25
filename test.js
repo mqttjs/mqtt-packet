@@ -1285,6 +1285,16 @@ testParseError('Connect flag bit 0 must be 0, but got 1', Buffer.from([
   0, 30 // Keepalive
 ]))
 
+// If the User Name Flag is set to 0, the Password Flag MUST be set to 0 [MQTT-3.1.2-22]
+testParseError('Password Flag must be set to zero when User Name Flag is set to 0', Buffer.from([
+  16, 10, // Header
+  0, 4, // Protocol ID length
+  0x4d, 0x51, 0x54, 0x54, // Protocol ID
+  4, // Protocol version
+  0x42, // Connect flags: password, clean
+  0, 30 // Keepalive
+]))
+
 // If the Will Flag is set to 0 the Will QoS and Will Retain fields in the Connect Flags MUST be set to zero and the Will Topic and Will Message fields MUST NOT be present in the payload [MQTT-3.1.2-11].
 testParseError('Will Retain Flag must be set to zero when Will Flag is set to 0', Buffer.from([
   16, 10, // Header
@@ -2809,7 +2819,7 @@ testGenerateError('Invalid password', {
   password: 42
 })
 
-testGenerateError('Username is required to use password', {
+testGenerateError('Username is required to use password before MQTT 5', {
   cmd: 'connect',
   retain: false,
   qos: 0,
@@ -2827,9 +2837,9 @@ testGenerateError('Username is required to use password', {
   keepalive: 30,
   clientId: 'test',
   password: 'password'
-})
+}, {}, 'Username is required to use password with MQTT 3.1')
 
-testGenerateError('Username is required to use password', {
+testGenerateError('Username is required to use password before MQTT 5', {
   cmd: 'connect',
   retain: false,
   qos: 0,
