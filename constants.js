@@ -197,6 +197,7 @@ protocol.VERSION4 = Buffer.from([4])
 protocol.VERSION5 = Buffer.from([5])
 protocol.VERSION131 = Buffer.from([131])
 protocol.VERSION132 = Buffer.from([132])
+protocol.VERSION133 = Buffer.from([133])
 
 /* QoS */
 protocol.QOS = [0, 1, 2].map(qos => {

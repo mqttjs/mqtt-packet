@@ -389,6 +389,30 @@ testParseGenerate('connect MQTT bridge 132', {
   116, 101, 115, 116 // Client ID
 ]))
 
+testParseGenerate('connect MQTT bridge 133', {
+  cmd: 'connect',
+  retain: false,
+  qos: 0,
+  dup: false,
+  length: 17,
+  protocolId: 'MQTT',
+  protocolVersion: 5,
+  bridgeMode: true,
+  clean: true,
+  keepalive: 30,
+  clientId: 'test'
+}, Buffer.from([
+  16, 17, // Header
+  0, 4, // Protocol ID length
+  77, 81, 84, 84, // Protocol ID
+  133, // Protocol version
+  2, // Connect flags: clean
+  0, 30, // Keepalive
+  0, // Properties length
+  0, 4, // Client ID length
+  116, 101, 115, 116 // Client ID
+]))
+
 testParseGenerate('connect MQTT 5', {
   cmd: 'connect',
   retain: false,
