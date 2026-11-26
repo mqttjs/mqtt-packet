@@ -130,8 +130,15 @@ Should be set before any `writeToStream` calls.
 
 ### mqtt.parser([opts])
 
-Returns a new `Parser` object. `Parser` inherits from `EventEmitter` and
-will emit:
+Returns a new `Parser` object. Options:
+
+  * `protocolVersion`: 3, 4 (default) or 5.
+  * `maxPacketSize`: the largest packet to accept, in bytes, counting the
+    fixed header (MQTT 5.0 §3.1.2.11.4). The check runs as soon as the
+    Remaining Length is read, so a larger packet fails before its body is
+    buffered. Unset or `0` means no limit.
+
+`Parser` inherits from `EventEmitter` and will emit:
 
   * `packet`, when a new packet is parsed, according to
     [packets](#packets)
@@ -142,9 +149,13 @@ The `error` argument carries `code` and `cmd`, the packet type being parsed
 
   * `'UNSUPPORTED_PROTOCOL_VERSION'`: a CONNECT with an unknown protocol
     version. A v5 server may answer with CONNACK `0x84` before closing.
+  * `'PACKET_TOO_LARGE'`: the packet is larger than `maxPacketSize`. A v5
+    peer may send reason code `0x95` (Packet too large) before closing.
   * `'MALFORMED_PACKET'`: any other protocol violation.
 
-Either way the connection should be closed. Match on `code` and `cmd` rather
+In every case the connection should be closed. The parser does not skip the
+rest of a failed packet: the next `parse()` call starts over and reads its
+input as a new packet. Match on `code` and `cmd` rather
 than on `message`, which is not a stable contract.
 
 <a name="parse">

@@ -239,9 +239,11 @@ export declare type Packet = IConnectPacket |
   IAuthPacket
 
 /** UNSUPPORTED_PROTOCOL_VERSION: a CONNECT with an unknown protocol version
- *  (a v5 server may answer CONNACK 0x84). MALFORMED_PACKET: any other protocol
- *  violation. Either way the connection should be closed. */
-export declare type ParserErrorCode = 'MALFORMED_PACKET' | 'UNSUPPORTED_PROTOCOL_VERSION'
+ *  (a v5 server may answer CONNACK 0x84). PACKET_TOO_LARGE: the packet is
+ *  larger than the parser's maxPacketSize (a v5 peer may send reason code 0x95).
+ *  MALFORMED_PACKET: any other protocol violation. In every case the connection
+ *  should be closed. */
+export declare type ParserErrorCode = 'MALFORMED_PACKET' | 'UNSUPPORTED_PROTOCOL_VERSION' | 'PACKET_TOO_LARGE'
 
 export declare const parserErrorCodes: { readonly [K in ParserErrorCode]: K }
 
@@ -261,7 +263,15 @@ export interface Parser extends EventEmitter {
   parse(buffer: Buffer, opts?: Object): number
 }
 
-export declare function parser(opts?: Object): Parser
+export interface ParserOptions {
+  protocolVersion?: number
+  /** Largest accepted packet in bytes, fixed header included. Checked as soon
+   *  as the Remaining Length is read; unset or 0 means no limit. */
+  maxPacketSize?: number
+  [key: string]: any
+}
+
+export declare function parser(opts?: ParserOptions): Parser
 
 export declare function generate(packet: Packet, opts?: Object): Buffer
 

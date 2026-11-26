@@ -4043,3 +4043,74 @@ test('parses non-Buffer views, whole and fragmented', t => {
   }
   t.end()
 })
+
+test('maxPacketSize rejects a larger packet from its fixed header alone', t => {
+  const parser = mqtt.parser({ maxPacketSize: 10 })
+  const errors = []
+  parser.on('error', err => errors.push(err))
+  parser.on('packet', () => t.fail('no packet expected'))
+
+  // PUBLISH announcing 10 bytes of Remaining Length: size 1 + 1 + 10 = 12. No body sent.
+  parser.parse(Buffer.from([0x30, 10]))
+
+  t.equal(errors.length, 1, 'one error')
+  t.equal(errors[0].code, mqtt.parserErrorCodes.PACKET_TOO_LARGE, 'error code')
+  t.equal(errors[0].cmd, 'publish', 'error cmd')
+  t.equal(errors[0].message, 'Packet size 12 exceeds maximum packet size 10', 'error message')
+  t.end()
+})
+
+test('maxPacketSize counts every Remaining Length byte', t => {
+  // Remaining Length 200 takes two bytes (0xc8 0x01): size 1 + 2 + 200 = 203.
+  const header = Buffer.from([0x30, 0xc8, 0x01])
+
+  const over = mqtt.parser({ maxPacketSize: 202 })
+  const errors = []
+  over.on('error', err => errors.push(err))
+  over.parse(header)
+  t.equal(errors.length, 1, 'one byte over the limit fails')
+  t.equal(errors[0].code, mqtt.parserErrorCodes.PACKET_TOO_LARGE, 'error code')
+  t.equal(errors[0].message, 'Packet size 203 exceeds maximum packet size 202', 'size includes both length bytes')
+
+  const exact = mqtt.parser({ maxPacketSize: 203 })
+  exact.on('error', err => t.fail(err.message))
+  exact.parse(header)
+  t.equal(exact.packet.length, 200, 'at the limit the parser waits for the body')
+  t.end()
+})
+
+test('maxPacketSize accepts a packet exactly at the limit', t => {
+  const publish = mqtt.generate({ cmd: 'publish', topic: 'a/b', payload: 'hello', qos: 0 })
+  const parser = mqtt.parser({ maxPacketSize: publish.length })
+  let packet = null
+  parser.on('packet', p => { packet = p })
+  parser.on('error', err => t.fail(err.message))
+  t.equal(parser.parse(publish), 0, 'remaining bytes')
+  t.equal(packet && packet.payload.toString(), 'hello', 'packet parsed')
+  t.end()
+})
+
+test('maxPacketSize still applies after a CONNECT', t => {
+  const connect = mqtt.generate({ cmd: 'connect', protocolVersion: 4, clientId: 'c', keepalive: 10, clean: true })
+  const parser = mqtt.parser({ maxPacketSize: 50 })
+  const errors = []
+  parser.on('error', err => errors.push(err))
+  parser.parse(connect)
+  parser.parse(Buffer.from([0x30, 100]))
+  t.equal(errors.length, 1, 'one error')
+  t.equal(errors[0].code, mqtt.parserErrorCodes.PACKET_TOO_LARGE, 'error code')
+  t.end()
+})
+
+test('no size limit without maxPacketSize', t => {
+  const publish = mqtt.generate({ cmd: 'publish', topic: 'a/b', payload: Buffer.alloc(1000), qos: 0 })
+  for (const opts of [undefined, {}, { maxPacketSize: 0 }]) {
+    const parser = mqtt.parser(opts)
+    let packet = null
+    parser.on('packet', p => { packet = p })
+    parser.on('error', err => t.fail(err.message))
+    parser.parse(publish)
+    t.equal(packet && packet.payload.length, 1000, `opts ${JSON.stringify(opts)}: packet parsed`)
+  }
+  t.end()
+})
