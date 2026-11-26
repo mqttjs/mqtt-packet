@@ -295,7 +295,8 @@ protocol.MQTT5_AUTH_CODES = {
 /* Parser error codes, set as err.code on every parser 'error' */
 protocol.parserErrorCodes = {
   MALFORMED_PACKET: 'MALFORMED_PACKET',
-  UNSUPPORTED_PROTOCOL_VERSION: 'UNSUPPORTED_PROTOCOL_VERSION'
+  UNSUPPORTED_PROTOCOL_VERSION: 'UNSUPPORTED_PROTOCOL_VERSION',
+  PACKET_TOO_LARGE: 'PACKET_TOO_LARGE'
 }
 
 export default protocol

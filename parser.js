@@ -17,6 +17,8 @@ class Parser extends EventEmitter {
     if (!(this instanceof Parser)) return (new Parser()).parser(opt)
 
     this.settings = opt || {}
+    // Kept apart from settings, which _parseConnect replaces with the CONNECT packet.
+    this._maxPacketSize = this.settings.maxPacketSize
 
     this._states = [
       '_parseHeader',
@@ -93,6 +95,14 @@ class Parser extends EventEmitter {
     const result = this._parseVarByteNum(true)
 
     if (result) {
+      // Size counts the fixed header byte and the length bytes (MQTT-5 §3.1.2.11.4).
+      const size = 1 + result.bytes + result.value
+      if (this._maxPacketSize && size > this._maxPacketSize) {
+        return this._emitError(
+          new Error('Packet size ' + size + ' exceeds maximum packet size ' + this._maxPacketSize),
+          constants.parserErrorCodes.PACKET_TOO_LARGE
+        )
+      }
       this.packet.length = result.value
       this._list.consume(result.bytes)
     }
